@@ -1,13 +1,14 @@
 {
-  "name": "courtney-marketplace",
+  "name": "quickstop",
   "owner": {
     "name": "Anthony Costanzo",
     "email": "mail@acostanzo.com"
   },
+  "description": "A collection of Claude Code plugins for workflow enhancement and productivity",
   "plugins": [
     {
       "name": "courtney",
-      "source": ".",
+      "source": "./plugins/courtney",
       "description": "Your agentic workflow stenographer - records Claude Code conversations to a searchable database"
     }
   ]
