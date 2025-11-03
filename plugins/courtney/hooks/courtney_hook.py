@@ -16,6 +16,21 @@ sys.path.insert(0, plugin_root)
 from courtney.recorder import Recorder
 
 
+def _log_to_file(log_path: str, message: str) -> None:
+    """Safely log to file without raising exceptions.
+
+    Args:
+        log_path: Path to log file
+        message: Message to log
+    """
+    try:
+        with open(log_path, 'a') as log:
+            log.write(message)
+    except:
+        # If we can't write to log, fail silently
+        pass
+
+
 def main():
     """Main entry point for the hook."""
     # Setup debug logging
@@ -24,11 +39,7 @@ def main():
     # Verify we're running from the correct location
     plugin_root_env = os.environ.get('CLAUDE_PLUGIN_ROOT')
     if not plugin_root_env:
-        try:
-            with open(log_path, 'a') as log:
-                log.write("WARNING: CLAUDE_PLUGIN_ROOT not set, using fallback\n\n")
-        except:
-            pass
+        _log_to_file(log_path, "WARNING: CLAUDE_PLUGIN_ROOT not set, using fallback\n\n")
 
     try:
         # Read hook data from stdin
@@ -38,8 +49,7 @@ def main():
         event_type = hook_data.get("hook_event_name")
 
         # Debug log
-        with open(log_path, 'a') as log:
-            log.write(f"[{event_type}] {json.dumps(hook_data, indent=2)}\n\n")
+        _log_to_file(log_path, f"[{event_type}] {json.dumps(hook_data, indent=2)}\n\n")
 
         if not event_type:
             # No event type, nothing to do
@@ -70,8 +80,9 @@ def main():
 
     except Exception as e:
         # Log error but don't block Claude Code
-        with open(log_path, 'a') as log:
-            log.write(f"ERROR: {e}\n\n")
+        import traceback
+        error_msg = f"ERROR: {e}\n{traceback.format_exc()}\n\n"
+        _log_to_file(log_path, error_msg)
         print(f"Courtney hook error: {e}", file=sys.stderr)
         sys.exit(0)
 
