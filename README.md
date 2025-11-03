@@ -129,6 +129,49 @@ On first use, Courtney automatically creates:
 - Configuration file at `~/.claude/courtney.json` (if it doesn't exist)
 - SQLite database at the configured path (default: `~/.claude/courtney.db`)
 
+## Using Courtney
+
+### Readback Command
+
+Courtney includes a `/readback` command to review recorded transcripts directly in Claude Code.
+
+#### Basic Usage
+
+```bash
+# Readback current session
+/readback
+
+# Readback specific timeframes
+/readback last 10 minutes
+/readback last 2 hours
+/readback last hour
+
+# Readback all entries (limited to recent 100)
+/readback all
+```
+
+#### Examples
+
+**Review current session:**
+```bash
+/readback
+```
+Shows all conversation entries from your current Claude Code session.
+
+**Check recent activity:**
+```bash
+/readback last 30 minutes
+```
+Shows all conversations from the last 30 minutes, regardless of session.
+
+**Quick review:**
+```bash
+/readback last hour
+```
+Shows all conversations from the last hour across all sessions.
+
+The readback is formatted chronologically with timestamps, showing the natural flow of conversation between you and the AI.
+
 ## Database Schema
 
 Courtney uses a simple, normalized schema:
