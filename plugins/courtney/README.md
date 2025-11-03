@@ -253,6 +253,38 @@ This will test:
 
 All tests run against a temporary database and clean up after themselves.
 
+## Code Quality & Security
+
+Courtney is built with security and reliability in mind:
+
+### Security Features
+- **SQL injection prevention**: All database queries use parameterized statements
+- **Path validation**: Transcript file paths are validated before reading
+- **File size limits**: Maximum 10MB transcript file size to prevent memory exhaustion
+- **Speaker validation**: Database CHECK constraint ensures only valid speaker types
+
+### Reliability Features
+- **Thread-safe SQLite**: Enables concurrent hook execution
+- **WAL mode**: Write-Ahead Logging for better database concurrency
+- **Corruption recovery**: Automatic database integrity checks with backup & recovery
+- **Error logging**: All errors logged to `~/.claude/courtney.log` without blocking Claude Code
+- **UTC timestamps**: Consistent timezone handling across sessions
+
+### Testing
+All core functionality is covered by automated tests. Run the test suite:
+
+```bash
+cd plugins/courtney
+python3 test_courtney.py
+```
+
+Tests cover:
+- Database initialization and schema
+- Session lifecycle tracking
+- User prompt and AI response recording
+- JSONL transcript parsing
+- SQL query examples
+
 ## Use Cases
 
 Courtney creates a searchable record of your AI-assisted development sessions, useful for:

@@ -1,6 +1,6 @@
 ---
 description: Read back the conversation transcript from the Courtney database
-argument-hint: [timeframe like "last 10 minutes" or "current session"]
+argument-hint: [timeframe like "last 10 minutes" or "all"]
 allowed-tools: Bash(sqlite3:*)
 ---
 

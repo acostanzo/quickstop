@@ -70,6 +70,82 @@ Courtney registers hooks for:
 
 Note: PreToolUse/PostToolUse hooks are NOT used - tool calls are considered "working" not "speaking"
 
+### Hook Data Structure
+
+#### SessionStart
+```json
+{
+  "hook_event_name": "SessionStart",
+  "session_id": "uuid-string",
+  "transcript_path": "/path/to/session.jsonl",
+  "cwd": "/working/directory",
+  "source": "startup" | "cli" | "api"
+}
+```
+
+#### SessionEnd
+```json
+{
+  "hook_event_name": "SessionEnd",
+  "session_id": "uuid-string",
+  "transcript_path": "/path/to/session.jsonl",
+  "cwd": "/working/directory",
+  "reason": "prompt_input_exit" | "error" | "timeout"
+}
+```
+
+#### UserPromptSubmit
+```json
+{
+  "hook_event_name": "UserPromptSubmit",
+  "session_id": "uuid-string",
+  "transcript_path": "/path/to/session.jsonl",
+  "cwd": "/working/directory",
+  "permission_mode": "default" | "restrictive",
+  "prompt": "full user prompt text"
+}
+```
+
+#### Stop
+```json
+{
+  "hook_event_name": "Stop",
+  "session_id": "uuid-string",
+  "transcript_path": "/path/to/session.jsonl",
+  "cwd": "/working/directory",
+  "permission_mode": "default" | "restrictive",
+  "stop_hook_active": false
+}
+```
+
+#### SubagentStop
+```json
+{
+  "hook_event_name": "SubagentStop",
+  "session_id": "uuid-string",
+  "transcript_path": "/path/to/session.jsonl",
+  "cwd": "/working/directory",
+  "permission_mode": "default" | "restrictive",
+  "stop_hook_active": false
+}
+```
+
+The transcript_path points to a JSONL file where each line is a JSON object. Assistant messages have this structure:
+```json
+{
+  "type": "assistant",
+  "message": {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "The actual response text"
+      }
+    ]
+  }
+}
+```
+
 ## Future Enhancements
 (Not in current scope, but considerations for Phase 2+)
 - PostgreSQL/MySQL adapters for remote database support
