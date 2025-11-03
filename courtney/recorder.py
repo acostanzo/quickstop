@@ -65,7 +65,7 @@ class Recorder:
         )
 
     def handle_user_prompt(self, hook_data: Dict[str, Any]) -> None:
-        """Handle UserPromptSubmit hook.
+        """Handle UserPromptSubmit hook - records full user input.
 
         Args:
             hook_data: The hook input data from Claude Code
@@ -73,6 +73,7 @@ class Recorder:
         session_id = hook_data.get("session_id")
         prompt = hook_data.get("prompt", "")
 
+        # Store full user prompt with no truncation
         self.adapter.add_entry(
             entry_id=str(uuid.uuid4()),
             session_id=session_id,
@@ -82,66 +83,8 @@ class Recorder:
             metadata={}
         )
 
-    def handle_pre_tool_use(self, hook_data: Dict[str, Any]) -> None:
-        """Handle PreToolUse hook.
-
-        Args:
-            hook_data: The hook input data from Claude Code
-        """
-        session_id = hook_data.get("session_id")
-        tool_name = hook_data.get("tool_name", "unknown")
-        tool_input = hook_data.get("tool_input", {})
-
-        # Create a readable transcript
-        transcript = f"{tool_name} with parameters: {json.dumps(tool_input, indent=2)}"
-
-        self.adapter.add_entry(
-            entry_id=str(uuid.uuid4()),
-            session_id=session_id,
-            timestamp=datetime.now(),
-            speaker="agent",
-            transcript=transcript,
-            metadata={
-                "type": "tool_call",
-                "tool_name": tool_name,
-                "tool_input": tool_input
-            }
-        )
-
-    def handle_post_tool_use(self, hook_data: Dict[str, Any]) -> None:
-        """Handle PostToolUse hook.
-
-        Args:
-            hook_data: The hook input data from Claude Code
-        """
-        session_id = hook_data.get("session_id")
-        tool_name = hook_data.get("tool_name", "unknown")
-        tool_response = hook_data.get("tool_response", "")
-
-        # Convert response to string if it's not already
-        if not isinstance(tool_response, str):
-            tool_response = json.dumps(tool_response)
-
-        # Truncate if too long (keep first 10000 chars)
-        transcript = tool_response[:10000]
-        was_truncated = len(tool_response) > 10000
-
-        self.adapter.add_entry(
-            entry_id=str(uuid.uuid4()),
-            session_id=session_id,
-            timestamp=datetime.now(),
-            speaker="agent",
-            transcript=transcript,
-            metadata={
-                "type": "tool_response",
-                "tool_name": tool_name,
-                "response_length": len(tool_response),
-                "truncated": was_truncated
-            }
-        )
-
     def handle_stop(self, hook_data: Dict[str, Any]) -> None:
-        """Handle Stop hook - extracts the assistant's final text response.
+        """Handle Stop hook - records the assistant's full text response.
 
         Args:
             hook_data: The hook input data from Claude Code
@@ -168,6 +111,7 @@ class Recorder:
                             if isinstance(item, dict) and item.get("type") == "text":
                                 text = item.get("text", "")
                                 if text.strip():
+                                    # Store full response with no truncation
                                     self.adapter.add_entry(
                                         entry_id=str(uuid.uuid4()),
                                         session_id=session_id,
@@ -178,6 +122,7 @@ class Recorder:
                                     )
                                     return
                     elif isinstance(content, str) and content.strip():
+                        # Store full response with no truncation
                         self.adapter.add_entry(
                             entry_id=str(uuid.uuid4()),
                             session_id=session_id,
@@ -193,7 +138,7 @@ class Recorder:
             pass
 
     def handle_subagent_stop(self, hook_data: Dict[str, Any]) -> None:
-        """Handle SubagentStop hook - extracts the subagent's final report.
+        """Handle SubagentStop hook - records the subagent's full final report.
 
         Args:
             hook_data: The hook input data from Claude Code
@@ -219,6 +164,7 @@ class Recorder:
                             if isinstance(item, dict) and item.get("type") == "text":
                                 text = item.get("text", "")
                                 if text.strip():
+                                    # Store full subagent report with no truncation
                                     self.adapter.add_entry(
                                         entry_id=str(uuid.uuid4()),
                                         session_id=session_id,
@@ -229,6 +175,7 @@ class Recorder:
                                     )
                                     return
                     elif isinstance(content, str) and content.strip():
+                        # Store full subagent report with no truncation
                         self.adapter.add_entry(
                             entry_id=str(uuid.uuid4()),
                             session_id=session_id,

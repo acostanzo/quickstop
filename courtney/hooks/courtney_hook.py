@@ -31,12 +31,11 @@ def main():
         recorder = Recorder()
 
         # Dispatch to appropriate handler based on event type
+        # Only recording user prompts and AI responses (not tool calls)
         handlers = {
             "SessionStart": recorder.handle_session_start,
             "SessionEnd": recorder.handle_session_end,
             "UserPromptSubmit": recorder.handle_user_prompt,
-            "PreToolUse": recorder.handle_pre_tool_use,
-            "PostToolUse": recorder.handle_post_tool_use,
             "Stop": recorder.handle_stop,
             "SubagentStop": recorder.handle_subagent_stop,
         }

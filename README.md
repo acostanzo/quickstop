@@ -8,16 +8,20 @@ Courtney is a Claude Code hook that records your AI conversations in a clean, no
 
 ## What Gets Recorded
 
-Courtney logs:
-- User prompts
-- AI responses
-- Tool invocations (with tool names)
-- Sub-agent activities (with agent names)
+Courtney logs only what was *said* in the conversation:
+- **User prompts** - Full text of what you asked (no truncation)
+- **AI responses** - Full text responses from the assistant (no truncation)
+- **Subagent reports** - Final reports from subagent tasks (no truncation)
+
+Courtney does NOT record:
+- Tool calls and their results (the "thinking" and "working" behind the scenes)
+- Internal reasoning or context building
 
 Each entry includes:
 - **Timestamp** - when it occurred
-- **Transcript** - the actual content
-- **Speaker** - who generated it (user, ai, tool name, or sub-agent name)
+- **Transcript** - the actual content (full, never truncated)
+- **Speaker** - either "user" or "agent"
+- **Metadata** - JSON with additional context (e.g., response type)
 
 ## Installation
 
@@ -60,8 +64,6 @@ If you prefer to install manually, add the following to your Claude Code setting
     "SessionStart": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
     "SessionEnd": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
     "UserPromptSubmit": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
-    "PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
-    "PostToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
     "Stop": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
     "SubagentStop": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}]
   }
@@ -130,11 +132,18 @@ FROM entries
 WHERE speaker = 'user'
 ORDER BY timestamp DESC;
 
--- Find all tool calls
+-- Find all AI responses
 SELECT timestamp, transcript
 FROM entries
-WHERE metadata LIKE '%"type":"tool_call"%'
+WHERE speaker = 'agent'
 ORDER BY timestamp DESC;
+
+-- View a conversation (alternating user/agent)
+SELECT timestamp, speaker,
+       SUBSTR(transcript, 1, 100) || '...' as preview
+FROM entries
+WHERE session_id = 'your-session-id'
+ORDER BY timestamp;
 ```
 
 ## Testing
@@ -148,8 +157,9 @@ python3 test_courtney.py
 This will test:
 - Database initialization
 - Session lifecycle tracking
-- User prompt recording
-- Tool call recording (PreToolUse/PostToolUse)
+- User prompt recording (full text, no truncation)
+- AI response recording (full text, no truncation)
+- Full conversation flow (user → agent)
 - Stop hook transcript parsing
 - Example SQL queries
 

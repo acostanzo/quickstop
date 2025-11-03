@@ -48,12 +48,11 @@ def add_courtney_hooks(settings, hook_script_path):
     }
 
     # Events that need Courtney hooks
+    # Only recording user prompts and AI responses (not tool calls)
     events = [
         "SessionStart",
         "SessionEnd",
         "UserPromptSubmit",
-        "PreToolUse",
-        "PostToolUse",
         "Stop",
         "SubagentStop"
     ]

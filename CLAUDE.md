@@ -48,10 +48,11 @@ install.py             # Installation script
 ### Hook Events
 Courtney registers hooks for:
 - SessionStart/SessionEnd: Session lifecycle
-- UserPromptSubmit: User input
-- PreToolUse/PostToolUse: Tool invocations and results
-- Stop: AI text responses
-- SubagentStop: Subagent final reports
+- UserPromptSubmit: User input (full text, no truncation)
+- Stop: AI text responses (full text, no truncation)
+- SubagentStop: Subagent final reports (full text, no truncation)
+
+Note: PreToolUse/PostToolUse hooks are NOT used - tool calls are considered "working" not "speaking"
 
 ## Future Enhancements
 (Not in current scope, but considerations for Phase 2+)

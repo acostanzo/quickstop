@@ -186,9 +186,9 @@ def test_user_prompt(config_path):
     return True
 
 
-def test_tool_calls(config_path):
-    """Test tool call recording."""
-    print("\nTesting tool call recording...")
+def test_full_conversation(config_path):
+    """Test a full conversation flow (user prompt + AI response)."""
+    print("\nTesting full conversation flow...")
 
     config = Config(config_path)
     recorder = Recorder(config)
@@ -196,46 +196,45 @@ def test_tool_calls(config_path):
     session_id = str(uuid.uuid4())
     recorder.handle_session_start({"session_id": session_id, "source": "test"})
 
-    # Test PreToolUse
+    # Test user prompt
     hook_data = {
         "session_id": session_id,
-        "tool_name": "Bash",
-        "tool_input": {
-            "command": "ls -la",
-            "description": "List files"
-        }
+        "prompt": "Write a hello world function"
     }
-    recorder.handle_pre_tool_use(hook_data)
-    print("  ✓ PreToolUse recorded")
+    recorder.handle_user_prompt(hook_data)
+    print("  ✓ User prompt recorded")
 
-    # Test PostToolUse
+    # Create mock transcript for AI response
+    transcript_path = create_mock_transcript(session_id)
+
+    # Test Stop hook (AI response)
     hook_data = {
         "session_id": session_id,
-        "tool_name": "Bash",
-        "tool_response": "file1.txt\nfile2.txt\n"
+        "transcript_path": transcript_path
     }
-    recorder.handle_post_tool_use(hook_data)
-    print("  ✓ PostToolUse recorded")
+    recorder.handle_stop(hook_data)
+    print("  ✓ AI response recorded")
 
-    # Verify in database
+    # Verify in database - should have 1 user entry and 1 agent entry
     cursor = recorder.adapter.conn.cursor()
-    cursor.execute("SELECT * FROM entries WHERE session_id = ? AND speaker = 'agent'", (session_id,))
+    cursor.execute("SELECT speaker, transcript FROM entries WHERE session_id = ? ORDER BY timestamp", (session_id,))
     rows = cursor.fetchall()
 
     if len(rows) != 2:
-        print(f"  ❌ Expected 2 entries, found {len(rows)}")
+        print(f"  ❌ Expected 2 entries (user + agent), found {len(rows)}")
         recorder.close()
+        os.unlink(transcript_path)
         return False
 
-    # Check metadata
-    metadata = json.loads(rows[0][5])  # metadata field
-    if metadata.get('tool_name') != 'Bash':
-        print(f"  ❌ Tool name mismatch in metadata")
+    if rows[0][0] != 'user' or rows[1][0] != 'agent':
+        print(f"  ❌ Speaker order incorrect: {[r[0] for r in rows]}")
         recorder.close()
+        os.unlink(transcript_path)
         return False
 
-    print("  ✓ Tool calls verified in database")
+    print("  ✓ Full conversation verified in database")
     recorder.close()
+    os.unlink(transcript_path)
     return True
 
 
@@ -348,7 +347,7 @@ def main():
         ("Database Initialization", lambda: test_database_initialization(config_path)),
         ("Session Lifecycle", lambda: test_session_lifecycle(config_path)),
         ("User Prompt Recording", lambda: test_user_prompt(config_path)),
-        ("Tool Call Recording", lambda: test_tool_calls(config_path)),
+        ("Full Conversation Flow", lambda: test_full_conversation(config_path)),
         ("Stop Hook Processing", lambda: test_stop_hook(config_path)),
         ("Example Queries", lambda: test_query_examples(config_path)),
     ]
