@@ -20,7 +20,7 @@ Courtney does NOT record:
 Each entry includes:
 - **Timestamp** - when it occurred
 - **Transcript** - the actual content (full, never truncated)
-- **Speaker** - either "user" or "agent"
+- **Speaker** - either "user", "agent", or "subagent"
 - **Metadata** - JSON with additional context (e.g., response type)
 
 ## Installation
@@ -102,9 +102,9 @@ Courtney uses a simple, normalized schema:
 - `id`: Unique entry identifier
 - `session_id`: Reference to the session
 - `timestamp`: When the entry occurred
-- `speaker`: Either "user" or "agent"
+- `speaker`: Either "user", "agent", or "subagent"
 - `transcript`: The actual content
-- `metadata`: JSON metadata (tool names, parameters, etc.)
+- `metadata`: JSON metadata (e.g., response type)
 
 ## Querying Your Data
 
@@ -138,7 +138,13 @@ FROM entries
 WHERE speaker = 'agent'
 ORDER BY timestamp DESC;
 
--- View a conversation (alternating user/agent)
+-- Find all subagent reports
+SELECT timestamp, transcript
+FROM entries
+WHERE speaker = 'subagent'
+ORDER BY timestamp DESC;
+
+-- View a conversation (user/agent/subagent)
 SELECT timestamp, speaker,
        SUBSTR(transcript, 1, 100) || '...' as preview
 FROM entries
