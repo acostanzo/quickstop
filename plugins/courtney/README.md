@@ -114,40 +114,40 @@ On first use, Courtney automatically creates:
 
 ### Readback Command
 
-Courtney includes a `/readback` command to review recorded transcripts directly in Claude Code.
+Courtney includes a `/courtney:readback` command to review recorded transcripts directly in Claude Code.
 
 #### Basic Usage
 
 ```bash
-# Readback last 30 minutes (default)
-/readback
+# Readback current session (default)
+/courtney:readback
 
-# Readback specific timeframes
-/readback last 10 minutes
-/readback last 2 hours
-/readback last hour
+# Readback specific timeframes (across all sessions)
+/courtney:readback last 10 minutes
+/courtney:readback last 2 hours
+/courtney:readback last hour
 
 # Readback all entries (limited to recent 100)
-/readback all
+/courtney:readback all
 ```
 
 #### Examples
 
-**Review recent activity:**
+**Review current session:**
 ```bash
-/readback
+/courtney:readback
 ```
-Shows all conversation entries from the last 30 minutes (default timeframe).
+Shows all conversation entries from your current Claude Code session (default behavior).
 
 **Check specific timeframe:**
 ```bash
-/readback last 10 minutes
+/courtney:readback last 10 minutes
 ```
-Shows all conversations from the last 10 minutes.
+Shows all conversations from the last 10 minutes across all sessions.
 
 **Quick review:**
 ```bash
-/readback last hour
+/courtney:readback last hour
 ```
 Shows all conversations from the last hour across all sessions.
 
