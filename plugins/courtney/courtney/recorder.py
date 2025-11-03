@@ -95,40 +95,42 @@ class Recorder:
             return
 
         try:
-            # Read and parse the transcript file
-            with open(transcript_path, 'r') as f:
-                transcript_data = json.load(f)
+            # Read the JSONL transcript file (one JSON object per line)
+            # Find the last assistant message with text content
+            last_text = None
 
-            # Find the last assistant message that contains text (not just tool calls)
-            messages = transcript_data.get("messages", [])
-            for message in reversed(messages):
-                if message.get("role") == "assistant":
-                    # Look for text content in the message
-                    content = message.get("content", [])
-                    if isinstance(content, list):
-                        for item in content:
-                            if isinstance(item, dict) and item.get("type") == "text":
-                                text = item.get("text", "")
-                                if text.strip():
-                                    # Store full response with no truncation
-                                    self.adapter.add_entry(
-                                        entry_id=str(uuid.uuid4()),
-                                        session_id=session_id,
-                                        timestamp=datetime.now(),
-                                        speaker="agent",
-                                        transcript=text
-                                    )
-                                    return
-                    elif isinstance(content, str) and content.strip():
-                        # Store full response with no truncation
-                        self.adapter.add_entry(
-                            entry_id=str(uuid.uuid4()),
-                            session_id=session_id,
-                            timestamp=datetime.now(),
-                            speaker="agent",
-                            transcript=content
-                        )
-                        return
+            with open(transcript_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        entry = json.loads(line)
+
+                        # Look for assistant messages with text content
+                        if entry.get("type") == "assistant":
+                            message = entry.get("message", {})
+                            if message.get("role") == "assistant":
+                                content = message.get("content", [])
+                                if isinstance(content, list):
+                                    for item in content:
+                                        if isinstance(item, dict) and item.get("type") == "text":
+                                            text = item.get("text", "")
+                                            if text.strip():
+                                                last_text = text
+                    except json.JSONDecodeError:
+                        continue
+
+            # Record the last text we found
+            if last_text:
+                self.adapter.add_entry(
+                    entry_id=str(uuid.uuid4()),
+                    session_id=session_id,
+                    timestamp=datetime.now(),
+                    speaker="agent",
+                    transcript=last_text
+                )
 
         except (IOError, json.JSONDecodeError) as e:
             # Silently fail - we don't want to break Claude's operation
@@ -147,39 +149,42 @@ class Recorder:
             return
 
         try:
-            # Read and parse the transcript file
-            with open(transcript_path, 'r') as f:
-                transcript_data = json.load(f)
+            # Read the JSONL transcript file (one JSON object per line)
+            # Find the last assistant message with text content
+            last_text = None
 
-            # Find the last assistant message (subagent's final report)
-            messages = transcript_data.get("messages", [])
-            for message in reversed(messages):
-                if message.get("role") == "assistant":
-                    content = message.get("content", [])
-                    if isinstance(content, list):
-                        for item in content:
-                            if isinstance(item, dict) and item.get("type") == "text":
-                                text = item.get("text", "")
-                                if text.strip():
-                                    # Store full subagent report with no truncation
-                                    self.adapter.add_entry(
-                                        entry_id=str(uuid.uuid4()),
-                                        session_id=session_id,
-                                        timestamp=datetime.now(),
-                                        speaker="subagent",
-                                        transcript=text
-                                    )
-                                    return
-                    elif isinstance(content, str) and content.strip():
-                        # Store full subagent report with no truncation
-                        self.adapter.add_entry(
-                            entry_id=str(uuid.uuid4()),
-                            session_id=session_id,
-                            timestamp=datetime.now(),
-                            speaker="subagent",
-                            transcript=content
-                        )
-                        return
+            with open(transcript_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        entry = json.loads(line)
+
+                        # Look for assistant messages with text content
+                        if entry.get("type") == "assistant":
+                            message = entry.get("message", {})
+                            if message.get("role") == "assistant":
+                                content = message.get("content", [])
+                                if isinstance(content, list):
+                                    for item in content:
+                                        if isinstance(item, dict) and item.get("type") == "text":
+                                            text = item.get("text", "")
+                                            if text.strip():
+                                                last_text = text
+                    except json.JSONDecodeError:
+                        continue
+
+            # Record the last text we found
+            if last_text:
+                self.adapter.add_entry(
+                    entry_id=str(uuid.uuid4()),
+                    session_id=session_id,
+                    timestamp=datetime.now(),
+                    speaker="subagent",
+                    transcript=last_text
+                )
 
         except (IOError, json.JSONDecodeError) as e:
             # Silently fail
