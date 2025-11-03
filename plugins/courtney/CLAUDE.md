@@ -49,8 +49,9 @@ quickstop/                          # Marketplace root
 │       │   └── courtney_hook.py  # Main hook entry point
 │       ├── commands/             # Slash commands
 │       │   └── readback.md       # Readback command
-│       ├── install.py            # Legacy installation script
 │       ├── test_courtney.py      # Test suite
+│       ├── setup.py              # Package configuration
+│       ├── requirements.txt      # Dependencies
 │       ├── README.md             # Plugin documentation
 │       └── CLAUDE.md             # This file
 ├── README.md                      # Marketplace overview

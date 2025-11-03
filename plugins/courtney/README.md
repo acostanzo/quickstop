@@ -28,11 +28,7 @@ Each entry includes:
 - Python 3.7 or higher
 - Claude Code installed and configured
 
-### Plugin Installation (Recommended)
-
-Courtney is distributed as a Claude Code plugin for easy installation and management.
-
-#### Install from GitHub
+### Install from GitHub
 
 ```bash
 # Add the Quickstop marketplace
@@ -44,7 +40,7 @@ Courtney is distributed as a Claude Code plugin for easy installation and manage
 
 Select "Install now" when prompted, then restart Claude Code to activate.
 
-#### Install from Local Clone
+### Install from Local Clone
 
 If you want to develop or customize Courtney:
 
@@ -63,20 +59,6 @@ The plugin will automatically:
 - Register hooks for SessionStart, SessionEnd, UserPromptSubmit, Stop, and SubagentStop
 - Create a default configuration file at `~/.claude/courtney.json`
 - Initialize the SQLite database at `~/.claude/courtney.db`
-
-### Legacy Installation (Python Script)
-
-If you prefer not to use the plugin system, you can still use the legacy installation script:
-
-```bash
-git clone https://github.com/acostanzo/quickstop.git
-cd quickstop/plugins/courtney
-python3 install.py
-```
-
-Choose either:
-- **Global**: Records all Claude Code sessions across all projects
-- **Project**: Records only sessions in the current project
 
 ## Managing the Plugin
 
