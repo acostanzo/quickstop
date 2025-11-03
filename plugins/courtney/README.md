@@ -137,7 +137,7 @@ Courtney includes a `/readback` command to review recorded transcripts directly 
 #### Basic Usage
 
 ```bash
-# Readback current session
+# Readback last 30 minutes (default)
 /readback
 
 # Readback specific timeframes
@@ -151,17 +151,17 @@ Courtney includes a `/readback` command to review recorded transcripts directly 
 
 #### Examples
 
-**Review current session:**
+**Review recent activity:**
 ```bash
 /readback
 ```
-Shows all conversation entries from your current Claude Code session.
+Shows all conversation entries from the last 30 minutes (default timeframe).
 
-**Check recent activity:**
+**Check specific timeframe:**
 ```bash
-/readback last 30 minutes
+/readback last 10 minutes
 ```
-Shows all conversations from the last 30 minutes, regardless of session.
+Shows all conversations from the last 10 minutes.
 
 **Quick review:**
 ```bash
