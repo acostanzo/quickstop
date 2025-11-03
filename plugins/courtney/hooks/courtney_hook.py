@@ -18,12 +18,19 @@ from courtney.recorder import Recorder
 
 def main():
     """Main entry point for the hook."""
+    # Setup debug logging
+    log_path = os.path.expanduser("~/.claude/courtney.log")
+
     try:
         # Read hook data from stdin
         hook_data = json.load(sys.stdin)
 
         # Get the hook event type
         event_type = hook_data.get("hook_event_name")
+
+        # Debug log
+        with open(log_path, 'a') as log:
+            log.write(f"[{event_type}] {json.dumps(hook_data, indent=2)}\n\n")
 
         if not event_type:
             # No event type, nothing to do
@@ -54,6 +61,8 @@ def main():
 
     except Exception as e:
         # Log error but don't block Claude Code
+        with open(log_path, 'a') as log:
+            log.write(f"ERROR: {e}\n\n")
         print(f"Courtney hook error: {e}", file=sys.stderr)
         sys.exit(0)
 
