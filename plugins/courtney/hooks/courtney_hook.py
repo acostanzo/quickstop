@@ -21,6 +21,15 @@ def main():
     # Setup debug logging
     log_path = os.path.expanduser("~/.claude/courtney.log")
 
+    # Verify we're running from the correct location
+    plugin_root_env = os.environ.get('CLAUDE_PLUGIN_ROOT')
+    if not plugin_root_env:
+        try:
+            with open(log_path, 'a') as log:
+                log.write("WARNING: CLAUDE_PLUGIN_ROOT not set, using fallback\n\n")
+        except:
+            pass
+
     try:
         # Read hook data from stdin
         hook_data = json.load(sys.stdin)

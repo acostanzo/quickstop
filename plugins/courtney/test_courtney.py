@@ -43,26 +43,23 @@ def create_test_config():
 
 def create_mock_transcript(session_id):
     """Create a mock transcript file for testing Stop/SubagentStop hooks."""
-    temp_transcript = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
-    transcript_data = {
-        "session_id": session_id,
-        "messages": [
-            {
-                "role": "user",
-                "content": "Hello, test user message"
-            },
-            {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Hello! This is a test assistant response."
-                    }
-                ]
-            }
-        ]
+    temp_transcript = tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False)
+
+    # Write JSONL format (one JSON object per line)
+    # This matches the actual Claude Code transcript format
+    entry = {
+        "type": "assistant",
+        "message": {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Hello! This is a test assistant response."
+                }
+            ]
+        }
     }
-    json.dump(transcript_data, temp_transcript)
+    temp_transcript.write(json.dumps(entry) + '\n')
     temp_transcript.close()
     return temp_transcript.name
 

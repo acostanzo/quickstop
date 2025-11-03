@@ -10,6 +10,11 @@ from pathlib import Path
 from .base import DatabaseAdapter
 
 
+class DatabaseCorruptedError(Exception):
+    """Raised when database is corrupted."""
+    pass
+
+
 class SQLiteAdapter(DatabaseAdapter):
     """SQLite implementation of the database adapter."""
 
@@ -27,8 +32,50 @@ class SQLiteAdapter(DatabaseAdapter):
 
     def initialize(self) -> None:
         """Initialize the database (create tables if they don't exist)."""
-        self.conn = sqlite3.connect(self.db_path)
-        cursor = self.conn.cursor()
+        try:
+            # Enable thread-safe mode and better concurrency
+            self.conn = sqlite3.connect(
+                self.db_path,
+                check_same_thread=False,  # Allow multi-thread access
+                timeout=10.0  # Wait up to 10s for locks
+            )
+
+            # Enable WAL mode for better concurrency
+            self.conn.execute("PRAGMA journal_mode=WAL")
+
+            # Check database integrity
+            cursor = self.conn.cursor()
+            cursor.execute("PRAGMA integrity_check")
+            result = cursor.fetchone()
+            if result[0] != 'ok':
+                # Database is corrupted, backup and recreate
+                backup_path = f"{self.db_path}.corrupted.{datetime.now().timestamp()}"
+                self.conn.close()
+                os.rename(self.db_path, backup_path)
+                self.conn = sqlite3.connect(
+                    self.db_path,
+                    check_same_thread=False,
+                    timeout=10.0
+                )
+                self.conn.execute("PRAGMA journal_mode=WAL")
+                cursor = self.conn.cursor()
+
+        except sqlite3.DatabaseError:
+            # Can't even check, database is severely corrupted
+            if self.conn:
+                self.conn.close()
+            backup_path = f"{self.db_path}.corrupted.{datetime.now().timestamp()}"
+            try:
+                os.rename(self.db_path, backup_path)
+            except:
+                pass
+            self.conn = sqlite3.connect(
+                self.db_path,
+                check_same_thread=False,
+                timeout=10.0
+            )
+            self.conn.execute("PRAGMA journal_mode=WAL")
+            cursor = self.conn.cursor()
 
         # Create sessions table
         cursor.execute("""
@@ -40,13 +87,13 @@ class SQLiteAdapter(DatabaseAdapter):
             )
         """)
 
-        # Create entries table
+        # Create entries table with speaker validation
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS entries (
                 id TEXT PRIMARY KEY,
                 session_id TEXT NOT NULL,
                 timestamp TIMESTAMP NOT NULL,
-                speaker TEXT NOT NULL,
+                speaker TEXT NOT NULL CHECK(speaker IN ('user', 'agent', 'subagent')),
                 transcript TEXT NOT NULL,
                 FOREIGN KEY (session_id) REFERENCES sessions(id)
             )
@@ -63,6 +110,11 @@ class SQLiteAdapter(DatabaseAdapter):
             ON entries(timestamp)
         """)
 
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_entries_speaker
+            ON entries(speaker)
+        """)
+
         self.conn.commit()
 
     def create_session(self, session_id: str, started_at: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
@@ -71,11 +123,19 @@ class SQLiteAdapter(DatabaseAdapter):
             raise RuntimeError("Database not initialized. Call initialize() first.")
 
         cursor = self.conn.cursor()
-        cursor.execute(
-            "INSERT INTO sessions (id, started_at, metadata) VALUES (?, ?, ?)",
-            (session_id, started_at.isoformat(), json.dumps(metadata) if metadata else None)
-        )
-        self.conn.commit()
+        try:
+            cursor.execute(
+                "INSERT INTO sessions (id, started_at, metadata) VALUES (?, ?, ?)",
+                (session_id, started_at.isoformat(), json.dumps(metadata) if metadata else None)
+            )
+            self.conn.commit()
+        except sqlite3.IntegrityError:
+            # Session already exists, update it instead
+            cursor.execute(
+                "UPDATE sessions SET started_at = ?, metadata = ? WHERE id = ?",
+                (started_at.isoformat(), json.dumps(metadata) if metadata else None, session_id)
+            )
+            self.conn.commit()
 
     def end_session(self, session_id: str, ended_at: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
         """Update session with end time."""
