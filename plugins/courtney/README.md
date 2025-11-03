@@ -36,7 +36,7 @@ Courtney is distributed as a Claude Code plugin for easy installation and manage
 
 ```bash
 # Add the Quickstop marketplace
-/plugin marketplace add acostanzo/Courtney
+/plugin marketplace add acostanzo/quickstop
 
 # Install Courtney
 /plugin install courtney@quickstop
@@ -50,10 +50,10 @@ If you want to develop or customize Courtney:
 
 ```bash
 # Clone the repository
-git clone https://github.com/acostanzo/Courtney.git
+git clone https://github.com/acostanzo/quickstop.git
 
 # Add as a local marketplace
-/plugin marketplace add ./Courtney
+/plugin marketplace add ./quickstop
 
 # Install Courtney
 /plugin install courtney@quickstop
@@ -69,8 +69,8 @@ The plugin will automatically:
 If you prefer not to use the plugin system, you can still use the legacy installation script:
 
 ```bash
-git clone https://github.com/acostanzo/Courtney.git
-cd Courtney
+git clone https://github.com/acostanzo/quickstop.git
+cd quickstop/plugins/courtney
 python3 install.py
 ```
 

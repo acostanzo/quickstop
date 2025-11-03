@@ -26,7 +26,7 @@ Records Claude Code conversations to a searchable SQLite database. Like a stenog
 
 ```bash
 # Add the Quickstop marketplace
-/plugin marketplace add acostanzo/Courtney
+/plugin marketplace add acostanzo/quickstop
 
 # Install a plugin
 /plugin install courtney@quickstop
@@ -38,10 +38,10 @@ Restart Claude Code to activate the plugin.
 
 ```bash
 # Clone the repository
-git clone https://github.com/acostanzo/Courtney.git
+git clone https://github.com/acostanzo/quickstop.git
 
 # Add as a local marketplace
-/plugin marketplace add ./Courtney
+/plugin marketplace add ./quickstop
 
 # Install a plugin
 /plugin install courtney@quickstop

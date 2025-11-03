@@ -71,7 +71,7 @@ Brief description of what your plugin does.
 ## Installation
 
 \`\`\`bash
-/plugin marketplace add acostanzo/Courtney
+/plugin marketplace add acostanzo/quickstop
 /plugin install your-plugin@quickstop
 \`\`\`
 
@@ -127,7 +127,7 @@ Before submitting, ensure:
 
 ```bash
 # Add your local repo as marketplace
-/plugin marketplace add ./Courtney
+/plugin marketplace add ./quickstop
 
 # Install your plugin
 /plugin install your-plugin@quickstop

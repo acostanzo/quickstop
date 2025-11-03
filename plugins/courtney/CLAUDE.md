@@ -33,21 +33,28 @@ Courtney is distributed as a **Claude Code plugin** for easy installation and ma
 
 ### Project Structure
 ```
-Courtney/                           # Plugin root
+quickstop/                          # Marketplace root
 ├── .claude-plugin/
-│   ├── plugin.json                # Plugin manifest
-│   └── marketplace.json           # Marketplace definition
-├── courtney/                      # Python package
-│   ├── adapters/                  # Database adapter implementations
-│   │   ├── base.py               # Abstract base class
-│   │   └── sqlite.py             # SQLite implementation
-│   ├── config.py                 # Configuration management
-│   └── recorder.py               # Core recording logic
-├── hooks/                         # Plugin hooks directory
-│   ├── hooks.json                # Hook configuration
-│   └── courtney_hook.py          # Main hook entry point
-├── install.py                     # Legacy installation script
-└── test_courtney.py              # Test suite
+│   └── marketplace.json           # Quickstop marketplace definition
+├── plugins/
+│   └── courtney/                  # Courtney plugin
+│       ├── .claude-plugin/
+│       │   └── plugin.json       # Plugin manifest
+│       ├── courtney/             # Python package
+│       │   ├── adapters/         # Database adapters
+│       │   ├── config.py         # Configuration
+│       │   └── recorder.py       # Core recording logic
+│       ├── hooks/                # Plugin hooks
+│       │   ├── hooks.json        # Hook configuration
+│       │   └── courtney_hook.py  # Main hook entry point
+│       ├── commands/             # Slash commands
+│       │   └── readback.md       # Readback command
+│       ├── install.py            # Legacy installation script
+│       ├── test_courtney.py      # Test suite
+│       ├── README.md             # Plugin documentation
+│       └── CLAUDE.md             # This file
+├── README.md                      # Marketplace overview
+└── CONTRIBUTING.md               # Plugin authoring guide
 ```
 
 ### Database Schema
