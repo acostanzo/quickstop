@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/courtney_hook.py"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/courtney_hook.py"
           }
         ]
       }
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/courtney_hook.py"
           }
         ]
       }
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/courtney_hook.py"
           }
         ]
       }
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/courtney_hook.py"
           }
         ]
       }
