@@ -6,10 +6,7 @@
     "name": "Anthony Costanzo",
     "email": "mail@acostanzo.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/acostanzo/quickstop"
-  },
+  "repository": "https://github.com/acostanzo/quickstop",
   "keywords": [
     "stenographer",
     "transcript",
