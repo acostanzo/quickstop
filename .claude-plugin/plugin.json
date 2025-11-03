@@ -1,0 +1,22 @@
+{
+  "name": "courtney",
+  "description": "Your agentic workflow stenographer - records Claude Code conversations to a searchable database",
+  "version": "1.0.0",
+  "author": {
+    "name": "Anthony Costanzo",
+    "email": "mail@acostanzo.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acostanzo/Courtney"
+  },
+  "keywords": [
+    "stenographer",
+    "transcript",
+    "recording",
+    "logging",
+    "conversation",
+    "database"
+  ],
+  "license": "MIT"
+}

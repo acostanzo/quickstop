@@ -29,45 +29,80 @@ Each entry includes:
 - Python 3.7 or higher
 - Claude Code installed and configured
 
-### Quick Install
+### Plugin Installation (Recommended)
 
-1. Clone or download this repository:
+Courtney is distributed as a Claude Code plugin for easy installation and management.
+
+#### Install from GitHub
+
 ```bash
-git clone https://github.com/yourusername/Courtney.git
-cd Courtney
+# Add the Courtney marketplace
+/plugin marketplace add acostanzo/Courtney
+
+# Install the plugin
+/plugin install courtney@courtney-marketplace
 ```
 
-2. Run the installation script:
+Select "Install now" when prompted, then restart Claude Code to activate.
+
+#### Install from Local Clone
+
+If you want to develop or customize Courtney:
+
 ```bash
-python3 install.py
+# Clone the repository
+git clone https://github.com/acostanzo/Courtney.git
+
+# Add as a local marketplace
+/plugin marketplace add ./Courtney
+
+# Install the plugin
+/plugin install courtney@courtney-marketplace
 ```
 
-3. Choose your installation type:
-   - **Global**: Records all Claude Code sessions across all projects
-   - **Project**: Records only sessions in the current project
-
-The installer will automatically:
-- Set up the necessary Claude Code hooks
+The plugin will automatically:
+- Register hooks for SessionStart, SessionEnd, UserPromptSubmit, Stop, and SubagentStop
 - Create a default configuration file at `~/.claude/courtney.json`
 - Initialize the SQLite database at `~/.claude/courtney.db`
 
-### Manual Installation
+### Legacy Installation (Python Script)
 
-If you prefer to install manually, add the following to your Claude Code settings file:
+If you prefer not to use the plugin system, you can still use the legacy installation script:
 
-**For global installation**, edit `~/.claude/settings.json`:
-**For project installation**, edit `<project>/.claude/settings.json`:
+```bash
+git clone https://github.com/acostanzo/Courtney.git
+cd Courtney
+python3 install.py
+```
 
-```json
-{
-  "hooks": {
-    "SessionStart": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
-    "SessionEnd": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
-    "UserPromptSubmit": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
-    "Stop": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}],
-    "SubagentStop": [{"matcher": "*", "hooks": [{"type": "command", "command": "/path/to/Courtney/courtney/hooks/courtney_hook.py"}]}]
-  }
-}
+Choose either:
+- **Global**: Records all Claude Code sessions across all projects
+- **Project**: Records only sessions in the current project
+
+## Managing the Plugin
+
+### Check Plugin Status
+
+```bash
+/plugin
+```
+
+Select "Manage Plugins" to see installed plugins and their status.
+
+### Disable/Enable
+
+```bash
+# Temporarily disable without uninstalling
+/plugin disable courtney@courtney-marketplace
+
+# Re-enable
+/plugin enable courtney@courtney-marketplace
+```
+
+### Uninstall
+
+```bash
+/plugin uninstall courtney@courtney-marketplace
 ```
 
 ## Configuration
@@ -86,7 +121,13 @@ Courtney's configuration is stored in `~/.claude/courtney.json`:
 ### Configuration Options
 
 - `adapter`: Database adapter type (currently only "sqlite" is supported)
-- `sqlite.path`: Path to the SQLite database file
+- `sqlite.path`: Path to the SQLite database file (supports `~` for home directory)
+
+### First Run
+
+On first use, Courtney automatically creates:
+- Configuration file at `~/.claude/courtney.json` (if it doesn't exist)
+- SQLite database at the configured path (default: `~/.claude/courtney.db`)
 
 ## Database Schema
 

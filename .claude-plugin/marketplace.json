@@ -1,0 +1,14 @@
+{
+  "name": "courtney-marketplace",
+  "owner": {
+    "name": "Anthony Costanzo",
+    "email": "mail@acostanzo.com"
+  },
+  "plugins": [
+    {
+      "name": "courtney",
+      "source": ".",
+      "description": "Your agentic workflow stenographer - records Claude Code conversations to a searchable database"
+    }
+  ]
+}

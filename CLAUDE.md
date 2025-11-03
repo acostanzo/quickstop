@@ -27,18 +27,27 @@ This file contains instructions and guidelines for Claude (or any AI assistant) 
 
 ## Architecture
 
+### Distribution
+
+Courtney is distributed as a **Claude Code plugin** for easy installation and management.
+
 ### Project Structure
 ```
-courtney/
-├── adapters/           # Database adapter implementations
-│   ├── base.py        # Abstract base class
-│   └── sqlite.py      # SQLite implementation
-├── hooks/             # Claude Code hook scripts
-│   └── courtney_hook.py  # Main hook entry point
-├── config.py          # Configuration management
-└── recorder.py        # Core recording logic
-
-install.py             # Installation script
+Courtney/                           # Plugin root
+├── .claude-plugin/
+│   ├── plugin.json                # Plugin manifest
+│   └── marketplace.json           # Marketplace definition
+├── courtney/                      # Python package
+│   ├── adapters/                  # Database adapter implementations
+│   │   ├── base.py               # Abstract base class
+│   │   └── sqlite.py             # SQLite implementation
+│   ├── config.py                 # Configuration management
+│   └── recorder.py               # Core recording logic
+├── hooks/                         # Plugin hooks directory
+│   ├── hooks.json                # Hook configuration
+│   └── courtney_hook.py          # Main hook entry point
+├── install.py                     # Legacy installation script
+└── test_courtney.py              # Test suite
 ```
 
 ### Database Schema

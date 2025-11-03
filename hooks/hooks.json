@@ -1,0 +1,57 @@
+{
+  "SessionStart": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+        }
+      ]
+    }
+  ],
+  "SessionEnd": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+        }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+        }
+      ]
+    }
+  ],
+  "SubagentStop": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "{{PLUGIN_DIR}}/hooks/courtney_hook.py"
+        }
+      ]
+    }
+  ]
+}
