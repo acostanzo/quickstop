@@ -21,7 +21,6 @@ Each entry includes:
 - **Timestamp** - when it occurred
 - **Transcript** - the actual content (full, never truncated)
 - **Speaker** - either "user", "agent", or "subagent"
-- **Metadata** - JSON with additional context (e.g., response type)
 
 ## Installation
 
@@ -188,7 +187,6 @@ Courtney uses a simple, normalized schema:
 - `timestamp`: When the entry occurred
 - `speaker`: Either "user", "agent", or "subagent"
 - `transcript`: The actual content
-- `metadata`: JSON metadata (e.g., response type)
 
 ## Querying Your Data
 

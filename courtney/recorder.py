@@ -79,8 +79,7 @@ class Recorder:
             session_id=session_id,
             timestamp=datetime.now(),
             speaker="user",
-            transcript=prompt,
-            metadata={}
+            transcript=prompt
         )
 
     def handle_stop(self, hook_data: Dict[str, Any]) -> None:
@@ -117,8 +116,7 @@ class Recorder:
                                         session_id=session_id,
                                         timestamp=datetime.now(),
                                         speaker="agent",
-                                        transcript=text,
-                                        metadata={"type": "response"}
+                                        transcript=text
                                     )
                                     return
                     elif isinstance(content, str) and content.strip():
@@ -128,8 +126,7 @@ class Recorder:
                             session_id=session_id,
                             timestamp=datetime.now(),
                             speaker="agent",
-                            transcript=content,
-                            metadata={"type": "response"}
+                            transcript=content
                         )
                         return
 
@@ -170,8 +167,7 @@ class Recorder:
                                         session_id=session_id,
                                         timestamp=datetime.now(),
                                         speaker="subagent",
-                                        transcript=text,
-                                        metadata={"type": "subagent"}
+                                        transcript=text
                                     )
                                     return
                     elif isinstance(content, str) and content.strip():
@@ -181,8 +177,7 @@ class Recorder:
                             session_id=session_id,
                             timestamp=datetime.now(),
                             speaker="subagent",
-                            transcript=content,
-                            metadata={"type": "subagent"}
+                            transcript=content
                         )
                         return
 

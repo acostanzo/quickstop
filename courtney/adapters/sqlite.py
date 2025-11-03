@@ -48,7 +48,6 @@ class SQLiteAdapter(DatabaseAdapter):
                 timestamp TIMESTAMP NOT NULL,
                 speaker TEXT NOT NULL,
                 transcript TEXT NOT NULL,
-                metadata TEXT,
                 FOREIGN KEY (session_id) REFERENCES sessions(id)
             )
         """)
@@ -106,8 +105,7 @@ class SQLiteAdapter(DatabaseAdapter):
         session_id: str,
         timestamp: datetime,
         speaker: str,
-        transcript: str,
-        metadata: Optional[Dict[str, Any]] = None
+        transcript: str
     ) -> None:
         """Add a new transcript entry."""
         if not self.conn:
@@ -115,8 +113,8 @@ class SQLiteAdapter(DatabaseAdapter):
 
         cursor = self.conn.cursor()
         cursor.execute(
-            "INSERT INTO entries (id, session_id, timestamp, speaker, transcript, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-            (entry_id, session_id, timestamp.isoformat(), speaker, transcript, json.dumps(metadata) if metadata else None)
+            "INSERT INTO entries (id, session_id, timestamp, speaker, transcript) VALUES (?, ?, ?, ?, ?)",
+            (entry_id, session_id, timestamp.isoformat(), speaker, transcript)
         )
         self.conn.commit()
 

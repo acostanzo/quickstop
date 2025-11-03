@@ -42,8 +42,7 @@ class DatabaseAdapter(ABC):
         session_id: str,
         timestamp: datetime,
         speaker: str,
-        transcript: str,
-        metadata: Optional[Dict[str, Any]] = None
+        transcript: str
     ) -> None:
         """Add a new transcript entry.
 
@@ -51,9 +50,8 @@ class DatabaseAdapter(ABC):
             entry_id: Unique identifier for the entry
             session_id: Session this entry belongs to
             timestamp: When the entry occurred
-            speaker: Either 'user' or 'agent'
+            speaker: Either 'user', 'agent', or 'subagent'
             transcript: The actual content
-            metadata: Optional metadata (tool names, params, etc.)
         """
         pass
 
