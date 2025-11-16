@@ -57,8 +57,9 @@ class Recorder:
                 for key, value in kwargs.items():
                     log.write(f"  {key}: {value}\n")
                 log.write("\n")
-        except:
-            pass  # Even logging failed, truly silent now
+        except (IOError, OSError):
+            # Truly silent - can't even log
+            pass
 
     def handle_session_start(self, hook_data: Dict[str, Any]) -> None:
         """Handle SessionStart hook.

@@ -26,7 +26,7 @@ def _log_to_file(log_path: str, message: str) -> None:
     try:
         with open(log_path, 'a') as log:
             log.write(message)
-    except:
+    except (IOError, OSError):
         # If we can't write to log, fail silently
         pass
 

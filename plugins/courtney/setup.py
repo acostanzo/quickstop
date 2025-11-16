@@ -9,7 +9,7 @@ long_description = readme_path.read_text() if readme_path.exists() else ""
 
 setup(
     name="courtney",
-    version="1.0.0",
+    version="1.0.1",
     packages=find_packages(),
     python_requires=">=3.7",
     author="Anthony Costanzo",

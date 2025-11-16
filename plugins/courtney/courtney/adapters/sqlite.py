@@ -18,6 +18,9 @@ class DatabaseCorruptedError(Exception):
 class SQLiteAdapter(DatabaseAdapter):
     """SQLite implementation of the database adapter."""
 
+    # Current schema version - increment this when making schema changes
+    SCHEMA_VERSION = 1
+
     def __init__(self, db_path: str):
         """Initialize SQLite adapter.
 
@@ -67,7 +70,8 @@ class SQLiteAdapter(DatabaseAdapter):
             backup_path = f"{self.db_path}.corrupted.{datetime.now().timestamp()}"
             try:
                 os.rename(self.db_path, backup_path)
-            except:
+            except (OSError, IOError):
+                # Couldn't rename corrupted file, proceeding anyway
                 pass
             self.conn = sqlite3.connect(
                 self.db_path,
@@ -115,7 +119,18 @@ class SQLiteAdapter(DatabaseAdapter):
             ON entries(speaker)
         """)
 
+        # Create schema version table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS schema_version (
+                version INTEGER PRIMARY KEY,
+                migrated_at TIMESTAMP NOT NULL
+            )
+        """)
+
         self.conn.commit()
+
+        # Check and update schema version
+        self._check_and_migrate_schema(cursor)
 
     def create_session(self, session_id: str, started_at: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
         """Create a new session record."""
@@ -177,6 +192,50 @@ class SQLiteAdapter(DatabaseAdapter):
             (entry_id, session_id, timestamp.isoformat(), speaker, transcript)
         )
         self.conn.commit()
+
+    def _check_and_migrate_schema(self, cursor: sqlite3.Cursor) -> None:
+        """Check schema version and run migrations if needed.
+
+        Args:
+            cursor: Database cursor to use for queries
+        """
+        # Get current schema version
+        cursor.execute("SELECT version FROM schema_version ORDER BY version DESC LIMIT 1")
+        row = cursor.fetchone()
+        current_version = row[0] if row else 0
+
+        # If we're already at the latest version, nothing to do
+        if current_version >= self.SCHEMA_VERSION:
+            return
+
+        # Run migrations from current_version to SCHEMA_VERSION
+        for version in range(current_version + 1, self.SCHEMA_VERSION + 1):
+            self._migrate_to_version(cursor, version)
+
+        self.conn.commit()
+
+    def _migrate_to_version(self, cursor: sqlite3.Cursor, version: int) -> None:
+        """Migrate database to a specific schema version.
+
+        Args:
+            cursor: Database cursor to use for queries
+            version: Target schema version
+        """
+        if version == 1:
+            # Version 1 is the initial schema - already created
+            # Just record the version
+            cursor.execute(
+                "INSERT OR REPLACE INTO schema_version (version, migrated_at) VALUES (?, ?)",
+                (version, datetime.now().isoformat())
+            )
+        # Future migrations would go here:
+        # elif version == 2:
+        #     # Add new column, table, etc.
+        #     cursor.execute("ALTER TABLE ...")
+        #     cursor.execute(
+        #         "INSERT OR REPLACE INTO schema_version (version, migrated_at) VALUES (?, ?)",
+        #         (version, datetime.now().isoformat())
+        #     )
 
     def close(self) -> None:
         """Close the database connection."""

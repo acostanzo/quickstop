@@ -1,9 +1,12 @@
 """Configuration management for Courtney."""
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -46,7 +49,7 @@ class Config:
                 self.config.update(user_config)
         except (IOError, json.JSONDecodeError) as e:
             # If config file is invalid, use defaults
-            print(f"Warning: Could not load config from {path}: {e}")
+            logger.warning(f"Could not load config from {path}: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a configuration value.

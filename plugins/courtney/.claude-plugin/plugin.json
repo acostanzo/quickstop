@@ -1,7 +1,7 @@
 {
   "name": "courtney",
   "description": "Your agentic workflow stenographer - records Claude Code conversations to a searchable database",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Anthony Costanzo",
     "email": "mail@acostanzo.com"
