@@ -81,29 +81,55 @@ Audit the plugin at: {plugin_path}
 
 Conduct a thorough review covering:
 
-## 1. Structure & Configuration
-- Verify directory structure
-- Check plugin.json manifest (required/recommended fields)
-- Validate version format (semantic versioning)
-- Check for README, documentation
+## 1. 2025 Schema Compliance (STRICT - REQUIRED)
 
-## 2. Commands (if present)
-- Review each command in commands/
-- Check frontmatter completeness
-- Evaluate instruction clarity
-- Verify allowed-tools are appropriate
-- Check for security issues in command logic
-- Assess error handling
+Use the "2025 Schema Compliance Checklist" from plugin-knowledge.md to validate:
 
-## 3. Hooks (if present)
-- Review hooks.json configuration
-- Check hook scripts exist and are executable
-- Verify hooks exit 0 (never block)
-- Check error handling
-- Assess performance (hooks should be fast)
-- Verify proper JSON parsing from stdin
+### Plugin Manifest (plugin.json)
+- REQUIRED: `name` (lowercase, alphanumeric, hyphens/underscores)
+- REQUIRED: `version` (semantic versioning x.y.z)
+- REQUIRED: `description` (descriptive text)
+- REQUIRED: `author` object with `name` field
+- REQUIRED: `author.email` field
+- REQUIRED: `repository` (full URL)
+- REQUIRED: `keywords` array
+- REQUIRED: `license` identifier
 
-## 4. Code Quality
+### Commands Schema
+- Frontmatter: `description`, `argument-hint`, `allowed-tools`
+- Uses `$ARGUMENTS` for parameters
+- Uses `${CLAUDE_PLUGIN_ROOT}` for paths
+
+### Skills Schema (2025 - STRICT)
+If skills present:
+- Directory structure: `skills/skill-name/SKILL.md`
+- `name`: lowercase, numbers, hyphens only, max 64 chars
+- `description`: max 1024 chars, includes trigger phrases
+- `allowed-tools`: present (strongly recommended)
+- `version`: present (strongly recommended)
+
+### Agents Schema
+If agents present:
+- `name` and `description` fields required
+- `allowed-tools` recommended
+
+### Hooks Schema
+If hooks present:
+- Valid event types only
+- Scripts are executable with shebang
+- Always exit 0 (never block)
+- Read JSON from stdin properly
+
+**Report schema compliance as:**
+- ✅ COMPLIANT: All required fields present
+- ⚠️ PARTIALLY COMPLIANT: Missing recommended fields
+- ❌ NON-COMPLIANT: Missing required fields
+
+## 2. Structure & Configuration
+- Verify directory structure matches standards
+- Check for README, CLAUDE.md, CHANGELOG.md
+
+## 3. Code Quality
 - Check for Python/JS code organization
 - Look for security vulnerabilities:
   - SQL injection (use parameterized queries)
@@ -112,23 +138,24 @@ Conduct a thorough review covering:
 - Review error handling (specific exceptions, not bare except)
 - Check for proper logging
 
-## 5. Testing
+## 4. Testing
 - Look for test files
 - Assess test coverage
 - Check if tests are comprehensive
+- Verify tests are executable and pass
 
-## 6. Documentation
+## 5. Documentation
 - README quality and completeness
 - Usage examples
 - Installation instructions
-- Troubleshooting section
+- CLAUDE.md for AI assistant guidelines (recommended)
 
-## 7. Best Practices
+## 6. Best Practices
 - Compare against patterns from Courtney, Pluggy
 - Check for common pitfalls
 - Verify follows Claude Code conventions
 
-## 8. Security & Performance
+## 7. Security & Performance
 - File size limits
 - Resource management
 - Concurrent access handling
@@ -140,8 +167,44 @@ Provide a detailed audit report with:
 
 ## Executive Summary
 - Overall assessment (Production Ready / Needs Work / Major Issues)
+- **2025 Schema Compliance**: ✅ COMPLIANT / ⚠️ PARTIALLY COMPLIANT / ❌ NON-COMPLIANT
 - Key strengths (3-5 bullet points)
 - Critical issues (if any)
+
+## 2025 Schema Compliance Report
+
+### Plugin Manifest
+- [ ] name (required)
+- [ ] version (required)
+- [ ] description (required)
+- [ ] author.name (required)
+- [ ] author.email (required)
+- [ ] repository (required)
+- [ ] keywords (required)
+- [ ] license (required)
+
+**Compliance**: ✅ COMPLIANT / ⚠️ PARTIALLY COMPLIANT / ❌ NON-COMPLIANT
+
+### Commands (if present)
+- [ ] All commands have description
+- [ ] All commands have argument-hint
+- [ ] All commands have allowed-tools
+- [ ] Commands use $ARGUMENTS properly
+- [ ] Commands use ${CLAUDE_PLUGIN_ROOT} for paths
+
+**Compliance**: ✅ COMPLIANT / ⚠️ PARTIALLY COMPLIANT / ❌ NON-COMPLIANT / N/A
+
+### Skills (if present)
+- [ ] Directory structure: skills/skill-name/SKILL.md
+- [ ] name field (lowercase, numbers, hyphens, max 64 chars)
+- [ ] description field (max 1024 chars, has trigger phrases)
+- [ ] allowed-tools field present
+- [ ] version field present
+
+**Compliance**: ✅ COMPLIANT / ⚠️ PARTIALLY COMPLIANT / ❌ NON-COMPLIANT / N/A
+
+### Overall Schema Compliance Score
+[X/10] - Based on adherence to 2025 schema requirements
 
 ## Detailed Findings
 
@@ -151,10 +214,10 @@ Provide a detailed audit report with:
 ### ⚠️ Issues Found
 
 #### Critical (Must Fix)
-[Issues that prevent production use]
+[Issues that prevent production use, including schema violations]
 
 #### Important (Should Fix)
-[Issues that impact quality/security]
+[Issues that impact quality/security, including missing recommended fields]
 
 #### Minor (Nice to Have)
 [Suggestions for improvement]

@@ -31,16 +31,23 @@ my-plugin/
 
 **Location**: `.claude-plugin/plugin.json`
 
-**Required fields:**
-- `name` (string) - Plugin identifier (lowercase, alphanumeric, hyphens/underscores)
-- `description` (string) - Brief description of plugin functionality
-- `version` (string) - Semantic version (x.y.z)
+### 2025 Schema Requirements
 
-**Recommended fields:**
-- `author` (object) - `{name, email}`
-- `repository` (string) - Source code URL
-- `keywords` (array) - Search keywords
-- `license` (string) - License type (e.g., "MIT")
+**Required fields (strict):**
+- `name` (string) - Plugin identifier
+  - MUST be lowercase, alphanumeric, hyphens/underscores only
+  - Kebab-case recommended (e.g., "my-plugin")
+  - No spaces or special characters
+
+**Strongly recommended fields:**
+- `version` (string) - Semantic version (x.y.z format required)
+- `description` (string) - Brief description of plugin functionality
+- `author` (object) - Author information with `name` field minimum
+  - `author.name` (string) - Author name
+  - `author.email` (string) - Author email
+- `repository` (string) - Source code URL (full GitHub/GitLab URL)
+- `keywords` (array of strings) - Search/discovery tags
+- `license` (string) - License identifier (e.g., "MIT", "Apache-2.0")
 
 **Example:**
 ```json
@@ -68,14 +75,24 @@ Commands are Markdown files in the `commands/` directory.
 
 **File naming**: `command-name.md` → invoked as `/plugin:command-name`
 
-### Frontmatter (Optional but Recommended)
+### Frontmatter Schema (2025)
+
+**All fields optional, but strongly recommended:**
+
 ```markdown
 ---
 description: Brief description of what this command does
-argument-hint: Expected argument format
-allowed-tools: Comma-separated list of tools Claude can use
+argument-hint: Expected argument format (for autocomplete)
+allowed-tools: Comma-separated list of tools (e.g., "Read, Write, Bash(git:*)")
+model: Specific Claude model (e.g., "opus", "haiku", "claude-sonnet-4-5-20250929")
 ---
 ```
+
+**Field details:**
+- `description` - Shown in command menu and help
+- `argument-hint` - Parameter guidance, shown during autocomplete
+- `allowed-tools` - Can specify method patterns (e.g., `Bash(git add:*)` for granular control)
+- `model` - Override default model for this command
 
 ### Command Body
 The markdown body contains instructions for Claude on how to execute the command. Think of it as a specialized system prompt.
@@ -199,11 +216,46 @@ if __name__ == "__main__":
     main()
 ```
 
-## Skills
+## Skills (2025 Schema)
 
 Skills are reusable capabilities that can be invoked within conversations. They provide specialized functionality.
 
-**Location**: `skills/` directory
+**Location**: `skills/skill-name/SKILL.md` (directory structure required)
+
+### Frontmatter Schema (2025 - STRICT)
+
+**Required fields:**
+- `name` (string) - Skill identifier
+  - MUST be lowercase letters, numbers, and hyphens only
+  - Maximum 64 characters
+  - Example: `"monitoring-cpu-usage"`
+- `description` (string) - What the skill does and when to use it
+  - Maximum 1024 characters
+  - MUST include trigger phrases for discovery
+  - Example: "Use when you need to 'analyze CPU performance' or 'detect CPU bottlenecks'"
+
+**Strongly recommended fields (2025):**
+- `allowed-tools` (string) - Comma-separated tool names for security/performance
+  - Example: `"Read, Write, Edit, Grep, Bash"`
+- `version` (string) - Semantic version to track skill evolution
+  - Example: `"1.0.0"`
+
+**Example:**
+```yaml
+---
+name: monitoring-cpu-usage
+description: This skill monitors CPU usage patterns. Use when you need to 'analyze CPU performance' or 'detect CPU bottlenecks'.
+allowed-tools: Read, Bash, Grep
+version: 1.0.0
+---
+```
+
+### Supporting Files
+Skills can include additional files in the skill directory:
+- `reference.md` - Additional documentation
+- `examples.md` - Usage examples
+- `scripts/` - Utility scripts
+- `templates/` - Template files
 
 Skills expand inline when invoked, providing additional context and capabilities to Claude.
 
@@ -386,3 +438,69 @@ Available to hooks and commands:
 8. **Scope**: MVP vs full-featured?
 9. **Timeline**: How complex is this?
 10. **Examples**: Are there similar plugins to learn from?
+
+## 2025 Schema Compliance Checklist
+
+Use this checklist when auditing plugins for 2025 schema compliance:
+
+### Plugin Manifest (plugin.json)
+- [ ] `name` field present and follows naming rules (lowercase, alphanumeric, hyphens/underscores)
+- [ ] `version` field present and uses semantic versioning (x.y.z)
+- [ ] `description` field present and descriptive
+- [ ] `author` object present with at least `name` field
+- [ ] `author.email` field present
+- [ ] `repository` field present with full URL
+- [ ] `keywords` array present for discoverability
+- [ ] `license` field present with valid identifier
+
+### Commands
+- [ ] All command files in `commands/` directory
+- [ ] File naming follows kebab-case pattern
+- [ ] `description` field in frontmatter
+- [ ] `argument-hint` field in frontmatter (if command takes arguments)
+- [ ] `allowed-tools` field in frontmatter
+- [ ] Command body uses `$ARGUMENTS` for parameters
+- [ ] Command body uses `${CLAUDE_PLUGIN_ROOT}` for paths
+
+### Skills (2025 Schema - STRICT)
+- [ ] Skills in `skills/skill-name/SKILL.md` directory structure
+- [ ] `name` field: lowercase, numbers, hyphens only, max 64 chars
+- [ ] `description` field: max 1024 chars, includes trigger phrases
+- [ ] `allowed-tools` field present (strongly recommended)
+- [ ] `version` field present (strongly recommended)
+- [ ] Description includes quoted trigger phrases for discovery
+
+### Agents
+- [ ] Agent files in `agents/` directory
+- [ ] `name` field in frontmatter
+- [ ] `description` field in frontmatter
+- [ ] `allowed-tools` field specified (recommended)
+
+### Hooks
+- [ ] `hooks.json` properly formatted
+- [ ] All hook event types are valid
+- [ ] Hook scripts exist and are executable
+- [ ] Hook scripts have proper shebang (`#!/usr/bin/env python3`)
+- [ ] Hook scripts always exit 0 (never block)
+- [ ] Hook scripts read JSON from stdin
+- [ ] Hook scripts use `${CLAUDE_PLUGIN_ROOT}` for paths
+- [ ] Timeout values are reasonable (default 60s)
+
+### Documentation
+- [ ] README.md present with installation instructions
+- [ ] README.md includes usage examples
+- [ ] CLAUDE.md present with AI assistant guidelines (recommended)
+- [ ] CHANGELOG.md present with version history (recommended)
+
+### Code Quality
+- [ ] No SQL injection vulnerabilities (use parameterized queries)
+- [ ] No path traversal vulnerabilities (validate paths)
+- [ ] No code injection vulnerabilities (sanitize inputs)
+- [ ] Specific exception handling (not bare `except:`)
+- [ ] Proper logging without blocking
+
+### Testing
+- [ ] Test file present (e.g., `test_pluginname.py`)
+- [ ] Tests cover core functionality
+- [ ] Tests are executable
+- [ ] All tests pass
