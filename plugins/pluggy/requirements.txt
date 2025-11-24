@@ -1,0 +1,3 @@
+# Pluggy has no external dependencies beyond Python stdlib
+# Minimum Python version: 3.7
+# Optional: jsonschema for advanced validation (will gracefully degrade if not available)
