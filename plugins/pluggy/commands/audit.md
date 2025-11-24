@@ -19,7 +19,7 @@ Launch an expert plugin development subagent to conduct a comprehensive audit an
 
 You are launching a specialized plugin development expert to audit a Claude Code plugin.
 
-### 1. Determine Plugin Path
+### 1. Determine and Validate Plugin Path
 
 ```python
 import os
@@ -30,6 +30,18 @@ plugin_path = args if args else "."
 
 # Resolve to absolute path
 plugin_path = os.path.abspath(plugin_path)
+
+# Validate path exists
+if not os.path.exists(plugin_path):
+    print(f"❌ Error: Path does not exist: {plugin_path}")
+    print("\nPlease provide a valid plugin directory path.")
+    # Stop here - don't launch expensive subagent
+    return
+
+if not os.path.isdir(plugin_path):
+    print(f"❌ Error: Path is not a directory: {plugin_path}")
+    # Stop here
+    return
 ```
 
 ### 2. Load Plugin Knowledge Base

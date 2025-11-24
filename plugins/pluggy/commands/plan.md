@@ -28,28 +28,29 @@ First, read the comprehensive plugin knowledge:
 Read ${CLAUDE_PLUGIN_ROOT}/docs/plugin-knowledge.md
 ```
 
-### 2. Parse Initial Request
+### 2. Parse and Validate Request
 
 ```python
-description = "$ARGUMENTS".strip()
-
-# Determine if this is:
-# - New plugin creation
-# - Feature addition to existing plugin
-# - General consultation
-
-# Check if we're in a plugin directory
 import os
 import json
 
+description = "$ARGUMENTS".strip()
+
+# Check if we're in a plugin directory
 in_plugin_dir = False
 plugin_name = None
+cwd = os.getcwd()
 
 if os.path.exists('.claude-plugin/plugin.json'):
     in_plugin_dir = True
-    with open('.claude-plugin/plugin.json') as f:
-        manifest = json.load(f)
-        plugin_name = manifest.get('name')
+    try:
+        with open('.claude-plugin/plugin.json') as f:
+            manifest = json.load(f)
+            plugin_name = manifest.get('name')
+    except (IOError, json.JSONDecodeError) as e:
+        print(f"⚠️  Warning: Could not read plugin.json: {e}")
+        print("Continuing as if creating new plugin...\n")
+        in_plugin_dir = False
 ```
 
 ### 3. Launch Interactive Planning Subagent

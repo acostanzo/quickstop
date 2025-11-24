@@ -688,7 +688,7 @@ def main():
         os.unlink(config_path)
         os.unlink(db_path)
         print(f"\nCleaned up test files")
-    except:
+    except (OSError, IOError):
         pass
 
     # Exit with appropriate code
