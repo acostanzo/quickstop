@@ -5,6 +5,8 @@ Arborist SessionStart Hook
 Detects and reports the current git worktree context when a Claude Code session begins.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess
