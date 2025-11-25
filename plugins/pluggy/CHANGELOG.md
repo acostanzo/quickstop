@@ -5,6 +5,17 @@ All notable changes to Pluggy will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-11-25
+
+### Improved
+
+- **Context-aware audit for repository files** - Audit now checks parent directories for `.gitignore` and `LICENSE` files. Plugins inside a monorepo (like a marketplace) inherit these from the repo root, so they no longer get incorrectly flagged as missing.
+
+### Changed
+
+- Updated `docs/plugin-knowledge.md` with "Repository Files (Context-Aware)" section explaining inheritance rules
+- Updated `commands/audit.md` to instruct subagent to check parent directories
+
 ## [1.0.0] - 2025-11-16
 
 ### Added

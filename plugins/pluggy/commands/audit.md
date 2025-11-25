@@ -128,6 +128,7 @@ If hooks present:
 ## 2. Structure & Configuration
 - Verify directory structure matches standards
 - Check for README, CLAUDE.md, CHANGELOG.md
+- **For .gitignore and LICENSE**: Check if the plugin is inside a git repository. If so, check parent directories up to the repo root - these files are inherited. Only flag as missing if standalone or no parent has them.
 
 ## 3. Code Quality
 - Check for Python/JS code organization

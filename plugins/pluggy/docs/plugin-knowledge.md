@@ -492,6 +492,18 @@ Use this checklist when auditing plugins for 2025 schema compliance:
 - [ ] CLAUDE.md present with AI assistant guidelines (recommended)
 - [ ] CHANGELOG.md present with version history (recommended)
 
+### Repository Files (Context-Aware)
+When auditing plugins that live inside a larger repository (e.g., a marketplace monorepo):
+
+- **`.gitignore`**: Check parent directories up to the git root. A `.gitignore` in any parent directory covers subdirectories. Don't flag as missing if a parent has one.
+- **`LICENSE`**: Check parent directories. A LICENSE file at the repo root covers all subdirectories. The plugin's `plugin.json` license field should match the parent LICENSE type.
+
+**How to check**: Use `git rev-parse --show-toplevel` to find the repo root, then check for these files there.
+
+Only flag these as missing if:
+1. The plugin is standalone (not in a git repo), OR
+2. Neither the plugin nor any parent directory has the file
+
 ### Code Quality
 - [ ] No SQL injection vulnerabilities (use parameterized queries)
 - [ ] No path traversal vulnerabilities (validate paths)
