@@ -1,0 +1,12 @@
+{
+  "name": "arborist",
+  "description": "Git worktree management with gardening-themed commands. Plant, graft, fertilize, prune, and uproot worktrees with ease.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Anthony Costanzo",
+    "email": "dev@acostanzo.com"
+  },
+  "repository": "https://github.com/acostanzo/quickstop",
+  "keywords": ["git", "worktree", "workflow", "branching", "development"],
+  "license": "MIT"
+}

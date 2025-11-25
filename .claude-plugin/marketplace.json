@@ -15,6 +15,11 @@
       "name": "pluggy",
       "source": "./plugins/pluggy",
       "description": "Your plugin development consultant - expert audits and interactive planning with deep ecosystem knowledge"
+    },
+    {
+      "name": "arborist",
+      "source": "./plugins/arborist",
+      "description": "Git worktree management with gardening-themed commands - plant, graft, fertilize, prune, and uproot worktrees"
     }
   ]
 }
