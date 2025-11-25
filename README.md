@@ -20,6 +20,34 @@ Records Claude Code conversations to a searchable SQLite database. Like a stenog
 
 [📖 Read Courtney Documentation](./plugins/courtney/README.md)
 
+### 🔌 Pluggy
+**Your plugin development consultant**
+
+Expert audits and interactive planning with deep ecosystem knowledge. Pluggy provides specialized subagents that understand the entire Claude Code plugin system—commands, hooks, skills, subagents, and best practices.
+
+**Features:**
+- Comprehensive plugin audits via `/pluggy:audit`
+- Interactive planning sessions via `/pluggy:plan`
+- Deep plugin ecosystem knowledge
+- Smart scaffolding based on your needs
+- Security and performance guidance
+
+[📖 Read Pluggy Documentation](./plugins/pluggy/README.md)
+
+### 🌳 Arborist
+**Git worktree management with gardening-themed commands**
+
+Work efficiently with git worktrees for parallel development across multiple branches. Plant, graft, fertilize, prune, and uproot worktrees with intuitive commands and Claude's expert guidance.
+
+**Features:**
+- Worktree skill for intelligent recommendations
+- Session awareness of your current worktree
+- Gardening-themed commands (plant, graft, fertilize, prune, uproot)
+- Multi-repository support
+- Copy configuration files between worktrees
+
+[📖 Read Arborist Documentation](./plugins/arborist/README.md)
+
 ## Installation
 
 ### Quick Start
@@ -73,14 +101,30 @@ quickstop/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace definition
 ├── plugins/
-│   └── courtney/                 # Courtney plugin
+│   ├── courtney/                 # Conversation recorder
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json      # Plugin manifest
+│   │   ├── courtney/            # Python package
+│   │   ├── hooks/               # Hook scripts
+│   │   ├── commands/            # Slash commands
+│   │   ├── README.md
+│   │   └── CHANGELOG.md
+│   ├── pluggy/                   # Plugin development assistant
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   ├── pluggy/              # Python package
+│   │   ├── commands/
+│   │   ├── docs/                # Plugin knowledge base
+│   │   ├── README.md
+│   │   └── CHANGELOG.md
+│   └── arborist/                 # Git worktree management
 │       ├── .claude-plugin/
-│       │   └── plugin.json      # Plugin manifest
-│       ├── courtney/            # Python package
-│       ├── hooks/               # Hook scripts
-│       ├── commands/            # Slash commands
-│       ├── README.md            # Plugin docs
-│       └── ...
+│       │   └── plugin.json
+│       ├── commands/
+│       ├── hooks/
+│       ├── skills/
+│       ├── README.md
+│       └── CHANGELOG.md
 ├── README.md                     # This file
 └── CONTRIBUTING.md              # How to contribute
 ```

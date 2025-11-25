@@ -15,12 +15,29 @@ Arborist helps you work efficiently with git worktrees - allowing parallel devel
 
 ## Installation
 
-```bash
-# Add the quickstop marketplace (if not already added)
-/plugin marketplace add /path/to/quickstop
+### From Quickstop Marketplace
 
-# Install arborist
-/plugin install arborist
+```bash
+# Add the Quickstop marketplace
+/plugin marketplace add acostanzo/quickstop
+
+# Install Arborist
+/plugin install arborist@quickstop
+```
+
+Restart Claude Code to activate the plugin.
+
+### From Local Clone
+
+```bash
+# Clone the repository
+git clone https://github.com/acostanzo/quickstop.git
+
+# Add as local marketplace
+/plugin marketplace add ./quickstop
+
+# Install Arborist
+/plugin install arborist@quickstop
 ```
 
 ## Commands

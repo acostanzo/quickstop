@@ -22,3 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Worktree expert skill for guided worktree operations
 - Multi-repository support for managing worktrees across projects
 - Interactive command fallbacks when arguments not provided
+- Python 3.9+ compatibility
+- Comprehensive documentation with usage examples
+
+[1.0.0]: https://github.com/acostanzo/quickstop/releases/tag/arborist-v1.0.0
