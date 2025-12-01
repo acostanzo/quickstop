@@ -42,9 +42,9 @@ Work efficiently with git worktrees for parallel development across multiple bra
 **Features:**
 - Worktree skill for intelligent recommendations
 - Session awareness of your current worktree
-- Gardening-themed commands (plant, graft, fertilize, prune, uproot)
-- Multi-repository support
-- Copy configuration files between worktrees
+- Five gardening-themed slash commands: plant, graft, fertilize, prune, uproot
+- Multi-repository support for consistent worktree management
+- Smart gitignored file copying between worktrees
 
 [📖 Read Arborist Documentation](./plugins/arborist/README.md)
 

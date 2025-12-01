@@ -1,6 +1,6 @@
 # Arborist
 
-Git worktree management with gardening-themed commands for Claude Code.
+Git worktree management with gardening-themed commands. Plant, graft, fertilize, prune, and uproot worktrees with ease.
 
 ## Overview
 
@@ -12,6 +12,12 @@ Arborist helps you work efficiently with git worktrees - allowing parallel devel
 - **Session Awareness**: Know which worktree you're in when starting a session
 - **Multi-Repo Support**: Manage worktrees across related repositories consistently
 - **Gardening Commands**: Intuitive, themed commands for all worktree operations
+
+## Requirements
+
+- Git 2.15+ (for worktree support)
+- Claude Code with plugin support
+- Python 3.9+ (for session hooks)
 
 ## Installation
 
@@ -59,7 +65,7 @@ Plant a new worktree for parallel development.
 
 ### `/arborist:uproot [worktree]` - Remove Worktree
 
-Remove a worktree when you're done with it.
+Remove a worktree when you're done with it. If no worktree is specified, provides an interactive selection menu.
 
 ```bash
 # Interactive selection
@@ -122,18 +128,14 @@ Audit worktrees and get cleanup recommendations.
 
 ## Skill Usage
 
-The worktree skill activates when Claude detects worktree-related work. It will:
+The worktree skill activates automatically when you mention phrases like **"work on multiple branches"**, **"create a worktree"**, **"parallel development"**, or **"switch branches without stashing"**. Just describe what you need in natural language.
+
+When activated, the skill will:
 
 - Recommend worktrees when starting feature work on main/master
 - Guide you through the plant → fertilize → work → prune lifecycle
 - Help manage worktrees across multiple related repositories
 - Advise on which gitignored files to copy or skip
-
-Trigger phrases:
-- "work on multiple branches"
-- "create a worktree"
-- "parallel development"
-- "switch branches without stashing"
 
 ## Session Notifications
 
@@ -168,11 +170,6 @@ Git worktrees let you:
 3. **Compare implementations** side-by-side
 4. **Context switch instantly** - just `cd` to another directory
 5. **Keep main clean** - never accidentally commit to the wrong branch
-
-## Requirements
-
-- Git 2.15+ (for worktree support)
-- Claude Code with plugin support
 
 ## License
 

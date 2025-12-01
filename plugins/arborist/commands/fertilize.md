@@ -81,22 +81,61 @@ This gives us files that:
 ### 5. Smart Skip Recommendations
 
 **ALWAYS skip these (don't even list):**
-- `node_modules/` - Too large, reinstall instead
+
+*Third-party dependencies (reinstall instead):*
+- `node_modules/` - Node.js
+- `vendor/` - PHP Composer, Go modules, Ruby Bundler
+- `__pycache__/`, `*.pyc`, `*.pyo`, `.venv/`, `venv/`, `env/`, `.env/`, `site-packages/` - Python
+- `Pods/` - iOS CocoaPods
+- `.gradle/`, `build/` (in Java/Kotlin projects) - Gradle
+- `target/` - Rust Cargo, Java Maven
+- `deps/`, `_build/` - Elixir Mix
+- `.bundle/` - Ruby Bundler cache
+- `bower_components/` - Bower (legacy)
+- `.pnpm-store/` - pnpm
+
+*Build artifacts and outputs:*
+- `dist/`, `build/`, `out/`, `output/` - Generic build output
+- `.next/`, `.nuxt/`, `.svelte-kit/` - Framework build dirs
+- `coverage/`, `.nyc_output/` - Test coverage
+- `*.bundle.js`, `*.min.js`, `*.min.css` - Bundled/minified assets
+- `.parcel-cache/`, `.turbo/`, `.webpack/` - Bundler caches
+
+*Cache and temporary:*
+- `.cache/`, `cache/`, `caches/` - Generic cache
+- `tmp/`, `temp/`, `.tmp/`, `.temp/` - Temporary files
+- `*.log`, `logs/`, `*.log.*` - Log files
+- `.eslintcache`, `.stylelintcache`, `.prettiercache` - Linter caches
+- `*.swp`, `*.swo`, `*~` - Editor swap files
+- `.DS_Store`, `Thumbs.db` - OS artifacts
+
+*Git internals:*
 - `.git/` - Never copy git internals
-- `__pycache__/` - Python will regenerate
-- `*.pyc` - Compiled Python
-- `vendor/` - Dependencies, reinstall
-- `dist/`, `build/`, `out/` - Build artifacts, regenerate
-- `.cache/` - Cache directories
-- `*.log` - Log files
 
 **RECOMMEND copying:**
+
+*Environment and secrets:*
 - `.env*` - Environment variables (critical!)
-- `config/` - Configuration files
-- `.env.local`, `.env.development` - Environment files
-- `credentials*.json` - Credentials (if not in vault)
+- `.env.local`, `.env.development`, `.env.*.local` - Environment overrides
+- `credentials*.json`, `serviceAccount*.json` - Credentials (if not in vault)
+- `*.pem`, `*.key` (if gitignored) - Local certificates/keys
+
+*Package manager configs (may contain registry/auth):*
+- `.npmrc` - npm config (registries, auth tokens)
+- `.yarnrc`, `.yarnrc.yml` - Yarn config
+- `.nvmrc`, `.node-version`, `.tool-versions` - Version managers
+- `pnpm-workspace.yaml` - pnpm workspace config
+
+*Project configuration:*
+- `config/`, `conf/` - Configuration directories
+- `*.local`, `*.local.*` - Local overrides (e.g., `vite.config.local.ts`)
 - `.idea/`, `.vscode/` - IDE settings (user preference)
-- `*.local` - Local overrides
+- `settings.local.json`, `appsettings.local.json` - App settings
+
+*Development tools:*
+- `tools/` (config files only, not generated) - Local tool configs
+- `.husky/_/` - Git hooks (local state)
+- `lint-staged.config.*` - Lint-staged configs
 
 **ASK about:**
 - Large files (>10MB)

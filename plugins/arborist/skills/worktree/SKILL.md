@@ -158,11 +158,122 @@ When user describes work spanning multiple repos:
 >
 > This keeps your work organized and lets you easily switch between repos for this feature.
 
-## Worktree Best Practices
+## Worktree Naming Strategy
 
-### Naming Conventions
-- Use descriptive branch names: `feature/user-auth`, `fix/login-bug`, `experiment/new-api`
-- Worktree directories: `<repo>-<branch-slug>` (e.g., `myapp-feature-auth`)
+Good worktree names are **discoverable**, **consistent**, and **self-documenting**. Always infer the appropriate name from context.
+
+### Anti-Pattern: Naming Worktrees After Branches
+
+**NEVER name a worktree the same as a branch.** This is a common mistake.
+
+❌ **Bad:**
+```
+git worktree add ../feature/auth feature/auth    # Worktree named same as branch
+git worktree add ../fix-login-bug fix/login-bug  # Just mirrors branch name
+```
+
+✅ **Good:**
+```
+git worktree add ../auth-work feature/auth       # Describes the work context
+git worktree add ../review-pr-123 feature/auth   # Describes why you have it
+```
+
+**Why this matters:**
+1. **You may switch branches** - A worktree can checkout different branches over time. If your worktree is named `feature/auth` but you're now on `feature/auth-v2`, the name is misleading.
+2. **The worktree is about THE WORK, not the branch** - Name it for what you're doing: `auth-refactor`, `review-sarahs-pr`, `experiment-caching`.
+3. **Multiple worktrees, same branch** - You might want two worktrees on the same branch (e.g., comparing approaches). Branch-named worktrees don't allow this.
+4. **Clarity when listing** - `git worktree list` shows both path and branch. If they're identical, you gain no information from the path.
+
+**When suggesting worktree names, always ask:** "What work is being done here?" not "What branch is this?"
+
+### Naming Patterns by Task Type
+
+| Task Type | Pattern | Example |
+|-----------|---------|---------|
+| Feature work | `feature-<name>-<repo>` | `feature-auth-backend`, `feature-auth-frontend` |
+| Bug fix | `fix-<issue>-<repo>` | `fix-login-crash-api`, `fix-422-validation` |
+| Code review | `review-<identifier>` | `review-pr-847`, `review-sarahs-auth-fix` |
+| Hotfix | `hotfix-<description>` | `hotfix-prod-memory-leak` |
+| Experiment | `experiment-<name>` | `experiment-new-cache-strategy` |
+| Release | `release-<version>` | `release-v2.1.0` |
+| Comparison | `compare-<what>` | `compare-old-api`, `compare-before-refactor` |
+
+### Inferring Names from Context
+
+**ALWAYS infer the worktree name from what the user tells you.** Examples:
+
+| User says... | Suggest... |
+|--------------|------------|
+| "I need to review PR #847" | `review-pr-847` |
+| "Can you check Sarah's auth changes?" | `review-sarahs-auth-changes` |
+| "Let me work on the payment feature" | `feature-payment` |
+| "There's a bug in login" | `fix-login-bug` |
+| "I want to try a different caching approach" | `experiment-caching` |
+| "Need to prep the 2.1 release" | `release-v2.1` |
+| "Quick hotfix for production" | `hotfix-prod-<issue>` (ask what issue) |
+
+**When uncertain, ask:**
+> "What should we call this worktree? Based on [context], I'd suggest `<inferred-name>`. Does that work?"
+
+### Multi-Repository Consistency
+
+When a feature spans multiple repos, use **the same base name** with a **repo suffix**:
+
+```
+feature-auth-backend/       # backend repo worktree
+feature-auth-frontend/      # frontend repo worktree
+feature-auth-shared/        # shared library worktree
+```
+
+**NOT** inconsistent names like:
+```
+backend-auth-feature/       # ❌ Different pattern
+frontend-new-login/         # ❌ Different description
+auth-work/                  # ❌ No repo identifier
+```
+
+**Proactively suggest matching names:**
+> "You're working on the auth feature in `backend`. I see you also have `frontend` and `shared` repos. Want me to create matching worktrees?
+> - `feature-auth-backend` ✓ (creating now)
+> - `feature-auth-frontend`
+> - `feature-auth-shared`"
+
+### Code Review Worktrees
+
+Code reviews deserve dedicated worktrees. Recommend this pattern:
+
+```bash
+# For PR reviews
+/arborist:plant review-pr-847
+
+# For reviewing a colleague's work
+/arborist:plant review-sarahs-auth-fix
+
+# For comparing approaches
+/arborist:plant compare-old-implementation
+```
+
+**Benefits to explain:**
+- Keep your current work untouched
+- Run the PR code locally without disrupting your branch
+- Easy cleanup after review is done
+
+### Branch Name vs Worktree Directory
+
+The **branch name** and **worktree directory** can differ:
+
+| Branch | Worktree Directory | Why |
+|--------|-------------------|-----|
+| `feature/user-auth` | `feature-auth-backend` | Directory adds repo context |
+| `fix/GH-1234` | `fix-login-validation` | Directory is more descriptive |
+| `jsmith/experiment` | `review-johns-experiment` | Directory shows it's a review |
+
+When planting, you can specify both:
+```bash
+git worktree add ../review-pr-847 origin/feature/their-branch
+```
+
+## Worktree Best Practices
 
 ### Workflow Recommendations
 1. **Keep main clean**: Never work directly on main/master

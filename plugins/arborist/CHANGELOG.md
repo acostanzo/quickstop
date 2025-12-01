@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-11-25
 
+Parallel development without the pain. Arborist brings git worktree management to Claude Code, eliminating the constant stash-switch-unstash cycle when working across multiple branches.
+
 ### Added
 
 - Initial release of Arborist - git worktree management for Claude Code
