@@ -1,0 +1,20 @@
+{
+  "name": "muxy",
+  "description": "Orchestrate complex tmux sessions with templates, worktree integration, and MCP control",
+  "version": "0.1.0",
+  "author": {
+    "name": "Anthony Costanzo",
+    "email": "anthony@augusthealth.com"
+  },
+  "repository": "https://github.com/acostanzo/quickstop",
+  "keywords": [
+    "tmux",
+    "session",
+    "terminal",
+    "multiplexer",
+    "orchestration",
+    "workflow",
+    "mcp"
+  ],
+  "license": "MIT"
+}
