@@ -1,7 +1,7 @@
 {
   "name": "pluggy",
   "description": "Your plugin development assistant - build, test, and maintain Claude Code plugins and marketplaces",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": {
     "name": "Anthony Costanzo",
     "email": "mail@acostanzo.com"

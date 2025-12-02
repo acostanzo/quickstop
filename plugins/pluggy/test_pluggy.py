@@ -447,6 +447,63 @@ def test_command_frontmatter_validation():
     return True
 
 
+def test_plugin_scaffolder_marketplace_registration():
+    """Test automatic marketplace registration when scaffolding inside a marketplace."""
+    print("\nTesting PluginScaffolder (marketplace registration)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a marketplace first
+        marketplace_name = "test-marketplace"
+        marketplace_scaffolder = MarketplaceScaffolder(marketplace_name, tmpdir)
+        marketplace_path = marketplace_scaffolder.create_marketplace("Test marketplace")
+
+        # Update the marketplace manifest to include plugins array
+        manifest_path = marketplace_path / ".claude-plugin" / "marketplace.json"
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+        manifest["plugins"] = []
+        with open(manifest_path, 'w') as f:
+            json.dump(manifest, f, indent=2)
+
+        # Scaffold a plugin inside the marketplace's plugins directory
+        plugins_dir = marketplace_path / "plugins"
+        plugin_scaffolder = PluginScaffolder("my-new-plugin", str(plugins_dir))
+        plugin_path = plugin_scaffolder.create_basic_plugin(
+            description="A brand new plugin"
+        )
+
+        assert plugin_path.exists()
+        print(f"  ✓ Plugin created: {plugin_path}")
+
+        # Check that the marketplace manifest was updated
+        with open(manifest_path, 'r') as f:
+            updated_manifest = json.load(f)
+
+        plugins = updated_manifest.get("plugins", [])
+        assert len(plugins) == 1, f"Expected 1 plugin, got {len(plugins)}"
+
+        plugin_entry = plugins[0]
+        assert plugin_entry["name"] == "my-new-plugin"
+        assert plugin_entry["source"] == "./plugins/my-new-plugin"
+        assert plugin_entry["description"] == "A brand new plugin"
+
+        print("  ✓ Plugin registered in marketplace.json")
+
+        # Create another plugin to verify it appends correctly
+        plugin_scaffolder2 = PluginScaffolder("another-plugin", str(plugins_dir))
+        plugin_scaffolder2.create_basic_plugin(description="Another plugin")
+
+        with open(manifest_path, 'r') as f:
+            updated_manifest = json.load(f)
+
+        plugins = updated_manifest.get("plugins", [])
+        assert len(plugins) == 2, f"Expected 2 plugins, got {len(plugins)}"
+
+        print("  ✓ Second plugin appended to marketplace.json")
+
+    return True
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -467,6 +524,7 @@ def main():
         ("MarketplaceValidator - Valid", test_marketplace_validator),
         ("MarketplaceValidator - Invalid", test_marketplace_validator_invalid),
         ("Command Frontmatter", test_command_frontmatter_validation),
+        ("PluginScaffolder - Marketplace Registration", test_plugin_scaffolder_marketplace_registration),
     ]
 
     results = []

@@ -3,7 +3,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 
 class PluginScaffolder:
@@ -45,6 +45,9 @@ class PluginScaffolder:
 
         # Create setup files
         self._create_setup_files()
+
+        # Register in parent marketplace if we're inside one
+        self._register_in_marketplace(description)
 
         return self.plugin_path
 
@@ -184,6 +187,73 @@ setup(
         with open(requirements_path, 'w') as f:
             f.write(f"# Dependencies for {self.plugin_name}\n")
             f.write("# Minimum Python version: 3.7\n")
+
+    def _find_marketplace(self) -> Optional[Tuple[Path, dict]]:
+        """Find the parent marketplace.json if we're inside a marketplace.
+
+        Returns:
+            Tuple of (marketplace.json path, parsed content) or None if not found
+        """
+        # Walk up from base_path looking for .claude-plugin/marketplace.json
+        current = self.base_path.resolve()
+
+        while current != current.parent:
+            marketplace_path = current / ".claude-plugin" / "marketplace.json"
+            if marketplace_path.exists():
+                try:
+                    with open(marketplace_path, 'r') as f:
+                        return (marketplace_path, json.load(f))
+                except (json.JSONDecodeError, IOError):
+                    pass
+            current = current.parent
+
+        return None
+
+    def _register_in_marketplace(self, description: str) -> bool:
+        """Register this plugin in the parent marketplace.json.
+
+        Args:
+            description: Plugin description
+
+        Returns:
+            True if registered, False if no marketplace found or already registered
+        """
+        result = self._find_marketplace()
+        if not result:
+            return False
+
+        marketplace_path, manifest = result
+        marketplace_root = marketplace_path.parent.parent
+
+        # Calculate relative source path from marketplace root
+        try:
+            relative_path = self.plugin_path.resolve().relative_to(marketplace_root)
+            source_path = f"./{relative_path}"
+        except ValueError:
+            # Plugin is not under marketplace root
+            return False
+
+        # Check if already registered
+        plugins = manifest.get("plugins", [])
+        for plugin in plugins:
+            if plugin.get("name") == self.plugin_name:
+                return False  # Already registered
+
+        # Add new plugin entry
+        new_entry = {
+            "name": self.plugin_name,
+            "source": source_path,
+            "description": description or f"A Claude Code plugin: {self.plugin_name}"
+        }
+        plugins.append(new_entry)
+        manifest["plugins"] = plugins
+
+        # Write back
+        with open(marketplace_path, 'w') as f:
+            json.dump(manifest, f, indent=2)
+            f.write('\n')
+
+        return True
 
     def add_command(self, command_name: str, description: str = "", allowed_tools: str = "") -> Path:
         """Add a slash command to the plugin.
