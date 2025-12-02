@@ -22,6 +22,8 @@ Run `tmux -V` to verify tmux is installed:
 
 ### Step 2: Check MCP Server Availability
 
+The tmux MCP server is bundled with the Muxy plugin and should start automatically when the plugin is enabled.
+
 Try to use the tmux MCP tools. Look for tools with names like:
 - `mcp__tmux__list_sessions` or similar
 - `mcp__tmux-mcp__list_sessions` or similar
@@ -31,34 +33,9 @@ If MCP tools are available:
 - List available tmux MCP tools
 
 If MCP tools are NOT available:
-- Explain that the tmux MCP server needs to be installed
-- Provide setup instructions:
-
-```markdown
-## Installing tmux MCP Server
-
-1. Install the tmux MCP server:
-   ```bash
-   # Using npx (recommended)
-   npx @anthropics/tmux-mcp
-
-   # Or check https://github.com/nickgnd/tmux-mcp for alternatives
-   ```
-
-2. Add to your Claude Code MCP configuration (~/.claude/mcp_servers.json):
-   ```json
-   {
-     "mcpServers": {
-       "tmux": {
-         "command": "npx",
-         "args": ["@anthropics/tmux-mcp"]
-       }
-     }
-   }
-   ```
-
-3. Restart Claude Code to load the MCP server
-```
+- Explain that the MCP server should be bundled with the plugin
+- Suggest the user restart Claude Code to load the MCP server
+- Note: MCP server changes require a Claude Code restart to take effect
 
 ### Step 3: Check Template Directory
 
