@@ -48,6 +48,20 @@ Work efficiently with git worktrees for parallel development across multiple bra
 
 [📖 Read Arborist Documentation](./plugins/arborist/README.md)
 
+### 🖥️ Muxy
+**Orchestrate complex tmux sessions with templates**
+
+Define reusable session configurations with windows, panes, and commands. Integrates with Arborist for worktree-aware development environments.
+
+**Features:**
+- Session templates with windows, panes, and startup commands
+- Template variables: `{{worktree:branch}}`, `{{project_name}}`, `{{date}}`
+- Git worktree integration via Arborist plugin
+- Pane operations: run commands and read output
+- Interactive session/window/pane selection
+
+[📖 Read Muxy Documentation](./plugins/muxy/README.md)
+
 ## Installation
 
 ### Quick Start
@@ -103,10 +117,10 @@ quickstop/
 ├── plugins/
 │   ├── courtney/                 # Conversation recorder
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json      # Plugin manifest
+│   │   │   └── plugin.json
 │   │   ├── courtney/            # Python package
-│   │   ├── hooks/               # Hook scripts
-│   │   ├── commands/            # Slash commands
+│   │   ├── hooks/
+│   │   ├── commands/
 │   │   ├── README.md
 │   │   └── CHANGELOG.md
 │   ├── pluggy/                   # Plugin development assistant
@@ -117,12 +131,18 @@ quickstop/
 │   │   ├── docs/                # Plugin knowledge base
 │   │   ├── README.md
 │   │   └── CHANGELOG.md
-│   └── arborist/                 # Git worktree management
+│   ├── arborist/                 # Git worktree management
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   ├── commands/
+│   │   ├── hooks/
+│   │   ├── skills/
+│   │   ├── README.md
+│   │   └── CHANGELOG.md
+│   └── muxy/                     # Tmux session orchestration
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       ├── commands/
-│       ├── hooks/
-│       ├── skills/
 │       ├── README.md
 │       └── CHANGELOG.md
 ├── README.md                     # This file

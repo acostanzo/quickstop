@@ -5,6 +5,26 @@ All notable changes to Pluggy will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-02
+
+### Added
+
+- **Marketplace Documentation Command** (`/pluggy:docs`) - Review and synchronize documentation across plugin marketplaces. Ensures READMEs are digestible, changelogs meaningful, and everything stays in sync.
+  - `all` - Review entire marketplace
+  - `root` - Review root README only
+  - `sync` - Auto-update root README from plugin manifests
+  - `<plugin-name>` - Review specific plugin docs
+  - Smart mode (no args) - Review based on recent git changes
+- **Marketplace documentation best practices** added to knowledge base
+  - Marketplace structure and manifest format
+  - README templates and standards
+  - Documentation synchronization guidelines
+  - Changelog best practices
+
+### Changed
+
+- Consolidated dante:review functionality into Pluggy (removed separate command)
+
 ## [1.1.0] - 2025-12-02
 
 ### Added
@@ -137,12 +157,11 @@ The expert subagents know about:
 
 ## Upcoming Features (Planned)
 
-### [1.1.0]
+### [1.3.0]
 - `/pluggy:test` - Generate and run plugin tests
-- `/pluggy:docs` - Generate documentation from manifest
 - Enhanced security analysis
 
-### [1.2.0]
+### [1.4.0]
 - `/pluggy:publish` - Publish to marketplace
 - `/pluggy:upgrade` - Migrate to new patterns
 - Version compatibility checking

@@ -516,3 +516,182 @@ Only flag these as missing if:
 - [ ] Tests cover core functionality
 - [ ] Tests are executable
 - [ ] All tests pass
+
+## Marketplace Structure & Documentation
+
+### Marketplace Definition
+
+A marketplace is a collection of plugins with a central manifest:
+
+```
+my-marketplace/
+├── .claude-plugin/
+│   └── marketplace.json      # REQUIRED: Marketplace manifest
+├── plugins/
+│   ├── plugin-a/
+│   ├── plugin-b/
+│   └── plugin-c/
+├── README.md                 # Marketplace overview
+├── CONTRIBUTING.md           # How to contribute
+└── LICENSE                   # Covers all plugins
+```
+
+### Marketplace Manifest (marketplace.json)
+
+**Location**: `.claude-plugin/marketplace.json`
+
+```json
+{
+  "name": "my-marketplace",
+  "description": "A collection of useful plugins",
+  "owner": {
+    "name": "Owner Name",
+    "email": "owner@example.com"
+  },
+  "plugins": [
+    {
+      "name": "plugin-a",
+      "source": "./plugins/plugin-a",
+      "description": "What plugin-a does"
+    }
+  ]
+}
+```
+
+**Key rules:**
+- Plugin `name` must match the plugin's own manifest name
+- Plugin `source` is relative path from marketplace root
+- Plugin `description` should match (or summarize) the plugin's own description
+
+### Marketplace README Best Practices
+
+The root README should:
+
+1. **Quick Overview** - What the marketplace offers (1-2 sentences)
+2. **Plugin Catalog** - Each plugin with:
+   - Name and tagline
+   - Brief description (2-3 sentences max)
+   - Key features (3-5 bullet points)
+   - Link to full documentation
+3. **Installation** - Copy-pasteable commands
+4. **Directory Structure** - Current, accurate tree
+5. **Contributing** - Link to guidelines
+
+**Example structure:**
+```markdown
+# Marketplace Name
+> Tagline
+
+Brief description.
+
+## Available Plugins
+
+### Plugin Name
+**Tagline**
+
+Description of what it does and why.
+
+**Features:**
+- Feature 1
+- Feature 2
+- Feature 3
+
+[📖 Read Documentation](./plugins/name/README.md)
+
+## Installation
+[Commands]
+
+## Repository Structure
+[Accurate tree]
+```
+
+### Documentation Synchronization
+
+Keep these in sync:
+
+| Source of Truth | Must Match |
+|-----------------|------------|
+| `plugin.json` name | `marketplace.json` plugin entry |
+| `plugin.json` description | Root README plugin description |
+| Plugin README features | CHANGELOG recent additions |
+| Directory structure | Root README tree |
+
+**Sync checklist:**
+- [ ] All plugins in marketplace.json are in root README
+- [ ] Plugin descriptions match their manifests
+- [ ] New changelog features appear in README feature lists
+- [ ] Directory tree reflects actual structure
+- [ ] Installation commands are tested and work
+
+### Plugin README Best Practices
+
+Each plugin should have a README that:
+
+1. **Explains purpose in 10 seconds** - Clear tagline + 2-sentence overview
+2. **Gets users started in 2 minutes** - Quick installation and first use
+3. **Documents all features** - Every command, hook, capability
+4. **Shows real examples** - Copy-pasteable, practical usage
+5. **Follows consistent format** - Same structure as other plugins
+
+**Required sections:**
+- Overview/What it does
+- Installation
+- Quick Start
+- Features/Commands
+- Examples
+
+**Optional sections:**
+- Configuration
+- Troubleshooting
+- Contributing
+- Changelog link
+
+### Changelog Best Practices
+
+Follow [Keep a Changelog](https://keepachangelog.com/) format:
+
+```markdown
+# Changelog
+
+## [Unreleased]
+
+## [1.1.0] - 2025-01-15
+
+### Added
+- New feature description (user-focused)
+
+### Changed
+- What changed and why
+
+### Fixed
+- Bug that was fixed
+
+## [1.0.0] - 2025-01-01
+Initial release.
+
+[Unreleased]: https://github.com/user/repo/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/user/repo/compare/v1.0.0...v1.1.0
+```
+
+**Rules:**
+- User-focused entries (explain impact, not implementation)
+- Link versions for comparison
+- Group by: Added, Changed, Deprecated, Removed, Fixed, Security
+- Keep Unreleased section for in-progress work
+
+### Documentation Review Process
+
+When reviewing marketplace documentation:
+
+1. **Check sync status** - Do all sources match?
+2. **Verify accuracy** - Does documentation match reality?
+3. **Assess clarity** - Can users understand quickly?
+4. **Test examples** - Do copy-paste examples work?
+5. **Check completeness** - Is anything missing?
+
+**Common issues:**
+- New plugins not in root README
+- CHANGELOG additions not reflected in README features
+- Outdated directory structure trees
+- Broken or inaccurate links
+- Description mismatches between manifests and docs
