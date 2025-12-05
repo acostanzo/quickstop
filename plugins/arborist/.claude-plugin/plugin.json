@@ -1,7 +1,7 @@
 {
   "name": "arborist",
-  "description": "Git worktree management with gardening-themed commands. Plant, graft, fertilize, prune, and uproot worktrees with ease.",
-  "version": "1.0.0",
+  "description": "Expert git worktree management through natural conversation. Create worktrees, symlink configs, and work across multiple repositories effortlessly.",
+  "version": "2.0.0",
   "author": {
     "name": "Anthony Costanzo",
     "email": "dev@acostanzo.com"

@@ -1,23 +1,28 @@
 # Arborist
 
-Git worktree management with gardening-themed commands. Plant, graft, fertilize, prune, and uproot worktrees with ease.
+Expert git worktree management through natural conversation. Create worktrees, symlink configs, and work across multiple repositories effortlessly.
 
 ## Overview
 
-Arborist helps you work efficiently with git worktrees - allowing parallel development across multiple branches without the hassle of stashing and switching. Think of your repository as a tree, with worktrees as branches you can tend to independently.
+Arborist is a **skill-based plugin** that teaches Claude everything about git worktrees. Instead of memorizing commands, just describe what you want in natural language:
 
-## Features
+- "I need to work on the payment feature"
+- "Set up a worktree for reviewing PR #847"
+- "Link my config files to this worktree"
+- "Clean up my old worktrees"
 
-- **Worktree Skill**: Claude understands worktrees and recommends them for appropriate workflows
-- **Session Awareness**: Know which worktree you're in when starting a session
-- **Multi-Repo Support**: Manage worktrees across related repositories consistently
-- **Gardening Commands**: Intuitive, themed commands for all worktree operations
+## v2.0 Highlights
+
+- **Pure conversational interface** - No slash commands needed
+- **Symlink-based configs** - Links gitignored files instead of copying
+- **Multi-repo support** - Create matching worktrees across related repositories
+- **Full git worktree coverage** - All subcommands and options
 
 ## Requirements
 
 - Git 2.15+ (for worktree support)
 - Claude Code with plugin support
-- Python 3.9+ (for session hooks)
+- Python 3.9+ (for hooks)
 
 ## Installation
 
@@ -31,145 +36,146 @@ Arborist helps you work efficiently with git worktrees - allowing parallel devel
 /plugin install arborist@quickstop
 ```
 
-Restart Claude Code to activate the plugin.
+Restart Claude Code to activate.
 
-### From Local Clone
+## How It Works
 
-```bash
-# Clone the repository
-git clone https://github.com/acostanzo/quickstop.git
+Arborist activates automatically when you mention worktrees or describe related work. The skill understands:
 
-# Add as local marketplace
-/plugin marketplace add ./quickstop
+### Creating Worktrees
 
-# Install Arborist
-/plugin install arborist@quickstop
+Just say what you want to work on:
+
+```
+You: "I need to work on the auth feature"
+
+Claude: I'll create a worktree for that. Let me set up `auth-work` based on main...
+        [Creates worktree, offers to symlink configs]
 ```
 
-## Commands
+### Symlinking Config Files
 
-### `/arborist:plant <branch-name>` - Create Worktree
+Instead of copying `.env` and config files (which get out of sync), Arborist creates symlinks:
 
-Plant a new worktree for parallel development.
-
-```bash
-# Create worktree for a new feature
-/arborist:plant feature/user-auth
-
-# Base on a specific branch
-/arborist:plant hotfix/urgent --base main
-
-# Custom path
-/arborist:plant feature/api --path ~/worktrees/api-work
+```
+main-repo/.env           # Original file (source of truth)
+worktree/.env -> ../main-repo/.env  # Symlink - always in sync
 ```
 
-### `/arborist:uproot [worktree]` - Remove Worktree
+Say things like:
+- "Link my config files"
+- "Symlink the environment files"
+- "I need my .env in this worktree"
 
-Remove a worktree when you're done with it. If no worktree is specified, provides an interactive selection menu.
+For files that should be independent (like database seeds), request a copy instead:
+- "Copy the seed database to the worktree"
+- "I need a copy of data.db, not a symlink"
 
-```bash
-# Interactive selection
-/arborist:uproot
+### Multi-Repo Projects
 
-# Remove specific worktree
-/arborist:uproot feature/auth
+When working in a parent directory with multiple repos:
 
-# Force remove with uncommitted changes
-/arborist:uproot feature/auth --force
+```
+You: "Create worktrees for the payment feature in both backend and frontend"
 
-# Also delete the branch
-/arborist:uproot feature/auth --delete-branch
+Claude: Found 2 repositories. Creating matching worktrees...
+        - backend-payment-work/
+        - frontend-payment-work/
 ```
 
-### `/arborist:graft [worktree]` - Switch Worktrees
+### Cleanup
 
-Switch your working context to a different worktree.
+```
+You: "Clean up my old worktrees"
 
-```bash
-# List all worktrees and select
-/arborist:graft
-
-# Switch to specific worktree
-/arborist:graft feature/dashboard
+Claude: Let me audit your worktrees...
+        [Shows merged/stale worktrees, offers to remove]
 ```
 
-### `/arborist:fertilize` - Copy Gitignored Files
+## What Gets Linked
 
-Copy configuration files (.env, configs) from main repo to your worktree.
+**Always symlinked (shared, stays in sync):**
+- `.env`, `.env.local`, `.env.*` - Environment variables
+- `credentials*.json` - Credentials
+- `.npmrc`, `.yarnrc` - Package manager configs
+- `.vscode/`, `.idea/` - IDE settings
+- `config/` - Configuration directories
 
-```bash
-# Copy from main worktree
-/arborist:fertilize
+**Copy on request (independent files):**
+- Database seeds, test fixtures
+- Large binary files you might modify per-worktree
+- Any file where you explicitly ask for "copy" instead of "symlink"
 
-# Preview what would be copied
-/arborist:fertilize --dry-run
-
-# Skip specific patterns
-/arborist:fertilize --skip "*.db,data/"
-
-# Copy from a different worktree
-/arborist:fertilize --from ../other-worktree
-```
-
-### `/arborist:prune` - Audit & Cleanup
-
-Audit worktrees and get cleanup recommendations.
-
-```bash
-# Audit current repo
-/arborist:prune
-
-# Focus on merged branches
-/arborist:prune --merged
-
-# Audit all repos in parent directory
-/arborist:prune --all
-```
-
-## Skill Usage
-
-The worktree skill activates automatically when you mention phrases like **"work on multiple branches"**, **"create a worktree"**, **"parallel development"**, or **"switch branches without stashing"**. Just describe what you need in natural language.
-
-When activated, the skill will:
-
-- Recommend worktrees when starting feature work on main/master
-- Guide you through the plant → fertilize → work → prune lifecycle
-- Help manage worktrees across multiple related repositories
-- Advise on which gitignored files to copy or skip
+**Never linked (reinstall instead):**
+- `node_modules/` - Run `npm install`
+- `vendor/` - Run `composer install`
+- `dist/`, `build/` - Build output
+- `.cache/` - Caches
 
 ## Session Notifications
 
-When you start a Claude Code session, Arborist tells you where you are:
+When you start a session, Arborist shows your context:
 
 ```
-Arborist: Working in worktree 'myproject-feature' (branch: feature/auth)
-   Main repo: /Users/you/myproject
+Arborist: In worktree 'myproject-auth' (feature/auth)
+   Main: /Users/you/myproject
+   Symlinks: 5 files linked
    3 worktrees available
 ```
 
-## Multi-Repository Workflows
+## Git Worktree Commands
 
-When working from a parent directory containing multiple repos (e.g., `backend/` and `frontend/`), Arborist helps create matching worktrees:
+The skill knows all git worktree operations:
 
-```
-parent/
-├── backend/                 # main
-├── backend-feature-auth/    # feature/auth worktree
-├── frontend/                # main
-└── frontend-feature-auth/   # feature/auth worktree
-```
-
-Use `/arborist:prune --all` to audit worktrees across all repos.
+| Operation | Example Request |
+|-----------|-----------------|
+| Create | "Create a worktree for feature X" |
+| Remove | "Remove the old worktree" |
+| List | "Which worktrees do I have?" |
+| Lock | "Lock this worktree" |
+| Unlock | "Unlock the worktree" |
+| Move | "Move this worktree to a different location" |
+| Repair | "Fix my broken worktree links" |
+| Prune | "Clean up stale worktree references" |
 
 ## Why Worktrees?
 
 Git worktrees let you:
 
-1. **Work on multiple features** without stashing uncommitted work
+1. **Work on multiple features** without stashing
 2. **Run tests/builds** on one branch while coding on another
 3. **Compare implementations** side-by-side
 4. **Context switch instantly** - just `cd` to another directory
 5. **Keep main clean** - never accidentally commit to the wrong branch
+
+## Worktree Naming
+
+Arborist encourages descriptive names based on **the work**, not the branch:
+
+| Intent | Worktree Name | Branch Name |
+|--------|---------------|-------------|
+| "Review PR #847" | `review-pr-847` | `origin/feature/auth` |
+| "Work on payments" | `payment-work` | `feature/payment-system` |
+| "Try caching approach" | `experiment-caching` | `experiment/redis` |
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/arborist:config` | Show current worktree's linked config files |
+
+## File Structure
+
+```
+arborist/
+├── .claude-plugin/plugin.json    # Plugin manifest
+├── commands/config.md            # Config display command
+├── skills/worktree/SKILL.md      # Comprehensive skill
+├── hooks/session_start.py        # Session context detection
+├── src/config_manager.py         # Config file operations
+├── config/skip_patterns.json     # Symlink categorization
+└── test_arborist.py              # Tests
+```
 
 ## License
 
