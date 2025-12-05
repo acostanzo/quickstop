@@ -1,6 +1,6 @@
 ---
 description: Comprehensive plugin audit by expert subagent
-argument-hint: [plugin-path]
+argument-hint: [plugin-name-or-path]
 allowed-tools: Task
 ---
 
@@ -12,8 +12,9 @@ Launch an expert plugin development subagent to conduct a comprehensive audit an
 
 **Arguments**: `$ARGUMENTS` (optional)
 
-- If no argument: audit current directory
-- If path provided: audit plugin at that path
+- If no argument: audit current directory (if it's a plugin) or list available plugins (if in marketplace)
+- If plugin name: smart search for the plugin (e.g., `arborist` finds `./plugins/arborist/`)
+- If path provided: audit plugin at that exact path
 
 ## Your Task
 
@@ -21,27 +22,71 @@ You are launching a specialized plugin development expert to audit a Claude Code
 
 ### 1. Determine and Validate Plugin Path
 
+**CRITICAL**: Always resolve paths relative to the CURRENT WORKING DIRECTORY, not the
+installed plugin location (`~/.claude/plugins/`). The user is developing plugins in their
+source repo and wants to audit their SOURCE files, not installed copies.
+
 ```python
 import os
+import sys
+
+# Add plugin's Python package to path for imports
+sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}')
+from pluggy.finder import PluginFinder
 
 # Parse arguments
 args = "$ARGUMENTS".strip()
-plugin_path = args if args else "."
 
-# Resolve to absolute path
-plugin_path = os.path.abspath(plugin_path)
+# Use smart plugin finder relative to CWD
+cwd = os.getcwd()
+finder = PluginFinder(cwd)
 
-# Validate path exists
-if not os.path.exists(plugin_path):
-    print(f"❌ Error: Path does not exist: {plugin_path}")
-    print("\nPlease provide a valid plugin directory path.")
-    # Stop here - don't launch expensive subagent
-    return
+# Show context for clarity
+print(f"📍 Working directory: {cwd}")
+print(f"📦 Context: {finder.get_context_summary()}\n")
 
-if not os.path.isdir(plugin_path):
-    print(f"❌ Error: Path is not a directory: {plugin_path}")
-    # Stop here
-    return
+if args:
+    # Try to find the plugin by name or path
+    plugin_path = finder.find_plugin(args)
+    if not plugin_path:
+        print(f"❌ Could not find plugin: {args}")
+        print(f"\nSearched in: {finder.context['root']}")
+        if finder.context['type'] == 'marketplace':
+            available = finder.list_plugins()
+            if available:
+                print("\nAvailable plugins:")
+                for p in available:
+                    print(f"  - {p['name']}: {p['description'][:50]}...")
+        print("\nTip: Use a plugin name (e.g., 'arborist') or path (e.g., 'plugins/arborist')")
+        # Stop here - don't launch expensive subagent
+        return
+    plugin_path = str(plugin_path)
+else:
+    # No argument provided
+    if finder.context['type'] == 'plugin':
+        # We're in a plugin directory - audit it
+        plugin_path = str(finder.context['root'])
+    elif finder.context['type'] == 'marketplace':
+        # We're in a marketplace - list available plugins
+        available = finder.list_plugins()
+        if available:
+            print("📋 Available plugins to audit:\n")
+            for p in available:
+                print(f"  - {p['name']}: {p['description'][:60]}...")
+            print(f"\nUsage: /pluggy:audit <plugin-name>")
+            print("Example: /pluggy:audit arborist")
+        else:
+            print("No plugins found in this marketplace.")
+        return
+    else:
+        print("❌ Not in a plugin or marketplace directory.")
+        print("\nPlease either:")
+        print("  1. Navigate to a plugin directory and run /pluggy:audit")
+        print("  2. Navigate to a marketplace and run /pluggy:audit <plugin-name>")
+        print("  3. Specify a path: /pluggy:audit path/to/plugin")
+        return
+
+print(f"🔍 Auditing plugin at: {plugin_path}\n")
 ```
 
 ### 2. Load Plugin Knowledge Base

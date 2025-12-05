@@ -13,6 +13,7 @@ Pluggy is a meta-plugin that provides expert guidance for building, auditing, an
 🧠 **Deep Knowledge** - Full understanding of commands, hooks, skills, subagents, MCP, and more
 🛠️ **Smart Scaffolding** - Generate code only after proper planning
 💡 **Best Practices** - Guidance based on production plugins like Courtney
+🎯 **Smart Discovery** - Auto-detect context and find plugins by name (`arborist` finds `./plugins/arborist/`)
 
 ## Installation
 
@@ -41,17 +42,25 @@ git clone https://github.com/acostanzo/quickstop.git
 
 ## Commands
 
-### `/pluggy:audit [path]` - Expert Plugin Audit
+### `/pluggy:audit [plugin-name-or-path]` - Expert Plugin Audit
 
 Launch a specialized plugin development expert to conduct a comprehensive audit.
 
 ```bash
-# Audit current directory
+# Audit current directory (if in a plugin)
 /pluggy:audit
 
-# Audit specific plugin
-/pluggy:audit ./my-plugin
+# Audit by plugin name (smart search finds ./plugins/arborist/)
+/pluggy:audit arborist
+
+# Audit by path
+/pluggy:audit plugins/my-plugin
+
+# List available plugins (when in marketplace root)
+/pluggy:audit
 ```
+
+**Smart Discovery**: When you're in a marketplace, Pluggy automatically detects context and finds plugins by name. Type `arborist` instead of `plugins/arborist`.
 
 **What gets reviewed:**
 - Structure & configuration
@@ -86,6 +95,8 @@ Start a collaborative planning session to design and build a plugin.
 # General consultation
 /pluggy:plan
 ```
+
+**Context-Aware**: Pluggy detects if you're in a marketplace (creates plugins in `./plugins/`) or a standalone directory (creates in current location).
 
 **The expert subagent will:**
 

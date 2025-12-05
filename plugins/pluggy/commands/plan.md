@@ -30,27 +30,35 @@ Read ${CLAUDE_PLUGIN_ROOT}/docs/plugin-knowledge.md
 
 ### 2. Parse and Validate Request
 
+**CRITICAL**: Always work relative to the CURRENT WORKING DIRECTORY, not the
+installed plugin location (`~/.claude/plugins/`). The user is developing plugins
+in their source repo.
+
 ```python
 import os
-import json
+import sys
+
+# Add plugin's Python package to path for imports
+sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}')
+from pluggy.finder import PluginFinder
 
 description = "$ARGUMENTS".strip()
 
-# Check if we're in a plugin directory
-in_plugin_dir = False
-plugin_name = None
+# Use smart plugin finder to detect context
 cwd = os.getcwd()
+finder = PluginFinder(cwd)
 
-if os.path.exists('.claude-plugin/plugin.json'):
-    in_plugin_dir = True
-    try:
-        with open('.claude-plugin/plugin.json') as f:
-            manifest = json.load(f)
-            plugin_name = manifest.get('name')
-    except (IOError, json.JSONDecodeError) as e:
-        print(f"⚠️  Warning: Could not read plugin.json: {e}")
-        print("Continuing as if creating new plugin...\n")
-        in_plugin_dir = False
+# Show context for clarity
+print(f"📍 Working directory: {cwd}")
+print(f"📦 Context: {finder.get_context_summary()}\n")
+
+# Determine what we're working with
+in_plugin_dir = finder.context['type'] == 'plugin'
+in_marketplace = finder.context['type'] == 'marketplace'
+plugin_name = finder.context.get('name') if in_plugin_dir else None
+
+if in_marketplace:
+    print("📂 You're in a marketplace. New plugins will be created in ./plugins/\n")
 ```
 
 ### 3. Launch Interactive Planning Subagent
@@ -241,10 +249,20 @@ import sys
 sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}')
 
 from pluggy.scaffolder import PluginScaffolder
+from pluggy.finder import PluginFinder
+
+# Determine correct base path
+finder = PluginFinder(".")
+if finder.context['type'] == 'marketplace':
+    # Create in plugins/ subdirectory of marketplace
+    base_path = str(finder.context['root'] / 'plugins')
+else:
+    # Create in current directory
+    base_path = "."
 
 scaffolder = PluginScaffolder(
     plugin_name="{name}",
-    base_path="."
+    base_path=base_path
 )
 
 # Create basic structure

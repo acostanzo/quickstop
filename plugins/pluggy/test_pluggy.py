@@ -16,6 +16,7 @@ sys.path.insert(0, pluggy_path)
 
 from pluggy.validator import PluginValidator, MarketplaceValidator, ValidationResult
 from pluggy.scaffolder import PluginScaffolder, MarketplaceScaffolder
+from pluggy.finder import PluginFinder
 
 
 def test_validation_result():
@@ -504,6 +505,196 @@ def test_plugin_scaffolder_marketplace_registration():
     return True
 
 
+def test_finder_detects_marketplace_context():
+    """Test PluginFinder detects marketplace context."""
+    print("\nTesting PluginFinder (marketplace context)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a marketplace
+        marketplace_scaffolder = MarketplaceScaffolder("test-marketplace", tmpdir)
+        marketplace_path = marketplace_scaffolder.create_marketplace("Test marketplace")
+
+        # Add plugins list to manifest
+        manifest_path = marketplace_path / ".claude-plugin" / "marketplace.json"
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+        manifest["plugins"] = [
+            {"name": "plugin-a", "source": "./plugins/plugin-a", "description": "Plugin A"}
+        ]
+        with open(manifest_path, 'w') as f:
+            json.dump(manifest, f, indent=2)
+
+        # Test from marketplace root
+        finder = PluginFinder(str(marketplace_path))
+        assert finder.context['type'] == 'marketplace'
+        assert finder.context['name'] == 'test-marketplace'
+        assert finder.context['root'].resolve() == marketplace_path.resolve()
+
+        print("  ✓ Detects marketplace from root")
+
+        # Test from plugins subdirectory
+        plugins_dir = marketplace_path / "plugins"
+        finder2 = PluginFinder(str(plugins_dir))
+        assert finder2.context['type'] == 'marketplace'
+        assert finder2.context['root'].resolve() == marketplace_path.resolve()
+
+        print("  ✓ Detects marketplace from subdirectory")
+
+    return True
+
+
+def test_finder_detects_plugin_context():
+    """Test PluginFinder detects plugin context."""
+    print("\nTesting PluginFinder (plugin context)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a plugin
+        plugin_scaffolder = PluginScaffolder("my-plugin", tmpdir)
+        plugin_path = plugin_scaffolder.create_basic_plugin(description="My plugin")
+
+        # Test from plugin root
+        finder = PluginFinder(str(plugin_path))
+        assert finder.context['type'] == 'plugin'
+        assert finder.context['name'] == 'my-plugin'
+        assert finder.context['root'].resolve() == plugin_path.resolve()
+
+        print("  ✓ Detects plugin context correctly")
+
+    return True
+
+
+def test_finder_detects_unknown_context():
+    """Test PluginFinder handles unknown context."""
+    print("\nTesting PluginFinder (unknown context)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Empty directory - no plugin or marketplace
+        finder = PluginFinder(tmpdir)
+        assert finder.context['type'] == 'unknown'
+        assert finder.context['root'] == Path(tmpdir).resolve()
+
+        print("  ✓ Handles unknown context correctly")
+
+    return True
+
+
+def test_finder_finds_plugin_by_name():
+    """Test PluginFinder finds plugin by name in marketplace."""
+    print("\nTesting PluginFinder (find by name)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a marketplace with plugins
+        marketplace_scaffolder = MarketplaceScaffolder("test-marketplace", tmpdir)
+        marketplace_path = marketplace_scaffolder.create_marketplace()
+
+        # Create plugin in plugins/
+        plugins_dir = marketplace_path / "plugins"
+        plugin_scaffolder = PluginScaffolder("arborist", str(plugins_dir))
+        plugin_path = plugin_scaffolder.create_basic_plugin(description="Tree plugin")
+
+        # Test finder from marketplace root
+        finder = PluginFinder(str(marketplace_path))
+
+        # Find by exact name
+        found = finder.find_plugin("arborist")
+        assert found is not None
+        assert found == plugin_path.resolve()
+
+        print("  ✓ Finds plugin by name")
+
+        # Should not find non-existent plugin
+        not_found = finder.find_plugin("nonexistent")
+        assert not_found is None
+
+        print("  ✓ Returns None for non-existent plugin")
+
+    return True
+
+
+def test_finder_finds_plugin_by_path():
+    """Test PluginFinder finds plugin by relative path."""
+    print("\nTesting PluginFinder (find by path)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a marketplace with plugins
+        marketplace_scaffolder = MarketplaceScaffolder("test-marketplace", tmpdir)
+        marketplace_path = marketplace_scaffolder.create_marketplace()
+
+        # Create plugin
+        plugins_dir = marketplace_path / "plugins"
+        plugin_scaffolder = PluginScaffolder("my-plugin", str(plugins_dir))
+        plugin_path = plugin_scaffolder.create_basic_plugin()
+
+        # Test finder
+        finder = PluginFinder(str(marketplace_path))
+
+        # Find by relative path
+        found = finder.find_plugin("plugins/my-plugin")
+        assert found is not None
+        assert found == plugin_path.resolve()
+
+        print("  ✓ Finds plugin by relative path")
+
+    return True
+
+
+def test_finder_lists_plugins():
+    """Test PluginFinder lists all plugins in marketplace."""
+    print("\nTesting PluginFinder (list plugins)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a marketplace
+        marketplace_scaffolder = MarketplaceScaffolder("test-marketplace", tmpdir)
+        marketplace_path = marketplace_scaffolder.create_marketplace()
+
+        # Create multiple plugins
+        plugins_dir = marketplace_path / "plugins"
+        for name in ["alpha", "beta", "gamma"]:
+            scaffolder = PluginScaffolder(name, str(plugins_dir))
+            scaffolder.create_basic_plugin(description=f"{name.capitalize()} plugin")
+
+        # Test listing
+        finder = PluginFinder(str(marketplace_path))
+        plugins = finder.list_plugins()
+
+        assert len(plugins) == 3
+        names = [p['name'] for p in plugins]
+        assert 'alpha' in names
+        assert 'beta' in names
+        assert 'gamma' in names
+
+        print("  ✓ Lists all plugins correctly")
+
+        # Each plugin should have path and description
+        for plugin in plugins:
+            assert 'path' in plugin
+            assert 'description' in plugin
+
+        print("  ✓ Plugin info includes path and description")
+
+    return True
+
+
+def test_finder_context_summary():
+    """Test PluginFinder context summary."""
+    print("\nTesting PluginFinder (context summary)...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a marketplace
+        marketplace_scaffolder = MarketplaceScaffolder("my-marketplace", tmpdir)
+        marketplace_path = marketplace_scaffolder.create_marketplace()
+
+        finder = PluginFinder(str(marketplace_path))
+        summary = finder.get_context_summary()
+
+        assert "Marketplace" in summary
+        assert "my-marketplace" in summary
+
+        print("  ✓ Context summary is descriptive")
+
+    return True
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -525,6 +716,13 @@ def main():
         ("MarketplaceValidator - Invalid", test_marketplace_validator_invalid),
         ("Command Frontmatter", test_command_frontmatter_validation),
         ("PluginScaffolder - Marketplace Registration", test_plugin_scaffolder_marketplace_registration),
+        ("PluginFinder - Marketplace Context", test_finder_detects_marketplace_context),
+        ("PluginFinder - Plugin Context", test_finder_detects_plugin_context),
+        ("PluginFinder - Unknown Context", test_finder_detects_unknown_context),
+        ("PluginFinder - Find by Name", test_finder_finds_plugin_by_name),
+        ("PluginFinder - Find by Path", test_finder_finds_plugin_by_path),
+        ("PluginFinder - List Plugins", test_finder_lists_plugins),
+        ("PluginFinder - Context Summary", test_finder_context_summary),
     ]
 
     results = []

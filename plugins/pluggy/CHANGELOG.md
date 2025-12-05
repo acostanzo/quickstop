@@ -5,6 +5,27 @@ All notable changes to Pluggy will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-12-05
+
+### Added
+
+- **Smart Plugin Discovery** (`PluginFinder`) - Intelligent plugin finding that auto-detects context and searches intelligently:
+  - Auto-detects if you're in a marketplace or plugin directory
+  - Find plugins by name: `/pluggy:audit arborist` finds `./plugins/arborist/`
+  - Find plugins by path: `/pluggy:audit plugins/my-plugin`
+  - Lists available plugins when run from marketplace root without arguments
+  - Always operates on source files in CWD, not installed copies in `~/.claude/`
+
+### Changed
+
+- **Audit command** now uses PluginFinder for smart discovery and provides CWD context to Claude
+- **Plan command** now uses PluginFinder for context detection and creates plugins in correct location
+- Explicit guidance to Claude to use CWD, not installed plugin location
+
+### Fixed
+
+- Commands now work correctly when developing plugins in a source repo separate from installed location
+
 ## [1.2.0] - 2025-12-02
 
 ### Added
@@ -157,11 +178,11 @@ The expert subagents know about:
 
 ## Upcoming Features (Planned)
 
-### [1.3.0]
+### [1.4.0]
 - `/pluggy:test` - Generate and run plugin tests
 - Enhanced security analysis
 
-### [1.4.0]
+### [1.5.0]
 - `/pluggy:publish` - Publish to marketplace
 - `/pluggy:upgrade` - Migrate to new patterns
 - Version compatibility checking
@@ -171,4 +192,7 @@ The expert subagents know about:
 - Plugin dependency resolution
 - Multi-language support (JavaScript, etc.)
 
+[1.3.0]: https://github.com/acostanzo/quickstop/releases/tag/pluggy-v1.3.0
+[1.2.0]: https://github.com/acostanzo/quickstop/releases/tag/pluggy-v1.2.0
+[1.1.0]: https://github.com/acostanzo/quickstop/releases/tag/pluggy-v1.1.0
 [1.0.0]: https://github.com/acostanzo/quickstop/releases/tag/pluggy-v1.0.0
