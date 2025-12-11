@@ -174,7 +174,8 @@ arborist/
 ├── hooks/session_start.py        # Session context detection
 ├── src/config_manager.py         # Config file operations
 ├── config/skip_patterns.json     # Symlink categorization
-└── test_arborist.py              # Tests
+├── tests/test_arborist.py        # Unit tests
+└── CLAUDE.md                     # Claude-specific docs
 ```
 
 ## License

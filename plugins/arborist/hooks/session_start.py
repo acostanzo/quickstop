@@ -69,12 +69,13 @@ def get_symlink_status(worktree_path: str) -> dict:
         with open(manifest_path, "r") as f:
             manifest = json.load(f)
 
-        symlinks = manifest.get("symlinks", [])
+        # Support both "links" (new v2.2+) and "symlinks" (legacy) formats
+        links = manifest.get("links", manifest.get("symlinks", []))
         valid = 0
         broken = 0
 
-        for symlink in symlinks:
-            target_path = os.path.join(worktree_path, symlink.get("target", ""))
+        for link in links:
+            target_path = os.path.join(worktree_path, link.get("target", ""))
             if os.path.islink(target_path):
                 if os.path.exists(target_path):
                     valid += 1
@@ -82,7 +83,7 @@ def get_symlink_status(worktree_path: str) -> dict:
                     broken += 1
 
         return {
-            "count": len(symlinks),
+            "count": len(links),
             "valid": valid,
             "broken": broken,
         }

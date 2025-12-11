@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 # Add src directory to path for imports
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from config_manager import (
     ALWAYS_SKIP_PATTERNS,
