@@ -7,16 +7,6 @@
   "description": "A collection of Claude Code plugins for workflow enhancement and productivity",
   "plugins": [
     {
-      "name": "courtney",
-      "source": "./plugins/courtney",
-      "description": "Your agentic workflow stenographer - records Claude Code conversations to a searchable database"
-    },
-    {
-      "name": "pluggy",
-      "source": "./plugins/pluggy",
-      "description": "Your plugin development consultant - expert audits and interactive planning with deep ecosystem knowledge"
-    },
-    {
       "name": "arborist",
       "source": "./plugins/arborist",
       "description": "Git worktree management with gardening-themed commands - plant, graft, fertilize, prune, and uproot worktrees"

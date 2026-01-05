@@ -41,9 +41,6 @@ htmlcov/
 *.db
 *.db-journal
 
-# Configuration (may contain sensitive paths)
-courtney.json
-
 # OS
 .DS_Store
 Thumbs.db

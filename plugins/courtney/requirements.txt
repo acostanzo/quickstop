@@ -1,3 +1,0 @@
-# Courtney has no external dependencies beyond Python stdlib
-# Minimum Python version: 3.7
-# Required system tools: sqlite3 (included with Python)

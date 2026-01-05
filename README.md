@@ -6,34 +6,6 @@ A collection of Claude Code plugins for workflow enhancement and productivity. L
 
 ## Available Plugins
 
-### 🎙️ Courtney
-**Your agentic workflow stenographer**
-
-Records Claude Code conversations to a searchable SQLite database. Like a stenographer, Courtney captures only what was said—user prompts, AI responses, and subagent reports—without the noise of tool calls and internal reasoning.
-
-**Features:**
-- Automatic conversation recording
-- Searchable SQLite database
-- `/readback` command for reviewing transcripts
-- No truncation - full conversation history
-- Simple schema: sessions and entries
-
-[📖 Read Courtney Documentation](./plugins/courtney/README.md)
-
-### 🔌 Pluggy
-**Your plugin development consultant**
-
-Expert audits and interactive planning with deep ecosystem knowledge. Pluggy provides specialized subagents that understand the entire Claude Code plugin system—commands, hooks, skills, subagents, and best practices.
-
-**Features:**
-- Comprehensive plugin audits via `/pluggy:audit`
-- Interactive planning sessions via `/pluggy:plan`
-- Deep plugin ecosystem knowledge
-- Smart scaffolding based on your needs
-- Security and performance guidance
-
-[📖 Read Pluggy Documentation](./plugins/pluggy/README.md)
-
 ### 🌳 Arborist
 **Git worktree management with gardening-themed commands**
 
@@ -71,7 +43,7 @@ Define reusable session configurations with windows, panes, and commands. Integr
 /plugin marketplace add acostanzo/quickstop
 
 # Install a plugin
-/plugin install courtney@quickstop
+/plugin install arborist@quickstop
 ```
 
 Restart Claude Code to activate the plugin.
@@ -86,7 +58,7 @@ git clone https://github.com/acostanzo/quickstop.git
 /plugin marketplace add ./quickstop
 
 # Install a plugin
-/plugin install courtney@quickstop
+/plugin install arborist@quickstop
 ```
 
 ## Plugin Management
@@ -99,13 +71,13 @@ Select "Browse Plugins" to see what's available in Quickstop.
 
 ### Disable/Enable
 ```bash
-/plugin disable courtney@quickstop
-/plugin enable courtney@quickstop
+/plugin disable arborist@quickstop
+/plugin enable arborist@quickstop
 ```
 
 ### Uninstall
 ```bash
-/plugin uninstall courtney@quickstop
+/plugin uninstall arborist@quickstop
 ```
 
 ## Repository Structure
@@ -115,22 +87,6 @@ quickstop/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace definition
 ├── plugins/
-│   ├── courtney/                 # Conversation recorder
-│   │   ├── .claude-plugin/
-│   │   │   └── plugin.json
-│   │   ├── courtney/            # Python package
-│   │   ├── hooks/
-│   │   ├── commands/
-│   │   ├── README.md
-│   │   └── CHANGELOG.md
-│   ├── pluggy/                   # Plugin development assistant
-│   │   ├── .claude-plugin/
-│   │   │   └── plugin.json
-│   │   ├── pluggy/              # Python package
-│   │   ├── commands/
-│   │   ├── docs/                # Plugin knowledge base
-│   │   ├── README.md
-│   │   └── CHANGELOG.md
 │   ├── arborist/                 # Git worktree management
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json

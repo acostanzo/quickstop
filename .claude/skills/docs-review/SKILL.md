@@ -36,9 +36,8 @@ You now have access to Dante, the documentation PM for the Quickstop plugin mark
 /dante:review root
 
 # Specific plugin
-/dante:review courtney
-/dante:review pluggy
 /dante:review arborist
+/dante:review muxy
 ```
 
 ## What Dante Checks
