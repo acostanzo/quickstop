@@ -5,5 +5,34 @@
     "email": "mail@acostanzo.com"
   },
   "description": "A collection of Claude Code plugins for workflow enhancement and productivity",
-  "plugins": []
+  "plugins": [
+    {
+      "name": "arborist",
+      "version": "2.0.0",
+      "description": "Expert git worktree management with automatic configuration syncing",
+      "path": "plugins/arborist",
+      "keywords": ["git", "worktree", "configuration", "sync", "branches"],
+      "features": [
+        "Comprehensive git worktree skill",
+        "Automatic gitignored file syncing to new worktrees",
+        ".worktreeignore config for skip patterns",
+        "SessionStart hook for worktree status display",
+        "/doctor command for diagnostics"
+      ]
+    },
+    {
+      "name": "muxy",
+      "version": "2.0.0",
+      "description": "Tmux session management with templates and natural language pane interactions",
+      "path": "plugins/muxy",
+      "keywords": ["tmux", "terminal", "multiplexer", "sessions", "templates"],
+      "features": [
+        "Template-based session creation (YAML format)",
+        "Natural language pane interactions",
+        "Session management commands",
+        "Template management commands",
+        "tmux-mcp server integration"
+      ]
+    }
+  ]
 }
