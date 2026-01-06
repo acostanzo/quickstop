@@ -5,16 +5,5 @@
     "email": "mail@acostanzo.com"
   },
   "description": "A collection of Claude Code plugins for workflow enhancement and productivity",
-  "plugins": [
-    {
-      "name": "arborist",
-      "source": "./plugins/arborist",
-      "description": "Git worktree management with gardening-themed commands - plant, graft, fertilize, prune, and uproot worktrees"
-    },
-    {
-      "name": "muxy",
-      "source": "./plugins/muxy",
-      "description": "Orchestrate complex tmux sessions with templates, worktree integration, and MCP control"
-    }
-  ]
+  "plugins": []
 }
