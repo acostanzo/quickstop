@@ -13,17 +13,17 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 
 ### Install from Marketplace
 
-Add quickstop as a plugin marketplace in Claude Code:
+First, add quickstop as a plugin marketplace in Claude Code:
 
 ```bash
-claude /install-plugin quickstop@acostanzo
+/plugin marketplace add acostanzo/quickstop
 ```
 
 Then install individual plugins:
 
 ```bash
-claude /install-plugin quickstop@acostanzo/arborist
-claude /install-plugin quickstop@acostanzo/muxy
+/plugin install arborist@quickstop
+/plugin install muxy@quickstop
 ```
 
 ### Install from Source
