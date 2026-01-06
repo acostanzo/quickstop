@@ -67,18 +67,19 @@ When adding, removing, or modifying plugins, update both:
       "name": "plugin-name",
       "version": "X.Y.Z",
       "description": "Brief description",
-      "path": "plugins/plugin-name",
-      "keywords": ["relevant", "keywords"],
-      "features": ["Key feature 1", "Key feature 2"]
+      "source": "./plugins/plugin-name",
+      "keywords": ["relevant", "keywords"]
     }
   ]
 }
 ```
 
+Note: The `source` field is required (use relative path like `./plugins/name`). The `features` field is NOT part of the marketplace schema - document features in the plugin's README instead.
+
 **Update both files when:**
 - Adding a new plugin (add to marketplace.json and README plugin table)
 - Bumping a plugin version
-- Changing a plugin's description or features
+- Changing a plugin's description
 - Removing a plugin
 
 ### Version Conventions
