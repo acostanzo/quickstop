@@ -52,9 +52,13 @@ plugins/plugin-name/
 
 ## Marketplace Management
 
-### IMPORTANT: Keep marketplace.json Updated
+### IMPORTANT: Keep marketplace.json and README.md Updated
 
-When adding, removing, or modifying plugins, update `.claude-plugin/marketplace.json`:
+When adding, removing, or modifying plugins, update both:
+1. `.claude-plugin/marketplace.json` - Plugin registry for marketplace installation
+2. `README.md` - Public documentation with plugin table and features
+
+**marketplace.json format:**
 
 ```json
 {
@@ -71,8 +75,8 @@ When adding, removing, or modifying plugins, update `.claude-plugin/marketplace.
 }
 ```
 
-**Update marketplace.json when:**
-- Adding a new plugin
+**Update both files when:**
+- Adding a new plugin (add to marketplace.json and README plugin table)
 - Bumping a plugin version
 - Changing a plugin's description or features
 - Removing a plugin
