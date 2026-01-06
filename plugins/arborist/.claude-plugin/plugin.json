@@ -1,12 +1,11 @@
 {
   "name": "arborist",
-  "description": "Expert git worktree management through natural conversation. Create worktrees, symlink configs, and work across multiple repositories effortlessly.",
   "version": "2.0.0",
+  "description": "Expert git worktree management with automatic configuration syncing",
   "author": {
-    "name": "Anthony Costanzo",
-    "email": "dev@acostanzo.com"
+    "name": "quickstop",
+    "url": "https://github.com/quickstop"
   },
-  "repository": "https://github.com/acostanzo/quickstop",
-  "keywords": ["git", "worktree", "workflow", "branching", "development"],
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": ["git", "worktree", "configuration", "sync", "branches"]
 }
