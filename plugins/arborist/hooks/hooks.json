@@ -1,16 +1,9 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py",
-            "timeout": 5000
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "type": "command",
+      "event": "SessionStart",
+      "command": ["bash", "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"]
+    }
+  ]
 }
