@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tmux": {
+      "command": "npx",
+      "args": ["-y", "tmux-mcp", "--shell-type=${MUXY_SHELL:-fish}"]
+    }
+  }
+}
