@@ -1,6 +1,6 @@
 {
   "name": "miser",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Mise polyglot version manager integration for Claude Code",
   "author": {
     "name": "quickstop",

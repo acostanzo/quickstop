@@ -120,7 +120,7 @@ This installs a pre-push hook that runs the version check automatically.
 
 ## Current Plugins
 
-### Arborist (v2.0.1)
+### Arborist (v2.0.2)
 Git worktree management with automatic configuration syncing.
 
 **Key features:**
@@ -140,7 +140,7 @@ Tmux session management with templates and natural language pane interactions.
 
 **Configuration:** Set `MUXY_SHELL` environment variable for your shell (default: fish)
 
-### Miser (v1.0.1)
+### Miser (v1.0.2)
 Mise polyglot version manager integration for Claude Code.
 
 **Key features:**

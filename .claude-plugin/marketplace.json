@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "arborist",
-      "version": "2.0.1",
+      "version": "2.0.2",
       "description": "Expert git worktree management with automatic configuration syncing",
       "source": "./plugins/arborist",
       "keywords": ["git", "worktree", "configuration", "sync", "branches"]
@@ -22,7 +22,7 @@
     },
     {
       "name": "miser",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Mise polyglot version manager integration for Claude Code",
       "source": "./plugins/miser",
       "keywords": ["mise", "version-manager", "polyglot", "ruby", "node", "python", "tools"]

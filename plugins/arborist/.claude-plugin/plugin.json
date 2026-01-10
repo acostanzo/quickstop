@@ -1,6 +1,6 @@
 {
   "name": "arborist",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Expert git worktree management with automatic configuration syncing",
   "author": {
     "name": "quickstop",
