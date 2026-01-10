@@ -5,7 +5,10 @@
       "args": [
         "-c",
         "for p in \"$HOME/.local/bin/mise\" /opt/homebrew/bin/mise /usr/local/bin/mise; do [ -x \"$p\" ] && exec \"$p\" mcp; done; echo 'mise not found' >&2; exit 1"
-      ]
+      ],
+      "env": {
+        "MISE_EXPERIMENTAL": "1"
+      }
     }
   }
 }
