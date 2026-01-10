@@ -1,0 +1,11 @@
+{
+  "name": "miser",
+  "version": "1.0.0",
+  "description": "Mise polyglot version manager integration for Claude Code",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["mise", "version-manager", "polyglot", "ruby", "node", "python", "tools"]
+}

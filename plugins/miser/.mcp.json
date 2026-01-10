@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mise": {
+      "command": "mise",
+      "args": ["mcp"]
+    }
+  }
+}

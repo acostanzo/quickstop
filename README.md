@@ -8,6 +8,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 |--------|---------|-------------|
 | [Arborist](plugins/arborist/) | 2.0.0 | Git worktree management with automatic configuration syncing |
 | [Muxy](plugins/muxy/) | 2.0.0 | Tmux session management with templates and natural language pane interactions |
+| [Miser](plugins/miser/) | 1.0.0 | Mise polyglot version manager integration for Claude Code |
 
 ## Installation
 
@@ -24,6 +25,7 @@ Then install individual plugins:
 ```bash
 /plugin install arborist@quickstop
 /plugin install muxy@quickstop
+/plugin install miser@quickstop
 ```
 
 ### Install from Source
@@ -76,6 +78,23 @@ Tmux session management with YAML-based templates and natural language pane inte
 - tmux 2.1+
 - Node.js (for tmux-mcp)
 - Set `MUXY_SHELL` env var for your shell (default: fish)
+
+### Miser
+
+Mise polyglot version manager integration for Claude Code's non-interactive bash environment.
+
+**Features:**
+- Automatic mise activation in shims mode at session start
+- Works with non-interactive bash (no prompt hooks needed)
+- MCP integration exposing mise's built-in server (tools, env, tasks, config)
+- Diagnostic command for troubleshooting
+
+**Commands:**
+- `/miser:doctor` - Diagnose mise integration and verify tool availability
+
+**Requirements:**
+- [mise](https://mise.jdx.dev/) installed
+- Tools installed via mise (e.g., `mise install node@20`)
 
 ## Contributing
 

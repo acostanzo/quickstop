@@ -1,0 +1,9 @@
+{
+  "hooks": [
+    {
+      "type": "command",
+      "event": "SessionStart",
+      "command": ["bash", "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"]
+    }
+  ]
+}
