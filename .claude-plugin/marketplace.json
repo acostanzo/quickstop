@@ -22,7 +22,7 @@
     },
     {
       "name": "miser",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Mise polyglot version manager integration for Claude Code",
       "source": "./plugins/miser",
       "keywords": ["mise", "version-manager", "polyglot", "ruby", "node", "python", "tools"]
