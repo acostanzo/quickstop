@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "mise": {
-      "command": "mise",
-      "args": ["mcp"]
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mise-mcp.sh"]
     }
   }
 }
