@@ -13,7 +13,10 @@ quickstop/
 │   ├── miser/              # Mise version manager integration
 │   └── muxy/               # Tmux session management
 ├── scripts/
-│   └── check-plugin-versions.sh  # Pre-push version check
+│   ├── check-plugin-versions.sh  # Version validation script
+│   ├── install-hooks.sh          # Git hooks installer
+│   └── git-hooks/                # Hook templates
+│       └── pre-push              # Runs version check before push
 └── CLAUDE.md
 ```
 
@@ -107,6 +110,13 @@ Note: The `source` field is required (use relative path like `./plugins/name`). 
 ```
 
 This script compares staged/committed changes against the main branch and warns if plugin files changed without a version bump.
+
+**Install git hooks for automatic enforcement:**
+```bash
+./scripts/install-hooks.sh
+```
+
+This installs a pre-push hook that runs the version check automatically.
 
 ## Current Plugins
 
