@@ -10,7 +10,10 @@ quickstop/
 │   └── marketplace.json    # Plugin registry - KEEP UPDATED
 ├── plugins/
 │   ├── arborist/           # Git worktree management
+│   ├── miser/              # Mise version manager integration
 │   └── muxy/               # Tmux session management
+├── scripts/
+│   └── check-plugin-versions.sh  # Pre-push version check
 └── CLAUDE.md
 ```
 
@@ -89,9 +92,25 @@ Note: The `source` field is required (use relative path like `./plugins/name`). 
 - Bump MINOR for new features
 - Bump PATCH for bug fixes
 
+### CRITICAL: Always Bump Versions on Plugin Changes
+
+**Plugin cache is keyed by version number.** If you modify plugin files without bumping the version, users won't get the changes until they manually clear their cache or reinstall.
+
+**Before pushing changes to any plugin:**
+1. Bump the version in `plugins/[name]/.claude-plugin/plugin.json`
+2. Update the version in `.claude-plugin/marketplace.json`
+3. Update the version in `README.md` plugin table
+
+**Run the version check script before pushing:**
+```bash
+./scripts/check-plugin-versions.sh
+```
+
+This script compares staged/committed changes against the main branch and warns if plugin files changed without a version bump.
+
 ## Current Plugins
 
-### Arborist (v2.0.0)
+### Arborist (v2.0.1)
 Git worktree management with automatic configuration syncing.
 
 **Key features:**
@@ -110,6 +129,16 @@ Tmux session management with templates and natural language pane interactions.
 - Session and template management commands
 
 **Configuration:** Set `MUXY_SHELL` environment variable for your shell (default: fish)
+
+### Miser (v1.0.1)
+Mise polyglot version manager integration for Claude Code.
+
+**Key features:**
+- SessionStart hook activates mise in shims mode (works in non-interactive bash)
+- MCP integration exposing mise's built-in server (tools, env, tasks, config)
+- `/miser:doctor` for diagnostics
+
+**Note:** Requires mise with experimental features enabled (`MISE_EXPERIMENTAL=1`)
 
 ## Commit Conventions
 

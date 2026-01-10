@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "arborist",
-      "version": "2.0.0",
+      "version": "2.0.1",
       "description": "Expert git worktree management with automatic configuration syncing",
       "source": "./plugins/arborist",
       "keywords": ["git", "worktree", "configuration", "sync", "branches"]

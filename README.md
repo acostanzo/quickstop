@@ -6,7 +6,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 
 | Plugin | Version | Description |
 |--------|---------|-------------|
-| [Arborist](plugins/arborist/) | 2.0.0 | Git worktree management with automatic configuration syncing |
+| [Arborist](plugins/arborist/) | 2.0.1 | Git worktree management with automatic configuration syncing |
 | [Muxy](plugins/muxy/) | 2.0.0 | Tmux session management with templates and natural language pane interactions |
 | [Miser](plugins/miser/) | 1.0.1 | Mise polyglot version manager integration for Claude Code |
 
