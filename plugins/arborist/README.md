@@ -1,103 +1,100 @@
 # Arborist
 
-Expert git worktree management with automatic configuration syncing.
+Sync gitignored config files across git worktrees.
 
-## Features
+## What It Does
 
-- **Worktree Status on Start** - Shows a status box when launching Claude inside a linked worktree
-- **Worktree Skill** - Comprehensive git worktree guidance including creation, management, repair, and troubleshooting
-- **Automatic Config Sync** - Copies gitignored files (like `.env`, IDE settings) to new worktrees
-- **Smart Skip Patterns** - Excludes regeneratable files (`node_modules/`, `build/`, etc.) from sync
-- **Doctor Command** - Diagnose and repair missing configurations in worktrees
+When you create a git worktree, gitignored files like `.env`, `.npmrc`, and local configs don't come along. Arborist detects this and helps you sync them.
+
+**Simple workflow:**
+1. Create a worktree via CLI: `git worktree add ../feature-branch feature/branch`
+2. Start Claude in the worktree
+3. If configs are missing, you'll see a **macOS alert dialog** prompting you to sync
+4. Run `/arborist:tend` to interactively sync what you need
 
 ## Installation
 
-Add to your Claude Code plugins:
-
 ```bash
-# Using plugin directory flag
-claude --plugin-dir /path/to/arborist
+# From quickstop marketplace
+/plugin install arborist@quickstop
 
-# Or add to .claude/plugins in your project
+# Or use directly
+claude --plugin-dir /path/to/quickstop/plugins/arborist
 ```
 
 ## Usage
 
-### Creating Worktrees
+### Automatic Detection
 
-When you ask Claude to create a worktree, it will:
-1. Create the worktree with `git worktree add`
-2. Automatically sync gitignored configuration files
-3. Display the worktree status
-
-Example prompts:
-- "Create a worktree for the feature/auth branch"
-- "Set up a worktree to review PR #123"
-- "I need to work on a hotfix while keeping my current work"
-
-### Doctor Command
-
-Run `/arborist:doctor` to:
-- Check if all gitignored configs are synced from main worktree
-- See what files are missing
-- Optionally copy missing files
-
-### Worktree Skill
-
-The worktree skill activates when you ask about:
-- Creating or managing worktrees
-- Working on multiple branches
-- Parallel development
-- Syncing gitignored files
-
-## Configuration
-
-### .worktreeignore
-
-Create a `.worktreeignore` file in your repository root to customize which gitignored files are **excluded** from syncing:
+When you start a Claude session in a linked worktree, arborist checks for missing config files. If any are found, a **macOS alert dialog** appears:
 
 ```
-# These files won't be synced to worktrees (they're regeneratable)
-
-# Large dependency directories (defaults)
-node_modules/
-.venv/
-
-# Project-specific exclusions
-.terraform/
-*.tfstate*
+┌─────────────────────────────────────────┐
+│  🌳 Worktree: feature/auth              │
+│                                         │
+│  Missing 3 config files from main.      │
+│                                         │
+│  Run /arborist:tend to sync.            │
+│                                         │
+│                              [ OK ]     │
+└─────────────────────────────────────────┘
 ```
 
-Files NOT matching these patterns will be synced (like `.env`, `.env.local`, IDE configs).
+This alert only appears when:
+- You're in a linked worktree (not the main repo)
+- There are config files in main that don't exist in your worktree
+- You're on macOS
 
-**Location priority:**
-1. `<repo>/.worktreeignore` - Can be committed and shared
-2. `<repo>/.git/info/worktreeignore` - Local only
+### /arborist:tend Command
 
-### Default Skip Patterns
+Interactive command to sync config files:
 
-These patterns are always excluded (regeneratable files):
-- `.git/`
+1. **Select source** - Choose which worktree to sync from (main is default)
+2. **Choose mode** - Sync all files or customize selection
+3. **Pick files** (if customize) - Toggle which files to copy
+
+Example flow:
+```
+> /arborist:tend
+
+Select worktree to sync from:
+○ main (/Users/you/project/main) [Recommended]
+○ feature-auth (/Users/you/project/feature-auth)
+
+Found 3 config files to sync. How would you like to proceed?
+○ Sync all (Recommended)
+○ Customize
+
+✓ Synced 3 files from main:
+  - .env
+  - .env.local
+  - config/local.json
+```
+
+## Auto-Excluded Files
+
+These regeneratable directories are automatically excluded from detection and sync:
+
 - `node_modules/`, `.pnpm-store/`, `vendor/`, `.bundle/`
 - `.venv/`, `venv/`, `__pycache__/`
-- `build/`, `dist/`, `target/`, `out/`
-- `.cache/`, `.parcel-cache/`, `.turbo/`
+- `build/`, `dist/`, `target/`, `out/`, `.gradle/`
+- `.next/`, `.nuxt/`, `.cache/`, `.parcel-cache/`, `.turbo/`
+- `.terraform/`, `.serverless/`
 
 ## Components
 
 | Component | Purpose |
 |-----------|---------|
-| `skills/worktree/` | Git worktree expertise and guidance |
-| `commands/doctor.md` | Diagnose and sync configurations |
-| `hooks/` | SessionStart hook for worktree status display |
-| `scripts/sync-gitignored.sh` | Sync script for gitignored files |
-| `scripts/detect-worktree.sh` | Worktree status detection |
+| `hooks/hooks.json` | SessionStart hook configuration |
+| `hooks/session-start.sh` | Detects missing configs, shows macOS alert |
+| `commands/tend.md` | Interactive sync command |
 
 ## Requirements
 
 - Git 2.5+ (worktree support)
-- Bash 4+ (for scripts)
+- macOS (for alert notifications)
 
-## Version
+## Version History
 
-2.0.0 - Complete rewrite with skill-based architecture and `.worktreeignore` support
+- **3.0.0** - Complete rewrite. macOS alert for missing configs, interactive /tend command. Removed worktree skill, .worktreeignore, and doctor command.
+- **2.0.x** - Expert worktree guidance with .worktreeignore support
