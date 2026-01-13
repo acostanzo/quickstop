@@ -8,10 +8,10 @@
   "plugins": [
     {
       "name": "arborist",
-      "version": "2.0.2",
-      "description": "Expert git worktree management with automatic configuration syncing",
+      "version": "3.0.0",
+      "description": "Sync gitignored config files across git worktrees",
       "source": "./plugins/arborist",
-      "keywords": ["git", "worktree", "configuration", "sync", "branches"]
+      "keywords": ["git", "worktree", "configuration", "sync", "env"]
     },
     {
       "name": "muxy",

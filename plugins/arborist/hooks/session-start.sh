@@ -1,65 +1,66 @@
 #!/bin/bash
-# session-start.sh - Display worktree status on session start (only for linked worktrees)
-
-set -euo pipefail
+# session-start.sh - Check for missing gitignored config files in worktrees
+# Sends macOS notification if configs are missing
 
 # Check if we're in a git repository
 if ! git rev-parse --git-dir &>/dev/null; then
     exit 0
 fi
 
-# Get git directory
-GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+# Get the absolute git directory path
+GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null) || exit 0
 
 # Check if this is a linked worktree (not main)
-IS_LINKED=false
-if [[ "$GIT_DIR" == *"/.git/worktrees/"* ]]; then
-    IS_LINKED=true
-elif [[ -f "$GIT_DIR" ]]; then
-    # .git is a file pointing to the actual git dir (linked worktree)
-    IS_LINKED=true
-fi
-
-# Only show status for linked worktrees
-if [[ "$IS_LINKED" != "true" ]]; then
+if [[ "$GIT_DIR" != *"/.git/worktrees/"* ]]; then
     exit 0
 fi
 
-# Get worktree details
-GIT_TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
-BRANCH=$(git branch --show-current 2>/dev/null || echo "(detached)")
+# Get current worktree path
+CURRENT_WORKTREE=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
 # Get main worktree path
-if [[ -f "$GIT_DIR" ]]; then
-    ACTUAL_GIT_DIR=$(cat "$GIT_DIR" | sed 's/gitdir: //')
-    MAIN_GIT_DIR=$(echo "$ACTUAL_GIT_DIR" | sed 's|/worktrees/.*||')
-else
-    MAIN_GIT_DIR=$(echo "$GIT_DIR" | sed 's|/worktrees/.*||')
-fi
+MAIN_GIT_DIR=$(echo "$GIT_DIR" | sed 's|/worktrees/.*||')
 MAIN_WORKTREE=$(dirname "$MAIN_GIT_DIR")
 
-# Helper to truncate paths (show ...end if too long)
-truncate_path() {
-    local path="$1"
-    local max_len="$2"
-    if [[ ${#path} -le $max_len ]]; then
-        echo "$path"
-    else
-        echo "...${path: -$((max_len-3))}"
+# Verify main worktree exists
+if [[ ! -d "$MAIN_WORKTREE" ]]; then
+    exit 0
+fi
+
+# Skip patterns (regeneratable files/directories)
+SKIP_PATTERNS="node_modules|\.pnpm-store|vendor|\.bundle|\.venv|venv|__pycache__|\.pyc|\.eggs|\.egg-info|build|dist|target|out|\.gradle|\.next|\.nuxt|\.cache|\.parcel-cache|\.turbo|\.terraform|\.serverless"
+
+# Get gitignored files from main worktree (excluding skip patterns)
+MAIN_GITIGNORED=$(git -C "$MAIN_WORKTREE" ls-files --others --ignored --exclude-standard 2>/dev/null | grep -Ev "$SKIP_PATTERNS") || true
+
+if [[ -z "$MAIN_GITIGNORED" ]]; then
+    exit 0
+fi
+
+# Count missing config files
+MISSING_COUNT=0
+while IFS= read -r file; do
+    [[ -z "$file" ]] && continue
+    if [[ ! -e "$CURRENT_WORKTREE/$file" ]]; then
+        ((MISSING_COUNT++)) || true
     fi
-}
+done <<< "$MAIN_GITIGNORED"
 
-# Format values
-BRANCH_FMT=$(truncate_path "$BRANCH" 36)
-PATH_FMT=$(truncate_path "$GIT_TOPLEVEL" 38)
-MAIN_FMT=$(truncate_path "$MAIN_WORKTREE" 38)
+# Only notify if there are missing files
+if [[ $MISSING_COUNT -eq 0 ]]; then
+    exit 0
+fi
 
-# Output the status box
-cat << EOF
-╭─ Worktree Status ──────────────────────────────╮
-│  Type: linked worktree                         │
-│  Branch: $(printf "%-36s" "$BRANCH_FMT") │
-│  Path: $(printf "%-38s" "$PATH_FMT") │
-│  Main: $(printf "%-38s" "$MAIN_FMT") │
-╰────────────────────────────────────────────────╯
-EOF
+# Get branch name
+BRANCH=$(git branch --show-current 2>/dev/null) || BRANCH="(detached)"
+
+# Send macOS alert dialog
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [[ $MISSING_COUNT -eq 1 ]]; then
+        MESSAGE="Missing 1 config file from main.\n\nRun /arborist:tend to sync."
+    else
+        MESSAGE="Missing $MISSING_COUNT config files from main.\n\nRun /arborist:tend to sync."
+    fi
+
+    osascript -e "display alert \"🌳 Worktree: $BRANCH\" message \"$MESSAGE\"" 2>/dev/null || true
+fi
