@@ -120,25 +120,23 @@ This installs a pre-push hook that runs the version check automatically.
 
 ## Current Plugins
 
-### Arborist (v2.0.2)
+### Arborist (v3.1.0)
 Git worktree management with automatic configuration syncing.
 
 **Key features:**
-- Worktree skill for creation, management, repair
+- Auto-syncs gitignored config files from main on session start
 - `.worktreeignore` config for controlling file sync
-- SessionStart hook displays worktree status
+- `/arborist:tend` for interactive sync with source selection
 - `/arborist:doctor` for diagnostics
 
-### Muxy (v2.0.0)
-Tmux session management with templates and natural language pane interactions.
+### Muxy (v3.0.0)
+Natural language tmux session management with templates.
 
 **Key features:**
-- YAML-based session templates
-- Natural language pane reading/command execution
-- tmux-mcp server integration
-- Session and template management commands
-
-**Configuration:** Set `MUXY_SHELL` environment variable for your shell (default: fish)
+- Natural language session creation with preview workflow
+- Template system with variable inference (`${project_dir}`)
+- Auto-detected shell (no configuration needed)
+- Only 2 commands: `/muxy:doctor`, `/muxy:templates`
 
 ### Miser (v1.0.2)
 Mise polyglot version manager integration for Claude Code.
