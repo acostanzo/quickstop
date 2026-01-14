@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "arborist",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "description": "Sync gitignored config files across git worktrees",
       "source": "./plugins/arborist",
       "keywords": ["git", "worktree", "configuration", "sync", "env"]

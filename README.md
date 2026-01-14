@@ -6,7 +6,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 
 | Plugin | Version | Description |
 |--------|---------|-------------|
-| [Arborist](plugins/arborist/) | 3.0.0 | Sync gitignored config files across git worktrees |
+| [Arborist](plugins/arborist/) | 3.1.0 | Sync gitignored config files across git worktrees |
 | [Muxy](plugins/muxy/) | 2.0.0 | Tmux session management with templates and natural language pane interactions |
 | [Miser](plugins/miser/) | 1.0.2 | Mise polyglot version manager integration for Claude Code |
 
@@ -41,11 +41,11 @@ claude --plugin-dir /path/to/quickstop/plugins/arborist
 
 ### Arborist
 
-Lightweight detection and syncing of gitignored config files across git worktrees.
+Automatic syncing of gitignored config files across git worktrees.
 
 **Features:**
-- SessionStart hook detects missing config files when in a linked worktree
-- Interactive `/arborist:tend` command to sync files from any worktree
+- Auto-syncs missing config files from main on session start
+- Interactive `/arborist:tend` command for manual sync with source selection
 - Auto-excludes regeneratable directories (node_modules, build, .venv, etc.)
 
 **Commands:**

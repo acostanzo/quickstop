@@ -4,13 +4,12 @@ Sync gitignored config files across git worktrees.
 
 ## What It Does
 
-When you create a git worktree, gitignored files like `.env`, `.npmrc`, and local configs don't come along. Arborist detects this and helps you sync them.
+When you create a git worktree, gitignored files like `.env`, `.npmrc`, and local configs don't come along. Arborist automatically syncs them from main when you start a Claude session.
 
 **Simple workflow:**
-1. Create a worktree via CLI: `git worktree add ../feature-branch feature/branch`
+1. Create a worktree: `git worktree add ../feature-branch feature/branch`
 2. Start Claude in the worktree
-3. If configs are missing, you'll see a **macOS alert dialog** prompting you to sync
-4. Run `/arborist:tend` to interactively sync what you need
+3. Missing configs are automatically synced from main - no action needed
 
 ## Installation
 
@@ -24,56 +23,26 @@ claude --plugin-dir /path/to/quickstop/plugins/arborist
 
 ## Usage
 
-### Automatic Detection
+### Automatic Sync on Session Start
 
-When you start a Claude session in a linked worktree, arborist checks for missing config files. If any are found, a **macOS alert dialog** appears:
-
-```
-┌─────────────────────────────────────────┐
-│  🌳 Worktree: feature/auth              │
-│                                         │
-│  Missing 3 config files from main.      │
-│                                         │
-│  Run /arborist:tend to sync.            │
-│                                         │
-│                              [ OK ]     │
-└─────────────────────────────────────────┘
-```
-
-This alert only appears when:
-- You're in a linked worktree (not the main repo)
-- There are config files in main that don't exist in your worktree
-- You're on macOS
+When you start Claude in a linked worktree, arborist automatically copies any missing gitignored config files from the main worktree. The sync happens silently - files just appear.
 
 ### /arborist:tend Command
 
-Interactive command to sync config files:
+For manual control, run `/arborist:tend` to interactively sync files:
 
 1. **Select source** - Choose which worktree to sync from (main is default)
 2. **Choose mode** - Sync all files or customize selection
 3. **Pick files** (if customize) - Toggle which files to copy
 
-Example flow:
-```
-> /arborist:tend
-
-Select worktree to sync from:
-○ main (/Users/you/project/main) [Recommended]
-○ feature-auth (/Users/you/project/feature-auth)
-
-Found 3 config files to sync. How would you like to proceed?
-○ Sync all (Recommended)
-○ Customize
-
-✓ Synced 3 files from main:
-  - .env
-  - .env.local
-  - config/local.json
-```
+Use this when:
+- You want to sync from a different worktree (not main)
+- You want to selectively sync specific files
+- You need to re-sync after making changes in the source worktree
 
 ## Auto-Excluded Files
 
-These regeneratable directories are automatically excluded from detection and sync:
+These regeneratable directories are automatically excluded:
 
 - `node_modules/`, `.pnpm-store/`, `vendor/`, `.bundle/`
 - `.venv/`, `venv/`, `__pycache__/`
@@ -86,15 +55,15 @@ These regeneratable directories are automatically excluded from detection and sy
 | Component | Purpose |
 |-----------|---------|
 | `hooks/hooks.json` | SessionStart hook configuration |
-| `hooks/session-start.sh` | Detects missing configs, shows macOS alert |
+| `hooks/session-start.sh` | Auto-syncs missing configs from main |
 | `commands/tend.md` | Interactive sync command |
 
 ## Requirements
 
 - Git 2.5+ (worktree support)
-- macOS (for alert notifications)
 
 ## Version History
 
-- **3.0.0** - Complete rewrite. macOS alert for missing configs, interactive /tend command. Removed worktree skill, .worktreeignore, and doctor command.
+- **3.1.0** - Automatic sync on session start. No prompts, just syncs missing configs from main automatically.
+- **3.0.0** - macOS alert for missing configs, interactive /tend command.
 - **2.0.x** - Expert worktree guidance with .worktreeignore support
