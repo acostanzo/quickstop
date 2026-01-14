@@ -1,199 +1,154 @@
 ---
-name: Tmux Session Management
-description: This skill should be used when the user asks to "read pane output", "check what's in a pane", "run command in pane", "execute in window", "see terminal output", "check the server pane", "restart process in pane", "what's happening in tmux", "manage tmux sessions", "work with multiple terminals", or when starting development environments that benefit from tmux multiplexing.
-version: 2.0.0
+name: Muxy
+description: This skill should be used when the user asks to "create a tmux session", "new tmux", "tmux for my project", "make a tmux layout", "set up tmux windows", "save as template", "load template", "tmux template", or describes a multi-window terminal setup. Provides natural language tmux session creation with template support.
 ---
 
-# Tmux Session Management with Muxy
+# Tmux Session Management
 
-Expert guidance for managing tmux sessions, windows, and panes using the tmux-mcp server tools.
+Muxy enables natural language creation of tmux sessions. Users describe their desired layout and this skill translates that into tmux commands via the tmux MCP server.
 
-## Core Concepts
+## Core Workflow
 
-### Tmux Hierarchy
+### Session Creation Flow
 
-```
-Session (named container)
-├── Window 1 (like a tab)
-│   ├── Pane 1 (terminal split)
-│   └── Pane 2
-├── Window 2
-│   └── Pane 1
-└── Window 3
-    ├── Pane 1
-    ├── Pane 2
-    └── Pane 3
-```
+1. **Parse user description** - Extract windows, panes, paths, and commands
+2. **Infer project directories** - Detect paths from user prompt, project names, or cwd
+3. **Present preview table** - Show structured plan for confirmation
+4. **Execute on approval** - Create session via MCP tools
+5. **Offer to save** - Optionally save as template for reuse
 
-- **Session**: Top-level container, persists across disconnects
-- **Window**: Like browser tabs within a session
-- **Pane**: Split sections within a window
+### Preview Table Format
 
-### Muxy Session Naming Convention
+Always present session plans in this markdown table format before creating:
 
-Sessions created from templates use the format: `SessionName (TemplateName)`
+```markdown
+**Session: [Session Name]**
 
-Example: `MyFeature (dev-fullstack)` indicates a session named "MyFeature" created from the "dev-fullstack" template.
-
-## Available MCP Tools
-
-The tmux-mcp server provides these tools:
-
-### Session Operations
-- `list-sessions` - List all active tmux sessions
-- `find-session` - Find a session by name
-- `create-session` - Create a new session
-- `kill-session` - Terminate a session by ID
-
-### Window Operations
-- `list-windows` - List windows in a session
-- `create-window` - Add a new window to a session
-- `kill-window` - Terminate a window by ID
-
-### Pane Operations
-- `list-panes` - List panes in a window
-- `split-pane` - Split a pane horizontally or vertically
-- `kill-pane` - Terminate a pane by ID
-- `capture-pane` - Read content from a pane
-- `execute-command` - Run a command in a pane
-- `get-command-result` - Get result of executed command
-
-## Reading Pane Output
-
-To read what's displayed in a pane:
-
-1. **Identify the pane**: Use `list-sessions` → `list-windows` → `list-panes` to find the pane ID
-2. **Capture content**: Use `capture-pane` with the pane ID
-
-```
-# Example workflow
-1. list-sessions → find session ID
-2. list-windows with session ID → find window ID
-3. list-panes with window ID → find pane ID
-4. capture-pane with pane ID → get output
+| Window | Name | Layout | Panes |
+|--------|------|--------|-------|
+| 1 | Servers | single | `/path/to/project` → `yarn start` |
+| 2 | IDE | vertical | `/path/to/project`, `~/notes` |
+| 3 | Console | horizontal | `/path` → `rails c`, `/path` → `claude` |
 ```
 
-When the user says "check pane 2" or "read the server pane", navigate the hierarchy to find the correct pane, then capture its content.
+**Layout values:**
+- `single` - One pane (default)
+- `vertical` - Side-by-side panes (even-horizontal in tmux)
+- `horizontal` - Stacked panes (even-vertical in tmux)
 
-## Running Commands in Panes
+**Pane notation:**
+- Path only: `/path/to/dir`
+- Path with command: `/path/to/dir` → `command`
 
-To execute a command in a specific pane:
+### Variable Inference
 
-1. **Locate the target pane** using the hierarchy navigation above
-2. **Execute command**: Use `execute-command` with pane ID and command string
-3. **Check result**: Use `get-command-result` to verify execution
+When loading templates or interpreting descriptions, infer values for common variables:
 
-Common scenarios:
-- "Restart the server" → Find server pane, execute restart command
-- "Run tests" → Find test pane or create one, execute test command
-- "Clear the logs pane" → Find logs pane, execute `clear`
+| Variable | Inference Logic |
+|----------|-----------------|
+| `${project_dir}` | 1. Project name mentioned in prompt → search working directories<br>2. Current working directory |
+| `${notes_dir}` | `~/notes` if exists, else `~/Documents/notes`, else ask |
+
+Always show inferred values in the preview table for user confirmation.
+
+## MCP Tools Reference
+
+Use these tmux MCP tools for session management:
+
+| Tool | Purpose |
+|------|---------|
+| `list-sessions` | List active tmux sessions |
+| `create-session` | Create new session (first window included) |
+| `create-window` | Add window to existing session |
+| `split-pane` | Split existing pane vertically or horizontally |
+| `execute-command` | Run command in a pane |
+| `kill-session` | Terminate a session |
+| `read-pane` | Read content from a pane |
+| `send-keys` | Send keystrokes to a pane |
+
+### Session Creation Sequence
+
+To create a multi-window session:
+
+```
+1. create-session (name, first window name, path)
+2. For each additional window:
+   - create-window (session, name, path)
+3. For each pane split needed:
+   - split-pane (session, window, direction, path)
+4. For each startup command:
+   - execute-command (session, window, pane, command)
+```
 
 ## Template System
 
-Templates are stored in `~/.config/muxy/templates/` as YAML files.
+Templates are YAML files stored in `~/.config/muxy/templates/`.
 
-### Template Structure
+### Template Operations
 
-```yaml
-name: template-name
-description: Brief description of the template purpose
-windows:
-  - name: window-name
-    layout: even-horizontal  # optional: even-vertical, main-horizontal, tiled
-    panes:
-      - path: /starting/directory
-        command: optional startup command
-      - path: /another/directory
-        command: another command
-```
+**Save a template:** After confirming a session preview, offer to save:
+- "Would you like to save this as a template?"
+- Write YAML to `~/.config/muxy/templates/{name}.yaml`
 
-### Layout Options
+**Load a template:** When user mentions a template name:
+- Read from `~/.config/muxy/templates/{name}.yaml`
+- Parse YAML and infer variable values
+- Show preview with resolved values
 
-- `even-horizontal` - Panes side by side, equal width
-- `even-vertical` - Panes stacked, equal height
-- `main-horizontal` - One large pane on top, others below
-- `main-vertical` - One large pane on left, others on right
-- `tiled` - Grid arrangement
+**List templates:** Read directory contents of `~/.config/muxy/templates/`
 
-### Creating Sessions from Templates
+For template YAML format, see `references/template-format.md`.
 
-When creating a session from a template:
+## Conversational Patterns
 
-1. Parse the template YAML
-2. Create the session with `create-session`
-3. For each window after the first, use `create-window`
-4. For each additional pane in a window, use `split-pane`
-5. For each pane with a command, use `execute-command`
+### User Says: Create session from description
 
-Name the session as `UserSessionName (TemplateName)`.
+Example: "Create a tmux session for my rails project with servers, console, and IDE windows"
 
-## Common Workflows
+Response flow:
+1. Parse: 3 windows (servers, console, IDE)
+2. Infer: project_dir from cwd or prompt mention
+3. Present preview table
+4. Wait for "looks good" or adjustments
+5. Execute via MCP tools
 
-### Development Environment
+### User Says: Use a template
 
-```yaml
-name: dev
-description: Standard development setup
-windows:
-  - name: code
-    panes:
-      - path: ~/project
-        command: $EDITOR .
-  - name: server
-    panes:
-      - path: ~/project
-        command: npm run dev
-  - name: shell
-    panes:
-      - path: ~/project
-```
+Example: "New tmux for rails"
 
-### Monitoring Setup
+Response flow:
+1. Load `~/.config/muxy/templates/rails.yaml`
+2. Infer variable values
+3. Present preview with resolved paths
+4. Execute on confirmation
 
-```yaml
-name: monitor
-description: System monitoring layout
-windows:
-  - name: main
-    layout: tiled
-    panes:
-      - command: htop
-      - command: watch -n1 'df -h'
-      - command: tail -f /var/log/syslog
-      - command: nethogs
-```
+### User Says: Save as template
 
-## Troubleshooting
+Example: "Save this as a template called 'fullstack'"
 
-### "Session not found"
+Response flow:
+1. Take the last confirmed session plan
+2. Identify paths that should become variables
+3. Write YAML to templates directory
+4. Confirm save location
 
-- Verify session name with `list-sessions`
-- Check if session was created (tmux may not be running)
+### User Says: Basic tmux operation
 
-### "Pane not responding"
+Examples: "List my sessions", "Kill the dev session", "What's running in tmux?"
 
-- The process in the pane may be blocking
-- Use `capture-pane` to see current state
-- Consider sending interrupt signals
+Response: Use MCP tools directly (`list-sessions`, `kill-session`, `read-pane`) without preview workflow.
 
-### "Command didn't execute"
+## Best Practices
 
-- Verify pane ID is correct
-- Check if pane is ready (not running an interactive program)
-- Use `get-command-result` to check status
+- **Always preview before creating** - Never create sessions without user confirmation
+- **Show inferred values** - Make variable resolution transparent
+- **Offer adjustments** - After preview, accept modifications before executing
+- **Name sessions descriptively** - Include project name when relevant
+- **Preserve user terminology** - Use their window names exactly as specified
 
-## Configuration
+## Additional Resources
 
-### Shell Configuration
+### Reference Files
 
-Set the shell for tmux-mcp via environment variable:
-
-```bash
-export MUXY_SHELL=fish
-```
-
-Default: `fish`. The shell setting ensures proper command exit status handling in tmux-mcp.
-
-### Template Directory
-
-Templates are stored in `~/.config/muxy/templates/` by default. Each template is a `.yaml` file.
+For detailed template YAML format and examples, see:
+- **`references/template-format.md`** - Complete template specification with examples

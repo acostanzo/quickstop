@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "tmux": {
-      "command": "npx",
-      "args": ["-y", "tmux-mcp", "--shell-type=${MUXY_SHELL:-fish}"]
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch-tmux-mcp.sh"]
     }
   }
 }
