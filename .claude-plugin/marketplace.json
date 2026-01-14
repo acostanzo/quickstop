@@ -15,8 +15,8 @@
     },
     {
       "name": "muxy",
-      "version": "2.0.0",
-      "description": "Tmux session management with templates and natural language pane interactions",
+      "version": "3.0.0",
+      "description": "Natural language tmux session management with templates",
       "source": "./plugins/muxy",
       "keywords": ["tmux", "terminal", "multiplexer", "sessions", "templates"]
     },

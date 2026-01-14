@@ -1,106 +1,102 @@
 ---
-description: Verify tmux and MCP server setup for Muxy
-allowed-tools: Bash, Read
+name: doctor
+description: Verify muxy plugin setup and dependencies
+allowed-tools:
+  - Bash
+  - Read
 ---
 
-Diagnose the Muxy plugin setup and verify all dependencies are properly configured.
+# Muxy Doctor
+
+Run diagnostics to verify the muxy plugin is properly configured.
 
 ## Checks to Perform
 
-### 1. Tmux Installation
+Execute each check and report results:
 
-Check if tmux is installed:
+### 1. tmux Installation
+
 ```bash
-which tmux && tmux -V
+tmux -V
 ```
 
-Report:
-- ✓ tmux installed (version X.X)
-- ✗ tmux not found - install with `brew install tmux` or `apt install tmux`
+**Pass:** Version string returned (e.g., "tmux 3.4")
+**Fail:** Command not found
 
-### 2. Tmux Server Running
+### 2. npx Availability
 
-Check if tmux server is running:
 ```bash
-tmux list-sessions 2>&1
+npx --version
 ```
 
-Report:
-- ✓ tmux server running (X active sessions)
-- ○ tmux server not running (will start when needed)
+**Pass:** Version number returned
+**Fail:** Command not found
 
-### 3. Node.js / npx Available
+### 3. tmux MCP Server
 
-Check if npx is available (needed for tmux-mcp):
+Check if tmux-mcp is connectable by verifying MCP tools are available. Use `/mcp` or check tool availability.
+
+**Pass:** tmux MCP tools (list-sessions, create-session, etc.) are available
+**Fail:** MCP server not connected
+
+### 4. Shell Configuration
+
+Check if `MUXY_SHELL` override is set, otherwise shell is auto-detected at MCP startup.
+
 ```bash
-which npx && npx --version
+echo ${MUXY_SHELL:-"(auto-detect)"}
 ```
 
-Report:
-- ✓ npx available (version X.X.X)
-- ✗ npx not found - install Node.js from https://nodejs.org
+**Pass:** Shows shell name or "(auto-detect)"
+**Note:** Auto-detection walks the process tree to find the launching shell.
 
-### 4. tmux-mcp Server
+### 5. Templates Directory
 
-Try to verify tmux-mcp can be loaded:
 ```bash
-npx -y tmux-mcp --help 2>&1 || echo "UNAVAILABLE"
+ls -la ~/.config/muxy/templates/ 2>/dev/null
 ```
 
-Report:
-- ✓ tmux-mcp available
-- ✗ tmux-mcp not available - check npm/network access
-
-### 5. Shell Configuration
-
-Check shell configuration:
-```bash
-echo "MUXY_SHELL=${MUXY_SHELL:-not set}"
-```
-
-Report:
-- ✓ Shell: fish (from MUXY_SHELL)
-- ○ Shell: fish (default) - set MUXY_SHELL if using different shell
-
-### 6. Templates Directory
-
-Check templates directory:
-```bash
-ls ~/.config/muxy/templates/*.yaml 2>/dev/null | wc -l
-```
-
-Report:
-- ✓ Templates directory exists (X templates)
-- ○ Templates directory empty
-- ○ Templates directory doesn't exist (will be created on first template)
+**Pass:** Directory exists (may be empty)
+**Note:** If missing, offer to create it
 
 ## Output Format
 
+Present results as a checklist:
+
 ```
-╭─ Muxy Doctor ──────────────────────────────────╮
-│                                                │
-│  ✓ tmux 3.4 installed                          │
-│  ✓ tmux server running (2 sessions)            │
-│  ✓ npx available                               │
-│  ✓ tmux-mcp server available                   │
-│  ✓ Shell configured: fish (env var)            │
-│  ○ Templates: 0 (directory will be created)    │
-│                                                │
-│  Status: Ready to use!                         │
-│                                                │
-╰────────────────────────────────────────────────╯
+## Muxy Diagnostics
+
+✓ tmux: v3.4
+✓ npx: 10.2.0
+✓ tmux-mcp: Connected
+✓ Shell: fish
+✓ Templates: ~/.config/muxy/templates/ (3 templates)
 ```
 
-## Status Summary
+Or with issues:
 
-At the end, provide overall status:
-- **Ready to use!** - All required checks pass
-- **Setup incomplete** - Missing required dependencies (tmux, npx)
-- **Partially configured** - Optional items missing but functional
+```
+## Muxy Diagnostics
 
-## Recommendations
+✓ tmux: v3.4
+✓ npx: 10.2.0
+✗ tmux-mcp: Not connected - check /mcp status
+✓ Shell: fish
+⚠ Templates: Directory not found
 
-If issues found, provide specific fix instructions:
-- Missing tmux: "Install tmux: `brew install tmux` (macOS) or `apt install tmux` (Ubuntu)"
-- Missing npx: "Install Node.js from https://nodejs.org"
-- Different shell: "Set your shell with: `export MUXY_SHELL=zsh` (or bash, fish, etc.)"
+### Recommendations
+- Run `/mcp` to check MCP server status
+- Create templates directory: `mkdir -p ~/.config/muxy/templates`
+```
+
+## Remediation
+
+If issues are found, provide specific fix commands:
+
+| Issue | Fix |
+|-------|-----|
+| tmux not found | `brew install tmux` (macOS) or `apt install tmux` (Linux) |
+| npx not found | Install Node.js from nodejs.org |
+| MCP not connected | Restart Claude Code session |
+| Shell not detected | Set `MUXY_SHELL` env var to your shell |
+| Templates dir missing | `mkdir -p ~/.config/muxy/templates` |

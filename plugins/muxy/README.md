@@ -1,124 +1,152 @@
-# Muxy
+# Muxy v3
 
-Tmux session management with templates and natural language pane interactions.
+Natural language tmux session management for Claude Code.
+
+## Overview
+
+Muxy lets you describe tmux sessions in plain English. Just tell Claude what you want:
+
+> "Create a tmux session for my rails project with three windows: one for the server, one split horizontally for console and shell, and one for my editor"
+
+Claude shows you a preview, you confirm, and it's created.
 
 ## Features
 
-- **Template-based Sessions** - Create reusable session layouts with windows, panes, and startup commands
-- **Natural Pane Interaction** - Read pane output and run commands using natural language
-- **Session Management** - Create, list, inspect, and destroy tmux sessions
-- **Doctor Command** - Verify tmux and MCP server setup
+- **Natural language session creation** - Describe layouts in your own words
+- **Visual preview before creation** - See exactly what will be built
+- **Template system** - Save and reuse session layouts
+- **Smart variable inference** - Automatically detects project directories
+- **Auto-detected shell** - Works with fish, zsh, bash, etc.
 
-## Requirements
+## Quick Start
 
-- **tmux** 2.1+ installed
-- **Node.js** (for npx/tmux-mcp)
-- **tmux-mcp** server (auto-installed via npx)
+### Create a Session
 
-## Installation
+Just describe what you want:
 
-Add to your Claude Code plugins:
-
-```bash
-claude --plugin-dir /path/to/muxy
+```
+New tmux session named "My Project"
+- Window 1: Server, run `npm start`
+- Window 2: Two vertical panes for coding
+- Window 3: Horizontal split with claude and shell
 ```
 
-## Configuration
+Claude presents a preview table, you say "looks good", and it's created.
 
-### Shell Configuration
+### Use a Template
 
-Muxy uses tmux-mcp which needs to know your shell for proper command exit status handling. Set it via environment variable:
-
-```bash
-export MUXY_SHELL=fish
+```
+New tmux for rails
 ```
 
-Add this to your shell profile (`.bashrc`, `.zshrc`, `config.fish`, etc.) to persist it.
+Claude loads the template, infers your project directory, shows the preview, and creates on confirmation.
 
-**Default**: `fish` (change by setting `MUXY_SHELL`)
+### Save as Template
 
-### Verify Setup
+After confirming a session:
 
-Run `/muxy:doctor` to verify your setup is complete.
+```
+Save this as a template called "fullstack"
+```
 
-## Usage
+### Basic Operations
 
-### Session Commands
+These work naturally without previews:
+
+- "List my tmux sessions"
+- "Kill the dev session"
+- "What's running in the server pane?"
+
+## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/muxy:session [template]` | Create session from template or custom |
-| `/muxy:list-sessions` | List all active sessions |
-| `/muxy:read-session [name]` | Show session layout and processes |
-| `/muxy:kill [name]` | Destroy session with confirmation |
-
-### Template Commands
-
-| Command | Description |
-|---------|-------------|
-| `/muxy:template-create` | Interactively create a new template |
-| `/muxy:template-list` | List all available templates |
-| `/muxy:template-edit [name]` | Modify an existing template |
-| `/muxy:template-delete [name]` | Remove a template |
-
-### Natural Language Pane Interaction
-
-Through the muxy skill, you can interact with panes naturally:
-
-- "What's happening in the server pane?"
-- "Read the output from pane 2"
-- "Run `npm test` in the test window"
-- "Restart the server in the main pane"
-- "Clear the logs pane"
+| `/muxy:doctor` | Verify setup and dependencies |
+| `/muxy:templates` | List available templates |
 
 ## Templates
 
-Templates are stored in `~/.config/muxy/templates/` as YAML files.
+Templates are YAML files stored in `~/.config/muxy/templates/`.
 
-### Example Template
+### Format
 
 ```yaml
-name: dev
-description: Standard development setup
+name: rails
+description: Standard Rails development
+variables:
+  project_dir: "Rails project root"
 windows:
-  - name: editor
+  - name: Server
     panes:
-      - path: ~/project
-        command: $EDITOR .
-  - name: server
-    layout: even-horizontal
+      - path: ${project_dir}
+        command: bin/rails server
+  - name: Console
+    layout: horizontal
     panes:
-      - path: ~/project
-        command: npm run dev
-      - path: ~/project
-        command: tail -f logs/app.log
-  - name: shell
-    panes:
-      - path: ~/project
+      - path: ${project_dir}
+        command: rails c
+      - path: ${project_dir}
 ```
 
-### Layout Options
+### Variables
 
-- `even-horizontal` - Panes side by side
-- `even-vertical` - Panes stacked
-- `main-horizontal` - Large pane on top
-- `main-vertical` - Large pane on left
-- `tiled` - Grid arrangement
+Templates support variables that are inferred automatically:
 
-## Session Naming
+| Variable | Inference |
+|----------|-----------|
+| `${project_dir}` | Current working directory or detected from prompt |
+| `${notes_dir}` | `~/notes` if exists |
 
-Sessions created from templates are named: `SessionName (TemplateName)`
+Unknown variables prompt for values.
 
-Example: Creating a "Feature-X" session from the "dev" template creates `Feature-X (dev)`.
+## Requirements
 
-## Components
+- tmux installed
+- Node.js/npx for tmux-mcp server
+- Claude Code with MCP support
 
-| Component | Purpose |
-|-----------|---------|
-| `skills/muxy/` | Tmux expertise and pane interactions |
-| `commands/` | Session and template management (9 commands) |
-| `.mcp.json` | tmux-mcp server configuration |
+## Shell Detection
 
-## Version
+Muxy automatically detects the shell you launched Claude from (fish, zsh, bash, etc.) and configures tmux-mcp accordingly. No manual configuration needed.
 
-2.0.0 - Complete rewrite with template system, MCP integration, and natural pane interaction
+If detection fails, it defaults to bash. You can override by setting `MUXY_SHELL` environment variable.
+
+## Troubleshooting
+
+Run `/muxy:doctor` to diagnose issues:
+
+```
+✓ tmux: v3.4
+✓ npx: 10.2.0
+✓ tmux-mcp: Connected
+✓ Shell: fish
+✓ Templates: ~/.config/muxy/templates/
+```
+
+### Common Issues
+
+**MCP not connected:** Restart your Claude Code session.
+
+**Shell not detected:** Set `MUXY_SHELL` environment variable to your shell (fish, zsh, bash).
+
+**Templates directory missing:** Run `mkdir -p ~/.config/muxy/templates`
+
+## Version History
+
+### v3.0.0
+
+Complete rewrite focused on simplicity:
+- Natural language session creation with preview workflow
+- Template system with variable inference
+- Auto-detected shell (no more MUXY_SHELL configuration)
+- Reduced from 9 commands to 2
+
+### v2.0.0
+
+- YAML-based templates
+- Natural language pane interactions
+- 9 specialized commands
+
+### v1.0.0
+
+- Initial release

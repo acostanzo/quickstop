@@ -7,7 +7,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 | Plugin | Version | Description |
 |--------|---------|-------------|
 | [Arborist](plugins/arborist/) | 3.1.0 | Sync gitignored config files across git worktrees |
-| [Muxy](plugins/muxy/) | 2.0.0 | Tmux session management with templates and natural language pane interactions |
+| [Muxy](plugins/muxy/) | 3.0.0 | Natural language tmux session management with templates |
 | [Miser](plugins/miser/) | 1.0.2 | Mise polyglot version manager integration for Claude Code |
 
 ## Installation
@@ -53,29 +53,21 @@ Automatic syncing of gitignored config files across git worktrees.
 
 ### Muxy
 
-Tmux session management with YAML-based templates and natural language pane interactions.
+Natural language tmux session management. Describe what you want, Claude builds it.
 
 **Features:**
-- Template-based session creation
-- Natural language pane interactions ("read the server pane", "run tests in pane 2")
-- tmux-mcp server integration
-- Session and template management
+- Natural language session creation with visual previews
+- Template system with smart variable inference
+- Auto-detected shell (no configuration needed)
+- Dramatically simplified from v2 (2 commands vs 9)
 
 **Commands:**
-- `/muxy:session [template]` - Create session from template
-- `/muxy:list-sessions` - List active sessions
-- `/muxy:read-session [name]` - Show session layout
-- `/muxy:kill [name]` - Destroy session
-- `/muxy:template-create` - Create new template
-- `/muxy:template-list` - List templates
-- `/muxy:template-edit [name]` - Modify template
-- `/muxy:template-delete [name]` - Remove template
 - `/muxy:doctor` - Verify setup
+- `/muxy:templates` - List available templates
 
 **Requirements:**
-- tmux 2.1+
+- tmux installed
 - Node.js (for tmux-mcp)
-- Set `MUXY_SHELL` env var for your shell (default: fish)
 
 ### Miser
 
