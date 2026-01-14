@@ -95,7 +95,7 @@ Templates support variables that are inferred automatically:
 | Variable | Inference |
 |----------|-----------|
 | `${project_dir}` | Current working directory or detected from prompt |
-| `${notes_dir}` | `~/notes` if exists |
+| `${notes_dir}` | `~/notes` if exists, else `~/Documents/notes`, else prompt |
 
 Unknown variables prompt for values.
 

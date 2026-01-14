@@ -65,8 +65,7 @@ These variables are automatically inferred when possible:
 | Variable | Inference |
 |----------|-----------|
 | `${project_dir}` | Current working directory, or detected from prompt |
-| `${notes_dir}` | `~/notes` or `~/Documents/notes` if exists |
-| `${home}` | User's home directory |
+| `${notes_dir}` | `~/notes` if exists, else `~/Documents/notes`, else prompt user |
 
 Unknown variables prompt the user for values.
 

@@ -63,7 +63,7 @@ Use these tmux MCP tools for session management:
 | `split-pane` | Split existing pane vertically or horizontally |
 | `execute-command` | Run command in a pane |
 | `kill-session` | Terminate a session |
-| `read-pane` | Read content from a pane |
+| `capture-pane` | Read content from a pane |
 | `send-keys` | Send keystrokes to a pane |
 
 ### Session Creation Sequence
@@ -136,7 +136,7 @@ Response flow:
 
 Examples: "List my sessions", "Kill the dev session", "What's running in tmux?"
 
-Response: Use MCP tools directly (`list-sessions`, `kill-session`, `read-pane`) without preview workflow.
+Response: Use MCP tools directly (`list-sessions`, `kill-session`, `capture-pane`) without preview workflow.
 
 ## Best Practices
 
