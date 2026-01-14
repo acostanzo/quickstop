@@ -1,6 +1,6 @@
 #!/bin/bash
-# session-start.sh - Check for missing gitignored config files in worktrees
-# Sends macOS notification if configs are missing
+# session-start.sh - Auto-sync gitignored config files from main worktree
+# Silently syncs missing configs when starting Claude in a linked worktree
 
 # Check if we're in a git repository
 if ! git rev-parse --git-dir &>/dev/null; then
@@ -37,30 +37,35 @@ if [[ -z "$MAIN_GITIGNORED" ]]; then
     exit 0
 fi
 
-# Count missing config files
-MISSING_COUNT=0
+# Sync missing files
+SYNCED_COUNT=0
+SYNCED_FILES=()
+
 while IFS= read -r file; do
     [[ -z "$file" ]] && continue
-    if [[ ! -e "$CURRENT_WORKTREE/$file" ]]; then
-        ((MISSING_COUNT++)) || true
+
+    SOURCE="$MAIN_WORKTREE/$file"
+    TARGET="$CURRENT_WORKTREE/$file"
+
+    # Only sync if file exists in main but not in current worktree
+    if [[ -f "$SOURCE" && ! -e "$TARGET" ]]; then
+        # Create target directory if needed
+        TARGET_DIR=$(dirname "$TARGET")
+        mkdir -p "$TARGET_DIR" 2>/dev/null
+
+        # Copy file preserving permissions
+        if cp -a "$SOURCE" "$TARGET" 2>/dev/null; then
+            ((SYNCED_COUNT++)) || true
+            SYNCED_FILES+=("$file")
+        fi
     fi
 done <<< "$MAIN_GITIGNORED"
 
-# Only notify if there are missing files
-if [[ $MISSING_COUNT -eq 0 ]]; then
-    exit 0
-fi
-
-# Get branch name
-BRANCH=$(git branch --show-current 2>/dev/null) || BRANCH="(detached)"
-
-# Send macOS alert dialog
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    if [[ $MISSING_COUNT -eq 1 ]]; then
-        MESSAGE="Missing 1 config file from main.\n\nRun /arborist:tend to sync."
+# Output summary if files were synced
+if [[ $SYNCED_COUNT -gt 0 ]]; then
+    if [[ $SYNCED_COUNT -eq 1 ]]; then
+        echo "🌳 Synced 1 config file from main: ${SYNCED_FILES[0]}"
     else
-        MESSAGE="Missing $MISSING_COUNT config files from main.\n\nRun /arborist:tend to sync."
+        echo "🌳 Synced $SYNCED_COUNT config files from main: ${SYNCED_FILES[*]}"
     fi
-
-    osascript -e "display alert \"🌳 Worktree: $BRANCH\" message \"$MESSAGE\"" 2>/dev/null || true
 fi
