@@ -96,7 +96,7 @@ fi
 AGE_DAYS=$(( (CURRENT_TIME - LAST_MODIFIED) / 86400 ))
 
 if [ $AGE_DAYS -gt $STALE_DAYS ]; then
-    echo "Guilty Spark: Documentation may be stale (last updated $AGE_DAYS days ago)"
+    echo "Guilty Spark: Documentation may be stale (last updated $AGE_DAYS days ago). Consider using /guilty-spark:checkpoint or asking The Monitor to update docs."
 fi
 
 exit 0

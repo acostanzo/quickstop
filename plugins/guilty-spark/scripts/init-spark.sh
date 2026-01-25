@@ -51,8 +51,8 @@ docs/
 
 ## About This Documentation
 
-This documentation is maintained by Guilty Spark, an autonomous documentation system.
-Documentation is updated automatically at session end or before context clearing.
+This documentation is maintained by Guilty Spark, a proactive documentation system.
+Documentation is updated when you ask The Monitor or use `/guilty-spark:checkpoint`.
 
 **Last Updated:** _Not yet initialized_
 EOF
