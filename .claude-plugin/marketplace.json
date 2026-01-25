@@ -26,6 +26,13 @@
       "description": "Mise polyglot version manager integration for Claude Code",
       "source": "./plugins/miser",
       "keywords": ["mise", "version-manager", "polyglot", "ruby", "node", "python", "tools"]
+    },
+    {
+      "name": "guilty-spark",
+      "version": "1.0.0",
+      "description": "Autonomous documentation management for Claude Code projects",
+      "source": "./plugins/guilty-spark",
+      "keywords": ["documentation", "automation", "architecture", "features", "docs"]
     }
   ]
 }

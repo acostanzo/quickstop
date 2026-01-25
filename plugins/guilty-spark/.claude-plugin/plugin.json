@@ -1,0 +1,11 @@
+{
+  "name": "guilty-spark",
+  "version": "1.0.0",
+  "description": "Autonomous documentation management for Claude Code projects",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["documentation", "automation", "architecture", "features", "docs"]
+}
