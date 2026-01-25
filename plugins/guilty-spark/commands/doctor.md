@@ -60,7 +60,7 @@ Documentation Structure:
 
 Documentation Health:
   Total files: 12
-  Last update: 2024-01-15
+  Last update: YYYY-MM-DD
   Stale (>7 days): 0
 
 Code References:

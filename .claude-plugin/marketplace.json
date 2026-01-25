@@ -29,7 +29,7 @@
     },
     {
       "name": "guilty-spark",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Autonomous documentation management for Claude Code projects",
       "source": "./plugins/guilty-spark",
       "keywords": ["documentation", "automation", "architecture", "features", "docs"]

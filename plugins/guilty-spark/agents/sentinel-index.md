@@ -79,7 +79,7 @@ If dispatched from Sentinel-Feature:
 
 | Feature | Description | Last Updated |
 |---------|-------------|--------------|
-| [Authentication](authentication/README.md) | User auth system | 2024-01-15 |
+| [Authentication](authentication/README.md) | User auth system | YYYY-MM-DD |
 ```
 
 ## Output

@@ -66,7 +66,7 @@ Task(
 )
 ```
 
-### User Asks: How Does X Work? (The Consultant)
+### User Asks: How Does X Work? (Deep Research)
 
 **Triggers:** "how does X work", "trace the flow of Y", "what calls Z", "explain the architecture of..."
 
@@ -104,7 +104,7 @@ Task(
 
 ## Templates
 
-Reference templates are in `references/`:
+Reference templates are in `${CLAUDE_PLUGIN_ROOT}/skills/monitor/references/`:
 - `feature-template.md` - Feature documentation format
 - `architecture-template.md` - Architecture documentation format
 

@@ -35,12 +35,18 @@ docs/
 
 ## How It Works
 
+### Session Initialization
+
+On session start, Guilty Spark:
+- Creates `docs/` directory if missing
+- Reports staleness warnings if docs are >7 days old
+
 ### Automatic Capture
 
-Guilty Spark automatically captures documentation at two key moments:
+Guilty Spark captures documentation at two key moments:
 
 1. **Session End** - When you exit Claude Code, Guilty Spark analyzes the session for documentation-worthy work
-2. **Before /clear** - When you clear context, Guilty Spark captures first to preserve knowledge
+2. **Clear Detection** - When you submit `/clear`, Guilty Spark detects it and attempts to capture documentation first
 
 If meaningful work was done (new features, architecture decisions), a Sentinel is dispatched in the background to update documentation.
 
@@ -50,7 +56,7 @@ Ask Claude about documentation and The Monitor skill activates:
 
 - "Document this feature" → Dispatches Sentinel-Feature
 - "Update architecture docs" → Dispatches Sentinel-Architecture
-- "How does X work?" → Dispatches Sentinel-Research (The Consultant)
+- "How does X work?" → Dispatches Sentinel-Research for deep analysis
 - "What's documented?" → Navigates existing documentation
 
 ### Sentinels
@@ -68,7 +74,7 @@ Sentinels are autonomous agents that maintain documentation:
 
 | Command | Description |
 |---------|-------------|
-| `/spark:doctor` | Verify plugin setup and documentation health |
+| `/guilty-spark:doctor` | Verify plugin setup and documentation health |
 
 ## Atomic Commits
 
@@ -87,7 +93,7 @@ docs(spark): Document authentication feature
 
 1. **Let it work** - Guilty Spark captures automatically; manual intervention is optional
 2. **Answer questions** - When asked about features, the captured docs make research faster
-3. **Review periodically** - Run `/spark:doctor` to check documentation health
+3. **Review periodically** - Run `/guilty-spark:doctor` to check documentation health
 4. **Trust the process** - Sentinels validate code references and keep docs current
 
 ## Requirements
