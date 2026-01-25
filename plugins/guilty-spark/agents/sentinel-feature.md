@@ -1,6 +1,8 @@
 ---
 name: sentinel-feature
-description: Background agent that documents features by analyzing session work and updating docs/features/. Dispatched by SessionEnd and UserPromptSubmit hooks to capture documentation before context is lost.
+description: Background agent that documents features by analyzing session work and updating docs/features/. Dispatched by SessionEnd and UserPromptSubmit hooks to capture documentation before context is lost. <example>Document the authentication feature</example> <example>Capture the new payment processing feature</example>
+model: inherit
+color: cyan
 tools:
   - Glob
   - Grep

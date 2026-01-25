@@ -1,10 +1,13 @@
 ---
 name: sentinel-index
-description: Background agent that updates INDEX.md files when documentation changes. Ensures the main docs/INDEX.md reflects current documentation state.
+description: Background agent that updates INDEX.md files when documentation changes. Ensures the main docs/INDEX.md reflects current documentation state. <example>Update documentation indexes</example> <example>Refresh the feature index</example>
+model: inherit
+color: cyan
 tools:
   - Glob
   - Grep
   - Read
+  - Write
   - Edit
   - Bash
 ---

@@ -31,9 +31,12 @@ If documentation updates are warranted:
 
 Example dispatch:
 ```
-Task tool with subagent_type: "guilty-spark:sentinel-feature"
-prompt: "Document the following session work: [summary]. Check for existing documentation and update or create as needed. Commit atomically."
-run_in_background: true
+Task(
+  description: "Document session work",
+  agent: "guilty-spark:sentinel-feature",
+  prompt: "Document the following session work: [summary]. Check for existing documentation and update or create as needed. Commit atomically.",
+  run_in_background: true
+)
 ```
 
 If no documentation updates are needed:

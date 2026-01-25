@@ -1,12 +1,16 @@
 ---
 name: sentinel-research
-description: Deep codebase research agent for The Consultant skill. Performs thorough analysis of specific questions about how code works, traces execution paths, and returns findings to the main session. May update docs if gaps are found.
+description: Deep codebase research agent for The Consultant skill. Performs thorough analysis of specific questions about how code works, traces execution paths, and returns findings to the main session. May update docs if gaps are found. <example>How does the authentication flow work?</example> <example>Trace the request lifecycle</example>
+model: inherit
+color: cyan
 tools:
   - Glob
   - Grep
   - Read
+  - Write
   - Edit
   - Bash
+  - Task
 ---
 
 # Sentinel-Research

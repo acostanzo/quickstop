@@ -11,7 +11,15 @@ Check if the user's prompt is `/clear` or indicates they are about to clear the 
 If the prompt is `/clear` (exact match):
 1. This is a critical moment - context will be lost after this command
 2. Quickly analyze the conversation for documentation-worthy work (same criteria as SessionEnd)
-3. If warranted, dispatch `guilty-spark:sentinel-feature` agent in background BEFORE the clear happens
+3. If warranted, dispatch the agent in background BEFORE the clear happens:
+```
+Task(
+  description: "Capture before clear",
+  agent: "guilty-spark:sentinel-feature",
+  prompt: "Document session work before context clear: [summary]",
+  run_in_background: true
+)
+```
 
 If the prompt is NOT `/clear`:
 - Output nothing (silent operation - do not interfere with normal prompts)

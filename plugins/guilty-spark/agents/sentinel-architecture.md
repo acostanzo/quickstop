@@ -1,6 +1,8 @@
 ---
 name: sentinel-architecture
-description: Analyzes and documents system architecture, technology stack, and key design decisions. Typically triggered manually via The Monitor skill when architecture documentation is needed.
+description: Analyzes and documents system architecture, technology stack, and key design decisions. Typically triggered manually via The Monitor skill when architecture documentation is needed. <example>Document the system architecture</example> <example>Analyze and document the API layer</example>
+model: inherit
+color: cyan
 tools:
   - Glob
   - Grep

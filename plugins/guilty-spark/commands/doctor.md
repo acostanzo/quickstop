@@ -1,6 +1,11 @@
 ---
 name: doctor
 description: Verify Guilty Spark plugin setup and documentation health
+allowed-tools:
+  - Bash
+  - Glob
+  - Read
+  - Grep
 ---
 
 # Guilty Spark Diagnostics

@@ -1,6 +1,6 @@
 {
   "name": "guilty-spark",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Autonomous documentation management for Claude Code projects",
   "author": {
     "name": "quickstop",

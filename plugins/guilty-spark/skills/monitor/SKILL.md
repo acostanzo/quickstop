@@ -42,8 +42,11 @@ docs/
 
 Example dispatch:
 ```
-Task tool with subagent_type: "guilty-spark:sentinel-feature"
-prompt: "Document the authentication feature. Focus on: [user's details]"
+Task(
+  description: "Document feature",
+  agent: "guilty-spark:sentinel-feature",
+  prompt: "Document the authentication feature. Focus on: [user's details]"
+)
 ```
 
 ### User Asks: Document Architecture
@@ -56,8 +59,11 @@ prompt: "Document the authentication feature. Focus on: [user's details]"
 
 Example dispatch:
 ```
-Task tool with subagent_type: "guilty-spark:sentinel-architecture"
-prompt: "Analyze and document the system architecture. Focus on: [specifics if any]"
+Task(
+  description: "Document architecture",
+  agent: "guilty-spark:sentinel-architecture",
+  prompt: "Analyze and document the system architecture. Focus on: [specifics if any]"
+)
 ```
 
 ### User Asks: How Does X Work? (The Consultant)
@@ -71,8 +77,11 @@ prompt: "Analyze and document the system architecture. Focus on: [specifics if a
 
 Example dispatch:
 ```
-Task tool with subagent_type: "guilty-spark:sentinel-research"
-prompt: "Research question: How does the authentication flow work?"
+Task(
+  description: "Research codebase",
+  agent: "guilty-spark:sentinel-research",
+  prompt: "Research question: How does the authentication flow work?"
+)
 ```
 
 ### User Asks: About Existing Documentation
