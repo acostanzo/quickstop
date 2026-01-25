@@ -11,24 +11,13 @@
         ]
       }
     ],
-    "SessionEnd": [
+    "PreToolUse": [
       {
-        "matcher": "*",
+        "matcher": "Bash(git commit*)",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "${CLAUDE_PLUGIN_ROOT}/hooks/session-end.md"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit.md"
+            "type": "command",
+            "command": "echo 'Guilty Spark: Consider documenting your changes before committing. Use /guilty-spark:checkpoint or ask The Monitor.'"
           }
         ]
       }

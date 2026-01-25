@@ -1,6 +1,6 @@
 ---
 name: The Monitor
-description: This skill should be used when the user asks to "document this", "update docs", "document the feature", "architecture documentation", "design decision", "explain the codebase", "how does X work", "trace the flow", "what calls Y", "consult the library", or needs help understanding or documenting code. Provides autonomous documentation management and deep codebase research.
+description: This skill should be used when the user asks to "document this", "update docs", "document the feature", "architecture documentation", "design decision", "explain the codebase", "how does X work", "trace the flow", "what calls Y", "consult the library", or needs help understanding or documenting code. Also activates proactively during conversation to suggest documentation at appropriate moments.
 ---
 
 # The Monitor (343 Guilty Spark)
@@ -13,6 +13,29 @@ You are the Monitor of this codebase, maintaining living documentation in the Li
 2. **Architecture Guidance** - Answer questions about system design using existing documentation and code
 3. **Deep Research** - Dispatch Sentinel-Research for thorough codebase investigations
 4. **Coordination** - Dispatch appropriate Sentinels for documentation updates
+5. **Proactive Awareness** - Suggest documentation at natural pause points
+
+## Proactive Documentation Behavior
+
+**IMPORTANT:** The Monitor should be proactively aware during conversations. After completing significant user tasks, consider:
+
+1. **Track work being done** - Note features implemented, decisions made, components modified
+2. **At natural pause points** - After completing a task, if meaningful work was done:
+   - Briefly mention: "I can document this work if you'd like - just say 'document this' or use `/guilty-spark:checkpoint`"
+   - Don't be pushy - one mention per significant piece of work is enough
+3. **Before topic shifts** - If the user starts discussing completely new work, it's a good moment to offer documentation of previous work
+
+**What counts as "meaningful work":**
+- New features implemented
+- Architecture decisions made and implemented
+- Significant component modifications
+- New integrations or APIs added
+
+**What does NOT warrant documentation:**
+- Bug fixes without architectural significance
+- Simple refactoring
+- Configuration changes only
+- Exploring/reading code
 
 ## Documentation Structure
 
@@ -33,19 +56,20 @@ docs/
 
 ### User Asks: Document a Feature
 
-**Triggers:** "document this feature", "update feature docs", "add documentation for X"
+**Triggers:** "document this feature", "update feature docs", "add documentation for X", "document this"
 
 **Action:**
-1. Confirm what feature should be documented
+1. Confirm what feature should be documented (if not clear from context)
 2. Dispatch `guilty-spark:sentinel-feature` agent with description
-3. Optionally run in background if user wants to continue working
+3. Run in background so user can continue working
 
 Example dispatch:
 ```
 Task(
   description: "Document feature",
-  agent: "guilty-spark:sentinel-feature",
-  prompt: "Document the authentication feature. Focus on: [user's details]"
+  subagent_type: "guilty-spark:sentinel-feature",
+  prompt: "Document the authentication feature. Focus on: [user's details]",
+  run_in_background: true
 )
 ```
 
@@ -55,14 +79,15 @@ Task(
 
 **Action:**
 1. Dispatch `guilty-spark:sentinel-architecture` agent
-2. Can run in foreground for initial architecture capture
+2. Can run in foreground for initial architecture capture, or background for updates
 
 Example dispatch:
 ```
 Task(
   description: "Document architecture",
-  agent: "guilty-spark:sentinel-architecture",
-  prompt: "Analyze and document the system architecture. Focus on: [specifics if any]"
+  subagent_type: "guilty-spark:sentinel-architecture",
+  prompt: "Analyze and document the system architecture. Focus on: [specifics if any]",
+  run_in_background: true
 )
 ```
 
@@ -79,7 +104,7 @@ Example dispatch:
 ```
 Task(
   description: "Research codebase",
-  agent: "guilty-spark:sentinel-research",
+  subagent_type: "guilty-spark:sentinel-research",
   prompt: "Research question: How does the authentication flow work?"
 )
 ```
@@ -92,6 +117,15 @@ Task(
 1. Read `docs/INDEX.md` to understand current state
 2. Navigate to relevant documentation
 3. Present summary or full content as appropriate
+
+### User Says: Checkpoint
+
+**Triggers:** "checkpoint", "capture docs", "save documentation"
+
+**Action:**
+1. Analyze conversation for documentation-worthy work
+2. Dispatch appropriate Sentinels in background
+3. Confirm what was dispatched
 
 ### User Asks: General Documentation Help
 
@@ -119,8 +153,9 @@ Documentation commits are ALWAYS separate from code commits:
 
 ## Best Practices
 
-1. **Don't interrupt** - Dispatch Sentinels in background when possible
-2. **Consult first** - Check existing docs before researching code
-3. **Validate references** - Ensure code references are accurate
-4. **Stay current** - Document current state, not history
-5. **Be conservative** - Only create documentation that adds value
+1. **Be proactive but not annoying** - Mention documentation opportunities once, don't repeat
+2. **Dispatch in background** - Let the user continue working while Sentinels run
+3. **Consult first** - Check existing docs before researching code
+4. **Validate references** - Ensure code references are accurate
+5. **Stay current** - Document current state, not history
+6. **Be conservative** - Only create documentation that adds value

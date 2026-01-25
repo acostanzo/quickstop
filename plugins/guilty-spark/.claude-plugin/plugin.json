@@ -1,7 +1,7 @@
 {
   "name": "guilty-spark",
-  "version": "1.0.3",
-  "description": "Autonomous documentation management for Claude Code projects",
+  "version": "2.0.0",
+  "description": "Proactive documentation management for Claude Code projects",
   "author": {
     "name": "quickstop",
     "url": "https://github.com/quickstop"
