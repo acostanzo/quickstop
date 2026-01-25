@@ -7,16 +7,17 @@ set -e
 DOCS_DIR="docs"
 
 # Create directory structure with error handling
-if ! mkdir -p "$DOCS_DIR/architecture/components" 2>/dev/null; then
+MKDIR_ERR=$(mkdir -p "$DOCS_DIR/architecture/components" 2>&1) || {
     echo "Guilty Spark: Error - Cannot create $DOCS_DIR/architecture/components" >&2
-    echo "Check permissions and disk space" >&2
+    echo "System error: $MKDIR_ERR" >&2
     exit 1
-fi
+}
 
-if ! mkdir -p "$DOCS_DIR/features" 2>/dev/null; then
+MKDIR_ERR=$(mkdir -p "$DOCS_DIR/features" 2>&1) || {
     echo "Guilty Spark: Error - Cannot create $DOCS_DIR/features" >&2
+    echo "System error: $MKDIR_ERR" >&2
     exit 1
-fi
+}
 
 # Get project name from directory (with fallback)
 PROJECT_NAME=$(basename "$(pwd)" 2>/dev/null) || PROJECT_NAME="unknown"
@@ -92,6 +93,12 @@ EOF
     exit 1
 }
 
+# Verify OVERVIEW.md was created
+if [ ! -f "$DOCS_DIR/architecture/OVERVIEW.md" ]; then
+    echo "Guilty Spark: Error - architecture/OVERVIEW.md not created" >&2
+    exit 1
+fi
+
 # Create features/INDEX.md
 {
     cat > "$DOCS_DIR/features/INDEX.md" << 'EOF'
@@ -113,6 +120,12 @@ EOF
     echo "Guilty Spark: Error - Failed to write features/INDEX.md" >&2
     exit 1
 }
+
+# Verify features/INDEX.md was created
+if [ ! -f "$DOCS_DIR/features/INDEX.md" ]; then
+    echo "Guilty Spark: Error - features/INDEX.md not created" >&2
+    exit 1
+fi
 
 echo "Created documentation structure in $DOCS_DIR/"
 exit 0

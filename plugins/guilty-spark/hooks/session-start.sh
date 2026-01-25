@@ -83,7 +83,16 @@ case "$UNAME_RESULT" in
         ;;
 esac
 
-CURRENT_TIME=$(date +%s)
+CURRENT_TIME=$(date +%s 2>/dev/null) || {
+    echo "Guilty Spark: Warning - Could not get current time" >&2
+    exit 0
+}
+
+# Validate timestamp is numeric
+if ! [[ "$CURRENT_TIME" =~ ^[0-9]+$ ]]; then
+    exit 0
+fi
+
 AGE_DAYS=$(( (CURRENT_TIME - LAST_MODIFIED) / 86400 ))
 
 if [ $AGE_DAYS -gt $STALE_DAYS ]; then

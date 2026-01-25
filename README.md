@@ -7,7 +7,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 | Plugin | Version | Description |
 |--------|---------|-------------|
 | [Arborist](plugins/arborist/) | 3.1.0 | Sync gitignored config files across git worktrees |
-| [Guilty Spark](plugins/guilty-spark/) | 1.0.2 | Autonomous documentation management for Claude Code projects |
+| [Guilty Spark](plugins/guilty-spark/) | 1.0.3 | Autonomous documentation management for Claude Code projects |
 | [Miser](plugins/miser/) | 1.0.2 | Mise polyglot version manager integration for Claude Code |
 | [Muxy](plugins/muxy/) | 3.0.0 | Natural language tmux session management with templates |
 
@@ -79,11 +79,11 @@ Autonomous documentation management for Claude Code projects. Named after 343 Gu
 - Automatic documentation capture at session end and before /clear
 - The Monitor skill for documentation management
 - Sentinel agents for autonomous documentation updates
-- Deep codebase research via The Consultant
+- Deep codebase research via Sentinel-Research
 - Atomic commits (docs always separate from code)
 
 **Commands:**
-- `/spark:doctor` - Verify plugin setup and documentation health
+- `/guilty-spark:doctor` - Verify plugin setup and documentation health
 
 ### Miser
 
