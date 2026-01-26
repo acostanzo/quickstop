@@ -68,7 +68,7 @@ Use `/guilty-spark:checkpoint` to capture documentation:
 
 ### Pre-Commit Reminder
 
-When you run `git commit`, Guilty Spark gently reminds you to consider documentation. Use `/guilty-spark:checkpoint` or say "document this" if needed.
+When Claude runs a `git commit` command via the Bash tool, Guilty Spark displays a reminder to consider documentation. Use `/guilty-spark:checkpoint` or say "document this" if needed.
 
 ### Sentinels
 

@@ -32,16 +32,12 @@ The user wants to capture documentation for work done in the current session. Th
 
 4. **Run in background** - Always dispatch with `run_in_background: true` so the user can continue
 
-## Example Dispatch
+## Example Task Tool Parameters
 
-```
-Task(
-  description: "Document session work",
-  subagent_type: "guilty-spark:sentinel-feature",
-  prompt: "Document the following work from this session: [summary of work]. Check existing docs and update or create as needed.",
-  run_in_background: true
-)
-```
+- `description`: "Document session work"
+- `subagent_type`: "guilty-spark:sentinel-feature"
+- `prompt`: "Document the following work from this session: [summary of work]. Check existing docs and update or create as needed."
+- `run_in_background`: true
 
 ## Output
 

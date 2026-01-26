@@ -63,15 +63,11 @@ docs/
 2. Dispatch `guilty-spark:sentinel-feature` agent with description
 3. Run in background so user can continue working
 
-Example dispatch:
-```
-Task(
-  description: "Document feature",
-  subagent_type: "guilty-spark:sentinel-feature",
-  prompt: "Document the authentication feature. Focus on: [user's details]",
-  run_in_background: true
-)
-```
+Example Task tool parameters:
+- `description`: "Document feature"
+- `subagent_type`: "guilty-spark:sentinel-feature"
+- `prompt`: "Document the authentication feature. Focus on: [user's details]"
+- `run_in_background`: true
 
 ### User Asks: Document Architecture
 
@@ -81,15 +77,11 @@ Task(
 1. Dispatch `guilty-spark:sentinel-architecture` agent
 2. Can run in foreground for initial architecture capture, or background for updates
 
-Example dispatch:
-```
-Task(
-  description: "Document architecture",
-  subagent_type: "guilty-spark:sentinel-architecture",
-  prompt: "Analyze and document the system architecture. Focus on: [specifics if any]",
-  run_in_background: true
-)
-```
+Example Task tool parameters:
+- `description`: "Document architecture"
+- `subagent_type`: "guilty-spark:sentinel-architecture"
+- `prompt`: "Analyze and document the system architecture. Focus on: [specifics if any]"
+- `run_in_background`: true
 
 ### User Asks: How Does X Work? (Deep Research)
 
@@ -100,14 +92,10 @@ Task(
 2. Present findings to user
 3. Offer to update documentation if gaps were found
 
-Example dispatch:
-```
-Task(
-  description: "Research codebase",
-  subagent_type: "guilty-spark:sentinel-research",
-  prompt: "Research question: How does the authentication flow work?"
-)
-```
+Example Task tool parameters (note: NO `run_in_background` - this runs in foreground):
+- `description`: "Research codebase"
+- `subagent_type`: "guilty-spark:sentinel-research"
+- `prompt`: "Research question: How does the authentication flow work?"
 
 ### User Asks: About Existing Documentation
 
