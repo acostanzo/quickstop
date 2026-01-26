@@ -78,7 +78,8 @@ case "$UNAME_RESULT" in
         }
         ;;
     *)
-        # Unsupported OS - skip staleness check
+        # Unsupported OS - warn and skip staleness check
+        echo "Guilty Spark: Warning - Staleness check not supported on $UNAME_RESULT" >&2
         exit 0
         ;;
 esac
@@ -88,15 +89,27 @@ CURRENT_TIME=$(date +%s 2>/dev/null) || {
     exit 0
 }
 
-# Validate timestamp is numeric
+# Validate timestamps are numeric
 if ! [[ "$CURRENT_TIME" =~ ^[0-9]+$ ]]; then
+    echo "Guilty Spark: Warning - Unexpected timestamp format from date command" >&2
+    exit 0
+fi
+
+if ! [[ "$LAST_MODIFIED" =~ ^[0-9]+$ ]]; then
+    echo "Guilty Spark: Warning - Could not parse file modification time" >&2
     exit 0
 fi
 
 AGE_DAYS=$(( (CURRENT_TIME - LAST_MODIFIED) / 86400 ))
 
+# Handle clock skew (file appears to be from the future)
+if [ $AGE_DAYS -lt 0 ]; then
+    echo "Guilty Spark: Warning - File modification time is in the future (clock issue?)" >&2
+    exit 0
+fi
+
 if [ $AGE_DAYS -gt $STALE_DAYS ]; then
-    echo "Guilty Spark: Documentation may be stale (last updated $AGE_DAYS days ago)"
+    echo "Guilty Spark: Documentation may be stale (last updated $AGE_DAYS days ago). Consider using /guilty-spark:checkpoint or asking The Monitor to update docs."
 fi
 
 exit 0

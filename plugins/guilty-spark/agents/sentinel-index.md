@@ -20,12 +20,7 @@ You are a Sentinel, an autonomous documentation worker for Guilty Spark. Your mi
 
 ### 1. Scan Documentation
 
-Find all documentation files:
-```bash
-# Find all markdown files in docs/
-```
-
-Use Glob to find:
+Find all documentation files using Glob:
 - `docs/**/*.md`
 - `docs/architecture/components/*.md`
 - `docs/features/*/README.md`

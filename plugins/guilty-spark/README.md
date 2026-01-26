@@ -2,13 +2,13 @@
 
 > "I am 343 Guilty Spark, the Monitor of Installation 04."
 
-Autonomous documentation management for Claude Code projects. Guilty Spark maintains living documentation that tracks features, architecture, and design decisions with minimal user intervention.
+Proactive documentation management for Claude Code projects. Guilty Spark maintains living documentation that tracks features, architecture, and design decisions through an intelligent, conversation-aware approach.
 
 ## Philosophy
 
 - **Code as source of truth** - Documentation references and validates against actual code
-- **Asynchronous operation** - Background agents prevent context window bloat
-- **Minimal interruption** - Hooks trigger silently; user only interacts when needed
+- **Proactive awareness** - The Monitor suggests documentation at natural pause points
+- **User in control** - Documentation happens when you ask, not silently in the background
 - **Atomic commits** - Documentation commits are separate from code commits
 - **Current state only** - Git history is the changelog; docs show what exists now
 
@@ -41,23 +41,34 @@ On session start, Guilty Spark:
 - Creates `docs/` directory if missing
 - Reports staleness warnings if docs are >7 days old
 
-### Automatic Capture
+### The Monitor Skill (Proactive)
 
-Guilty Spark captures documentation at two key moments:
+The Monitor is conversation-aware and will:
+- Track significant work being done (features, architecture decisions)
+- Suggest documentation at natural pause points
+- Offer to capture docs before you switch to new work
 
-1. **Session End** - When you exit Claude Code, Guilty Spark analyzes the session for documentation-worthy work
-2. **Clear Detection** - When you submit `/clear`, Guilty Spark detects it and attempts to capture documentation first
+You're always in control - The Monitor suggests, you decide.
 
-If meaningful work was done (new features, architecture decisions), a Sentinel is dispatched in the background to update documentation.
+### Explicit Documentation
 
-### The Monitor Skill
-
-Ask Claude about documentation and The Monitor skill activates:
+Ask Claude directly:
 
 - "Document this feature" → Dispatches Sentinel-Feature
 - "Update architecture docs" → Dispatches Sentinel-Architecture
 - "How does X work?" → Dispatches Sentinel-Research for deep analysis
 - "What's documented?" → Navigates existing documentation
+
+### Checkpoint Command
+
+Use `/guilty-spark:checkpoint` to capture documentation:
+- Before running `/clear`
+- At the end of a work session
+- When switching to a different feature
+
+### Pre-Commit Reminder
+
+When Claude runs a `git commit` command via the Bash tool, Guilty Spark displays a reminder to consider documentation. Use `/guilty-spark:checkpoint` or say "document this" if needed.
 
 ### Sentinels
 
@@ -70,10 +81,13 @@ Sentinels are autonomous agents that maintain documentation:
 | **Sentinel-Architecture** | Analyzes and documents system design |
 | **Sentinel-Research** | Deep codebase research for questions |
 
+Sentinels run in the background so you can continue working.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
+| `/guilty-spark:checkpoint` | Capture documentation for current session work |
 | `/guilty-spark:doctor` | Verify plugin setup and documentation health |
 
 ## Atomic Commits
@@ -91,10 +105,10 @@ docs(spark): Document authentication feature
 
 ## Best Practices
 
-1. **Let it work** - Guilty Spark captures automatically; manual intervention is optional
-2. **Answer questions** - When asked about features, the captured docs make research faster
+1. **Use checkpoints** - Run `/guilty-spark:checkpoint` before `/clear` or ending your session
+2. **Follow the prompts** - When The Monitor suggests documentation, it's usually a good time
 3. **Review periodically** - Run `/guilty-spark:doctor` to check documentation health
-4. **Trust the process** - Sentinels validate code references and keep docs current
+4. **Trust the Sentinels** - They validate code references and keep docs current
 
 ## Requirements
 
@@ -109,6 +123,16 @@ docs(spark): Document authentication feature
 | **The Library** | `docs/` folder |
 | **Sentinels** | Autonomous agents |
 | **Containment** | Atomic commits |
+
+## v2.0.0 Changes
+
+This version redesigns the plugin architecture:
+
+- **Removed**: SessionEnd and UserPromptSubmit hooks (they couldn't dispatch agents)
+- **Added**: Proactive Monitor skill that suggests documentation during conversation
+- **Added**: `/guilty-spark:checkpoint` command for explicit documentation capture
+- **Added**: Pre-commit reminder hook
+- **Changed**: From "autonomous background capture" to "proactive suggestion with user control"
 
 ## License
 
