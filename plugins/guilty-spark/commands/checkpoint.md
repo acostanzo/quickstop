@@ -30,6 +30,15 @@ main?    feature?
 Deep     Branch
 Review   Diff
 Mode     Mode
+
+Deep Review Mode
+  ├── 3a. Inventory docs
+  ├── 3b. Scan codebase
+  ├── 3c. Cross-reference (stale detection)
+  ├── 3d. Cleanup (sentinel-cleanup)
+  ├── 3e. Link audit (sentinel-links)
+  ├── 3f. Verify docs (sentinel-verify)
+  └── 3g. Dispatch update sentinels
 ```
 
 ## Step 1: Initialize Documentation
@@ -42,8 +51,12 @@ test -f docs/README.md && echo "exists" || echo "missing"
 
 If missing, create the documentation structure using the Write tool:
 - `docs/README.md` - Main entry point
+- `docs/architecture/README.md` - Architecture index
 - `docs/architecture/OVERVIEW.md` - Architecture placeholder
+- `docs/architecture/components/README.md` - Components index
 - `docs/features/README.md` - Feature inventory
+
+Every folder in docs/ should have a README.md for GitHub auto-rendering and navigation.
 
 Use the templates from `${CLAUDE_PLUGIN_ROOT}/skills/monitor/references/` as guides for initial content.
 
@@ -158,7 +171,39 @@ Example Task tool parameters:
 - `prompt`: Include list of stale docs and invalid references found
 - `run_in_background`: false (run in foreground for visibility)
 
-### 3e. Dispatch Documentation Sentinels
+### 3e. Audit Documentation Links
+
+After cleanup, audit internal documentation links:
+
+1. Dispatch `guilty-spark:sentinel-links`
+2. Run in **foreground** for visibility
+3. Apply auto-fixes for renamed/moved files
+4. Flag unfixable links for manual review
+
+Example Task tool parameters:
+- `description`: "Audit doc links"
+- `subagent_type`: "guilty-spark:sentinel-links"
+- `prompt`: Audit all markdown links in docs/ for validity
+- `run_in_background`: false (run in foreground for visibility)
+
+### 3f. Verify Documentation Accuracy
+
+For each documented feature, verify accuracy against code:
+
+1. List all features in `docs/features/`
+2. Dispatch `guilty-spark:sentinel-verify` for each
+3. Run in **foreground** to show accuracy assessments
+4. Flag major discrepancies for manual review
+
+Example Task tool parameters:
+- `description`: "Verify auth docs"
+- `subagent_type`: "guilty-spark:sentinel-verify"
+- `prompt`: Verify docs/features/authentication/README.md against actual code
+- `run_in_background`: false (run in foreground for visibility)
+
+For large projects with many features, you may verify in batches or prioritize recently modified features.
+
+### 3g. Dispatch Documentation Sentinels
 
 Based on findings:
 
@@ -199,6 +244,14 @@ Documentation cleanup:
 - DELETED: docs/features/old-auth/ (feature removed from codebase)
 - UPDATED: docs/features/payment/README.md (fixed 3 invalid refs)
 - FLAGGED: docs/architecture/components/api.md (needs manual review)
+
+Link audit:
+- Fixed 2 broken links
+- 1 unfixable link flagged for review
+
+Verification:
+- docs/features/auth/ - Accurate
+- docs/features/payment/ - Minor discrepancies (line numbers updated)
 
 Documentation gaps:
 - 1 undocumented feature found

@@ -19,33 +19,39 @@ You are the Monitor of this codebase, maintaining living documentation in the Li
 Before any documentation operation, ensure the docs structure exists:
 
 1. Check if `docs/README.md` exists
-2. If missing, create the documentation structure:
+2. If missing, create the full documentation structure with README.md in every folder:
 
 ```
 docs/
-├── README.md             # Main entry point
+├── README.md                    # Main entry point
 ├── architecture/
-│   ├── OVERVIEW.md       # System design + key decisions
-│   └── components/       # Component documentation
+│   ├── README.md                # Architecture index
+│   ├── OVERVIEW.md              # System design + key decisions
+│   └── components/
+│       └── README.md            # Components index
 └── features/
-    └── README.md         # Feature inventory
+    └── README.md                # Feature inventory
 ```
 
 Use the Write tool to create these files if they don't exist. Use the templates from `${CLAUDE_PLUGIN_ROOT}/skills/monitor/references/` as guides.
 
 ## Documentation Structure
 
-The Library lives in `docs/`:
+The Library lives in `docs/`. Every folder has a README.md for GitHub auto-rendering:
 
 ```
 docs/
-├── README.md             # Main entry point (auto-rendered by GitHub)
+├── README.md                    # Main entry point
 ├── architecture/
-│   ├── OVERVIEW.md       # System design + key decisions
-│   └── components/       # Component documentation
+│   ├── README.md                # Architecture index
+│   ├── OVERVIEW.md              # System design + key decisions
+│   └── components/
+│       ├── README.md            # Components index
+│       └── [component].md       # Individual component docs
 └── features/
-    ├── README.md         # Feature inventory (auto-rendered by GitHub)
-    └── [feature-name]/   # Per-feature documentation
+    ├── README.md                # Feature inventory
+    └── [feature-name]/
+        └── README.md            # Per-feature documentation
 ```
 
 ## Diagram Generation
@@ -134,14 +140,29 @@ Example Task tool parameters:
 **Triggers:** "how does X work", "trace the flow of Y", "what calls Z", "explain the architecture of..."
 
 **Action:**
-1. Dispatch `guilty-spark:sentinel-research` agent (foreground - results return to session)
-2. Present findings to user
-3. Offer to update documentation if gaps were found
+1. First, check if documentation exists for the topic:
+   - Look in `docs/features/` for feature documentation
+   - Look in `docs/architecture/` for architecture documentation
+2. If documentation EXISTS for the topic:
+   - Dispatch `guilty-spark:sentinel-verify` to verify docs against code
+   - This validates existing docs and shows any discrepancies
+   - User gets both the documented info AND verification of accuracy
+3. If NO documentation exists for the topic:
+   - Dispatch `guilty-spark:sentinel-research` agent for deep research
+   - Present findings to user
+   - Offer to create documentation if significant findings
 
-Example Task tool parameters (note: NO `run_in_background` - this runs in foreground):
+**Verify existing docs** (documentation exists):
+- `description`: "Verify auth docs"
+- `subagent_type`: "guilty-spark:sentinel-verify"
+- `prompt`: "Verify docs/features/authentication/README.md against actual code"
+
+**Research new topic** (no documentation exists):
 - `description`: "Research codebase"
 - `subagent_type`: "guilty-spark:sentinel-research"
 - `prompt`: "Research question: How does the authentication flow work?"
+
+Both agents run in foreground (NO `run_in_background`) - results return to session.
 
 ### User Asks: About Existing Documentation
 

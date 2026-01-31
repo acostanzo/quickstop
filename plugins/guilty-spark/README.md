@@ -21,17 +21,21 @@ Branch-aware documentation management for Claude Code projects. Guilty Spark mai
 
 ## Documentation Structure
 
-Guilty Spark maintains documentation in `docs/`:
+Guilty Spark maintains documentation in `docs/`. Every folder has a README.md for GitHub auto-rendering:
 
 ```
 docs/
-├── README.md             # Main entry point (auto-rendered by GitHub)
+├── README.md                    # Main entry point
 ├── architecture/
-│   ├── OVERVIEW.md       # System design + key decisions
-│   └── components/       # Component documentation
+│   ├── README.md                # Architecture index
+│   ├── OVERVIEW.md              # System design + key decisions
+│   └── components/
+│       ├── README.md            # Components index
+│       └── [component].md       # Individual component docs
 └── features/
-    ├── README.md         # Feature inventory (auto-rendered by GitHub)
-    └── [feature-name]/   # Per-feature documentation
+    ├── README.md                # Feature inventory
+    └── [feature-name]/
+        └── README.md            # Per-feature documentation
 ```
 
 ## How It Works
@@ -114,10 +118,13 @@ Sentinels are autonomous agents that maintain documentation:
 | **Sentinel-Feature** | Documents features, updates feature index |
 | **Sentinel-Architecture** | Analyzes and documents system design |
 | **Sentinel-Diff** | Documents changes specific to a feature branch |
-| **Sentinel-Index** | Keeps README.md files current |
+| **Sentinel-Index** | Keeps README.md files current in every docs folder |
 | **Sentinel-Research** | Deep codebase research for questions |
+| **Sentinel-Cleanup** | Removes stale documentation during Deep Review Mode |
+| **Sentinel-Verify** | Cross-references docs against code for accuracy |
+| **Sentinel-Links** | Audits and fixes broken markdown links |
 
-Sentinels run in the background so you can continue working.
+Most sentinels run in the background. Verification sentinels (verify, links, cleanup) run in foreground during Deep Review Mode.
 
 ## Command
 
@@ -159,9 +166,20 @@ docs(spark): Document authentication feature
 | **Sentinels** | Autonomous agents |
 | **Containment** | Atomic commits |
 
+## v3.2.0 Changes
+
+This version adds cross-referencing, link auditing, and consistent README patterns:
+
+- **Added**: Sentinel-Verify agent for cross-referencing docs against code
+- **Added**: Sentinel-Links agent for auditing and fixing broken markdown links
+- **Added**: README.md pattern - every docs folder now has a README.md entry point
+- **Changed**: Monitor skill now dispatches sentinel-verify when docs exist for a topic
+- **Changed**: Deep Review Mode now includes link audit and verification steps
+- **Changed**: Sentinel-Index now maintains README.md in architecture/ and components/
+
 ## v3.0.0 Changes
 
-This version simplifies the plugin and adds branch-aware intelligence:
+This version simplified the plugin and added branch-aware intelligence:
 
 - **Added**: Branch-aware checkpoint command (diff mode vs deep review mode)
 - **Added**: Sentinel-Diff agent for feature branch documentation
