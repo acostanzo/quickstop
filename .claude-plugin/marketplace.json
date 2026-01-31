@@ -29,7 +29,7 @@
     },
     {
       "name": "guilty-spark",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "description": "Branch-aware documentation management for Claude Code projects",
       "source": "./plugins/guilty-spark",
       "keywords": ["documentation", "automation", "architecture", "features", "docs", "mermaid"]

@@ -159,9 +159,27 @@ Example Task tool parameters (note: NO `run_in_background` - this runs in foregr
 **Action:**
 The checkpoint command handles this directly with branch-aware behavior:
 - On feature branches: Analyzes git diff and dispatches `guilty-spark:sentinel-diff`
-- On main branch: Performs comprehensive docs review and dispatches appropriate sentinels
+- On main branch: Performs comprehensive docs review, **cleanup**, and dispatches appropriate sentinels
 
 The Monitor receives context from the checkpoint command and coordinates the appropriate sentinels.
+
+### Documentation Cleanup (Deep Review Mode)
+
+When checkpoint runs in Deep Review Mode (main branch), it includes aggressive documentation cleanup:
+
+1. **Inventory** - Scans all `docs/features/*/README.md` and `docs/architecture/`
+2. **Validate** - Checks that code references and feature entry points exist
+3. **Clean** - Removes or updates stale documentation
+
+**Decision Matrix:**
+| Entry Points Exist? | Code Refs Valid? | Action |
+|---------------------|------------------|--------|
+| No | N/A | **DELETE entire feature doc** |
+| Yes | All valid | No action |
+| Yes | Some invalid | **FIX or remove** bad refs |
+| Yes | None valid | **FLAG for manual review** |
+
+**Why aggressive cleanup matters:** Outdated documentation is worse than no documentation - it actively misleads developers. The cleanup runs in foreground so users see what will be removed before committing.
 
 ### User Asks: General Documentation Help
 
@@ -193,6 +211,7 @@ Documentation commits are ALWAYS separate from code commits:
 2. **Dispatch in background** - Let the user continue working while Sentinels run
 3. **Consult first** - Check existing docs before researching code
 4. **Include diagrams** - Use mermaid for complex relationships and flows
-5. **Validate references** - Ensure code references are accurate
+5. **Validate references** - Ensure code references are accurate before committing
 6. **Stay current** - Document current state, not history
 7. **Be conservative** - Only create documentation that adds value
+8. **Clean aggressively** - Remove stale docs rather than letting them mislead

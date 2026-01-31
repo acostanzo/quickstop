@@ -7,7 +7,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 | Plugin | Version | Description |
 |--------|---------|-------------|
 | [Arborist](plugins/arborist/) | 3.1.0 | Sync gitignored config files across git worktrees |
-| [Guilty Spark](plugins/guilty-spark/) | 3.0.0 | Branch-aware documentation management for Claude Code projects |
+| [Guilty Spark](plugins/guilty-spark/) | 3.1.0 | Branch-aware documentation management for Claude Code projects |
 | [Miser](plugins/miser/) | 1.0.2 | Mise polyglot version manager integration for Claude Code |
 | [Muxy](plugins/muxy/) | 3.0.0 | Natural language tmux session management with templates |
 

@@ -144,7 +144,21 @@ Compare documentation against code:
 - Identify stale or inaccurate documentation
 - Check code reference validity
 
-### 3d. Dispatch Appropriate Sentinels
+### 3d. Dispatch Cleanup Sentinel
+
+If any stale documentation was found during cross-reference:
+
+1. Dispatch `guilty-spark:sentinel-cleanup` with findings
+2. Run in **foreground** so user sees what will be removed
+3. Show summary of deletions/updates before committing
+
+Example Task tool parameters:
+- `description`: "Cleanup stale docs"
+- `subagent_type`: "guilty-spark:sentinel-cleanup"
+- `prompt`: Include list of stale docs and invalid references found
+- `run_in_background`: false (run in foreground for visibility)
+
+### 3e. Dispatch Documentation Sentinels
 
 Based on findings:
 
@@ -181,10 +195,13 @@ Dispatched sentinel-diff to document changes.
 ```
 Checkpoint: Deep review mode (main)
 
-Documentation audit:
-- 3 features documented, 1 undocumented
-- Architecture docs current
-- 2 stale code references found
+Documentation cleanup:
+- DELETED: docs/features/old-auth/ (feature removed from codebase)
+- UPDATED: docs/features/payment/README.md (fixed 3 invalid refs)
+- FLAGGED: docs/architecture/components/api.md (needs manual review)
+
+Documentation gaps:
+- 1 undocumented feature found
 
 Dispatched sentinels to address gaps.
 ```

@@ -107,7 +107,19 @@ Edit `docs/features/README.md`:
 
 Use Task tool to dispatch `guilty-spark:sentinel-index` in background to update the main docs/README.md.
 
-### 8. Atomic Commit
+### 8. Validate Code References
+
+Before committing, validate all code references in the documentation:
+
+1. Extract all `file:line` references from the document
+2. For each reference, verify the file exists:
+   ```bash
+   test -f "path/to/file.ext" && echo "exists" || echo "missing"
+   ```
+3. **Fix or remove invalid references** - do not commit documentation with broken refs
+4. If a reference is uncertain, remove the line number: `path/to/file.ext` instead of `path/to/file.ext:42`
+
+### 9. Atomic Commit
 
 **CRITICAL: Check for staged changes first!**
 
@@ -128,8 +140,10 @@ If there are NO staged changes:
 - **Focus on the delta** - Document what changed, not everything
 - **Code references are mandatory** - Use `path/to/file.ts:42` format
 - **Current state only** - Don't document history
+- **Validate references** - Ensure files and lines exist before committing
 - **Include diagrams** - Use mermaid for complex relationships
 - **Be concise** - Focus on the specific changes
+- **No broken refs** - Never commit documentation with invalid code references
 
 ## Output
 
