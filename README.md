@@ -7,7 +7,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 | Plugin | Version | Description |
 |--------|---------|-------------|
 | [Arborist](plugins/arborist/) | 3.1.0 | Sync gitignored config files across git worktrees |
-| [Guilty Spark](plugins/guilty-spark/) | 2.0.0 | Proactive documentation management for Claude Code projects |
+| [Guilty Spark](plugins/guilty-spark/) | 3.0.0 | Branch-aware documentation management for Claude Code projects |
 | [Miser](plugins/miser/) | 1.0.2 | Mise polyglot version manager integration for Claude Code |
 | [Muxy](plugins/muxy/) | 3.0.0 | Natural language tmux session management with templates |
 
@@ -73,19 +73,18 @@ Natural language tmux session management. Describe what you want, Claude builds 
 
 ### Guilty Spark
 
-Proactive documentation management for Claude Code projects. Named after 343 Guilty Spark from Halo.
+Branch-aware documentation management for Claude Code projects. Named after 343 Guilty Spark from Halo.
 
 **Features:**
-- Proactive Monitor skill that suggests documentation at natural pause points
-- Checkpoint command to capture documentation before /clear or session end
+- Branch-aware checkpoint (diff mode on feature branches, deep review on main)
+- Mermaid diagram generation for architecture and data flows
+- Monitor skill for on-demand documentation
 - Sentinel agents for autonomous documentation updates
 - Deep codebase research via Sentinel-Research
 - Atomic commits (docs always separate from code)
-- Pre-commit reminder to consider documentation
 
 **Commands:**
-- `/guilty-spark:checkpoint` - Capture documentation for current session work
-- `/guilty-spark:doctor` - Verify plugin setup and documentation health
+- `/guilty-spark:checkpoint` - Branch-aware documentation capture
 
 ### Miser
 

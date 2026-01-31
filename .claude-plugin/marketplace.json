@@ -29,10 +29,10 @@
     },
     {
       "name": "guilty-spark",
-      "version": "2.0.0",
-      "description": "Proactive documentation management for Claude Code projects",
+      "version": "3.0.0",
+      "description": "Branch-aware documentation management for Claude Code projects",
       "source": "./plugins/guilty-spark",
-      "keywords": ["documentation", "automation", "architecture", "features", "docs"]
+      "keywords": ["documentation", "automation", "architecture", "features", "docs", "mermaid"]
     }
   ]
 }

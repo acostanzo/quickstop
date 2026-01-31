@@ -2,15 +2,16 @@
 
 > "I am 343 Guilty Spark, the Monitor of Installation 04."
 
-Proactive documentation management for Claude Code projects. Guilty Spark maintains living documentation that tracks features, architecture, and design decisions through an intelligent, conversation-aware approach.
+Branch-aware documentation management for Claude Code projects. Guilty Spark maintains living documentation that tracks features, architecture, and design decisions with intelligent branch detection.
 
 ## Philosophy
 
 - **Code as source of truth** - Documentation references and validates against actual code
-- **Proactive awareness** - The Monitor suggests documentation at natural pause points
-- **User in control** - Documentation happens when you ask, not silently in the background
+- **Branch-aware** - Checkpoint command adapts behavior based on git branch
+- **User in control** - Documentation happens when you ask, not automatically
 - **Atomic commits** - Documentation commits are separate from code commits
 - **Current state only** - Git history is the changelog; docs show what exists now
+- **Visual documentation** - Mermaid diagrams for architecture and data flows
 
 ## Installation
 
@@ -24,51 +25,85 @@ Guilty Spark maintains documentation in `docs/`:
 
 ```
 docs/
-├── INDEX.md              # Main entry point
+├── README.md             # Main entry point (auto-rendered by GitHub)
 ├── architecture/
 │   ├── OVERVIEW.md       # System design + key decisions
 │   └── components/       # Component documentation
 └── features/
-    ├── INDEX.md          # Feature inventory
+    ├── README.md         # Feature inventory (auto-rendered by GitHub)
     └── [feature-name]/   # Per-feature documentation
 ```
 
 ## How It Works
 
-### Session Initialization
+### The Monitor Skill
 
-On session start, Guilty Spark:
-- Creates `docs/` directory if missing
-- Reports staleness warnings if docs are >7 days old
-
-### The Monitor Skill (Proactive)
-
-The Monitor is conversation-aware and will:
-- Track significant work being done (features, architecture decisions)
-- Suggest documentation at natural pause points
-- Offer to capture docs before you switch to new work
-
-You're always in control - The Monitor suggests, you decide.
-
-### Explicit Documentation
-
-Ask Claude directly:
+Ask Claude directly for documentation help:
 
 - "Document this feature" → Dispatches Sentinel-Feature
 - "Update architecture docs" → Dispatches Sentinel-Architecture
 - "How does X work?" → Dispatches Sentinel-Research for deep analysis
 - "What's documented?" → Navigates existing documentation
 
-### Checkpoint Command
+### Branch-Aware Checkpoint
 
-Use `/guilty-spark:checkpoint` to capture documentation:
-- Before running `/clear`
-- At the end of a work session
-- When switching to a different feature
+Use `/guilty-spark:checkpoint` for intelligent documentation capture:
 
-### Pre-Commit Reminder
+**On Feature Branches:**
+```
+/guilty-spark:checkpoint
+       ↓
+  Analyzes git diff against main
+       ↓
+  Dispatches sentinel-diff
+       ↓
+  Documents only the changes
+```
 
-When Claude runs a `git commit` command via the Bash tool, Guilty Spark displays a reminder to consider documentation. Use `/guilty-spark:checkpoint` or say "document this" if needed.
+**On Main Branch:**
+```
+/guilty-spark:checkpoint
+       ↓
+  Performs comprehensive audit
+       ↓
+  Cross-references code vs docs
+       ↓
+  Dispatches sentinels for gaps
+```
+
+### Mermaid Diagrams
+
+Guilty Spark generates mermaid diagrams for visual documentation:
+
+**Architecture Overview:**
+```mermaid
+flowchart TD
+    subgraph Frontend
+        A[Web App]
+    end
+    subgraph Backend
+        B[API]
+        C[Worker]
+    end
+    A --> B
+    B --> C
+```
+
+**Data Flow:**
+```mermaid
+sequenceDiagram
+    User->>API: Request
+    API->>DB: Query
+    DB-->>API: Data
+    API-->>User: Response
+```
+
+**Data Models:**
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ ITEM : contains
+```
 
 ### Sentinels
 
@@ -77,18 +112,18 @@ Sentinels are autonomous agents that maintain documentation:
 | Sentinel | Purpose |
 |----------|---------|
 | **Sentinel-Feature** | Documents features, updates feature index |
-| **Sentinel-Index** | Keeps INDEX.md files current |
 | **Sentinel-Architecture** | Analyzes and documents system design |
+| **Sentinel-Diff** | Documents changes specific to a feature branch |
+| **Sentinel-Index** | Keeps README.md files current |
 | **Sentinel-Research** | Deep codebase research for questions |
 
 Sentinels run in the background so you can continue working.
 
-## Commands
+## Command
 
 | Command | Description |
 |---------|-------------|
-| `/guilty-spark:checkpoint` | Capture documentation for current session work |
-| `/guilty-spark:doctor` | Verify plugin setup and documentation health |
+| `/guilty-spark:checkpoint` | Branch-aware documentation capture |
 
 ## Atomic Commits
 
@@ -106,9 +141,9 @@ docs(spark): Document authentication feature
 ## Best Practices
 
 1. **Use checkpoints** - Run `/guilty-spark:checkpoint` before `/clear` or ending your session
-2. **Follow the prompts** - When The Monitor suggests documentation, it's usually a good time
-3. **Review periodically** - Run `/guilty-spark:doctor` to check documentation health
-4. **Trust the Sentinels** - They validate code references and keep docs current
+2. **Trust the branch detection** - Feature branches get diff-focused docs, main gets comprehensive review
+3. **Trust the Sentinels** - They validate code references and keep docs current
+4. **Review the diagrams** - Mermaid diagrams render in GitHub and most markdown viewers
 
 ## Requirements
 
@@ -124,15 +159,18 @@ docs(spark): Document authentication feature
 | **Sentinels** | Autonomous agents |
 | **Containment** | Atomic commits |
 
-## v2.0.0 Changes
+## v3.0.0 Changes
 
-This version redesigns the plugin architecture:
+This version simplifies the plugin and adds branch-aware intelligence:
 
-- **Removed**: SessionEnd and UserPromptSubmit hooks (they couldn't dispatch agents)
-- **Added**: Proactive Monitor skill that suggests documentation during conversation
-- **Added**: `/guilty-spark:checkpoint` command for explicit documentation capture
-- **Added**: Pre-commit reminder hook
-- **Changed**: From "autonomous background capture" to "proactive suggestion with user control"
+- **Added**: Branch-aware checkpoint command (diff mode vs deep review mode)
+- **Added**: Sentinel-Diff agent for feature branch documentation
+- **Added**: Mermaid diagram generation in all documentation
+- **Added**: Documentation initialization in Monitor skill
+- **Removed**: SessionStart hook (docs init moved to Monitor skill)
+- **Removed**: Pre-commit reminder hook
+- **Removed**: `/guilty-spark:doctor` command
+- **Changed**: From "proactive suggestions" to "explicit user control"
 
 ## License
 

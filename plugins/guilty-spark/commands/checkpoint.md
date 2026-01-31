@@ -5,44 +5,197 @@ allowed-tools:
   - Task
   - Read
   - Glob
+  - Grep
+  - Bash
+  - Skill
 ---
 
 # Documentation Checkpoint
 
-The user wants to capture documentation for work done in the current session. This is typically invoked:
-- Before running `/clear`
-- At the end of a work session
-- When switching to a different feature or task
+The user wants to capture documentation. This command provides branch-aware documentation behavior.
 
-## Your Task
+## Workflow
 
-1. **Analyze the conversation** - Review the current session to identify:
-   - Features implemented or significantly modified
-   - Architecture decisions made
-   - Components that were changed
+```
+/guilty-spark:checkpoint
+       │
+       ▼
+  Detect Branch (git rev-parse --abbrev-ref HEAD)
+       │
+  ┌────┴────┐
+  ▼         ▼
+main?    feature?
+  │         │
+  ▼         ▼
+Deep     Branch
+Review   Diff
+Mode     Mode
+```
 
-2. **Determine documentation needs** - Is documentation warranted?
-   - **Yes**: New features, architecture decisions, significant component changes
-   - **No**: Bug fixes only, simple refactoring, just reading/exploring code
+## Step 1: Initialize Documentation
 
-3. **Dispatch appropriate Sentinels**:
-   - For feature work → dispatch `guilty-spark:sentinel-feature`
-   - For architecture changes → dispatch `guilty-spark:sentinel-architecture`
-   - For both → dispatch both (feature first, then architecture)
+Before any documentation work, check if `docs/README.md` exists:
 
-4. **Run in background** - Always dispatch with `run_in_background: true` so the user can continue
+```bash
+test -f docs/README.md && echo "exists" || echo "missing"
+```
 
-## Example Task Tool Parameters
+If missing, create the documentation structure using the Write tool:
+- `docs/README.md` - Main entry point
+- `docs/architecture/OVERVIEW.md` - Architecture placeholder
+- `docs/features/README.md` - Feature inventory
 
-- `description`: "Document session work"
-- `subagent_type`: "guilty-spark:sentinel-feature"
-- `prompt`: "Document the following work from this session: [summary of work]. Check existing docs and update or create as needed."
+Use the templates from `${CLAUDE_PLUGIN_ROOT}/skills/monitor/references/` as guides for initial content.
+
+## Step 2: Detect Current Branch
+
+Run:
+```bash
+git rev-parse --abbrev-ref HEAD
+```
+
+- If `main` or `master` → **Deep Review Mode**
+- Otherwise → **Branch Diff Mode**
+
+---
+
+## Branch Diff Mode (Feature Branches)
+
+When on a feature branch, document only the changes specific to this branch.
+
+### 2a. Find Base Branch
+
+```bash
+git merge-base HEAD main 2>/dev/null || git merge-base HEAD master
+```
+
+### 2b. Get Changed Files
+
+```bash
+git diff --name-only $(git merge-base HEAD main)..HEAD
+```
+
+### 2c. Analyze Changes
+
+Read the diff content to understand what changed:
+```bash
+git diff $(git merge-base HEAD main)..HEAD --stat
+```
+
+For significant files, read the actual changes:
+```bash
+git diff $(git merge-base HEAD main)..HEAD -- path/to/file
+```
+
+### 2d. Categorize Changes
+
+Analyze the changed files:
+- **New features**: New files in feature-related directories
+- **Feature modifications**: Changes to existing feature code
+- **Architecture changes**: Changes to core/config/structure files
+- **Skip-worthy**: Tests only, deps only, formatting, docs only
+
+### 2e. Leverage Session Context
+
+Review the conversation history to understand:
+- What features were implemented
+- What decisions were made
+- What the user was working on
+
+### 2f. Dispatch Sentinel
+
+If meaningful changes were found, invoke the Monitor skill with context:
+
+Use the Skill tool:
+- `skill`: "guilty-spark:monitor"
+- `args`: Summary of changes and session context
+
+Or dispatch sentinel-diff directly via Task tool:
+- `subagent_type`: "guilty-spark:sentinel-diff"
+- `prompt`: Include changed files list, diff summary, and session context
 - `run_in_background`: true
+
+---
+
+## Deep Review Mode (Main Branch)
+
+When on main/master, perform a comprehensive documentation review.
+
+### 3a. Inventory Current Documentation
+
+```bash
+find docs -name "*.md" -type f 2>/dev/null | head -50
+```
+
+Read `docs/README.md` and `docs/features/README.md` to understand current state.
+
+### 3b. Scan Codebase
+
+Explore the codebase to identify:
+- Major features and components
+- Entry points and key files
+- Architecture patterns
+
+### 3c. Cross-Reference
+
+Compare documentation against code:
+- **Code is the source of truth**
+- Identify undocumented features
+- Identify stale or inaccurate documentation
+- Check code reference validity
+
+### 3d. Dispatch Appropriate Sentinels
+
+Based on findings:
+
+**For undocumented features:**
+- Dispatch `guilty-spark:sentinel-feature` for each
+
+**For architecture gaps:**
+- Dispatch `guilty-spark:sentinel-architecture`
+
+**For index updates:**
+- Dispatch `guilty-spark:sentinel-index`
+
+Run sentinels in background so user can continue working.
+
+---
 
 ## Output
 
-After dispatching (or if no documentation needed):
-- Confirm what was dispatched
-- Or explain why no documentation was needed
+After analysis and dispatch:
 
-Keep the response brief - the user invoked this to quickly capture docs, not for a lengthy discussion.
+**If on feature branch:**
+```
+Checkpoint: Branch diff mode (feature/xyz)
+
+Changes analyzed:
+- 5 files modified
+- New: authentication handler
+- Modified: user service
+
+Dispatched sentinel-diff to document changes.
+```
+
+**If on main branch:**
+```
+Checkpoint: Deep review mode (main)
+
+Documentation audit:
+- 3 features documented, 1 undocumented
+- Architecture docs current
+- 2 stale code references found
+
+Dispatched sentinels to address gaps.
+```
+
+**If no documentation needed:**
+```
+Checkpoint: No documentation needed
+
+Changes reviewed:
+- Tests only
+- No feature or architecture changes detected
+```
+
+Keep responses concise - the user invoked this for quick documentation capture.

@@ -15,10 +15,32 @@ Brief description of the overall system architecture (3-5 sentences).
 
 ### High-Level Diagram
 
-```
-[Component A] → [Component B] → [Component C]
-     ↓              ↓
-[Storage]      [External API]
+```mermaid
+flowchart TD
+    subgraph Client
+        A[Web App]
+        B[Mobile App]
+    end
+    subgraph API Layer
+        C[API Gateway]
+        D[Auth Service]
+    end
+    subgraph Backend
+        E[Core Service]
+        F[Worker Service]
+    end
+    subgraph Data
+        G[(Database)]
+        H[(Cache)]
+    end
+
+    A --> C
+    B --> C
+    C --> D
+    C --> E
+    E --> F
+    E --> G
+    E --> H
 ```
 
 ## Technology Stack
@@ -48,10 +70,24 @@ project/
 
 ## Data Flow
 
-1. User action triggers...
-2. Request flows to...
-3. Processing happens in...
-4. Response returns via...
+### Request Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as Gateway
+    participant S as Service
+    participant D as Database
+
+    C->>G: HTTP Request
+    G->>G: Validate Token
+    G->>S: Forward Request
+    S->>D: Query Data
+    D-->>S: Result Set
+    S->>S: Transform Data
+    S-->>G: Response
+    G-->>C: HTTP Response
+```
 
 ## Integration Points
 
@@ -72,6 +108,22 @@ For `architecture/components/[component].md`:
 ## Purpose
 
 What this component does and why it exists.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph Component
+        A[Entry Point]
+        B[Core Logic]
+        C[Data Access]
+    end
+
+    Input --> A
+    A --> B
+    B --> C
+    C --> Output
+```
 
 ## Implementation
 
@@ -101,4 +153,18 @@ If applicable, document the public interface.
 2. **Keep current** - Only document the current state
 3. **Reference code** - Include file paths for key implementations
 4. **Avoid duplication** - Link to component docs instead of repeating
-5. **Simple diagrams** - ASCII art preferred for portability
+5. **Use mermaid diagrams** - Preferred over ASCII art for maintainability and rendering
+
+## Diagram Guidelines
+
+### System Overview
+Use `flowchart TD` with subgraphs to show major system components and their relationships.
+
+### Data Flow
+Use `sequenceDiagram` to show how requests flow through the system.
+
+### Component Relationships
+Use `flowchart` to show internal structure of complex components.
+
+### Data Models
+Use `erDiagram` to show entity relationships in the data layer.

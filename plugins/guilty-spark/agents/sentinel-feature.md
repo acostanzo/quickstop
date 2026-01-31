@@ -55,18 +55,52 @@ docs/features/{feature-name}/README.md
 2. Update only the sections that changed
 3. Ensure code references are still valid
 
-### 5. Update Feature Index
+### 5. Include Diagrams
 
-Edit `docs/features/INDEX.md` to add/update the feature entry with:
+Use mermaid diagrams to visualize the feature. Choose the appropriate type:
+
+**Flow Diagram** - For features with multi-step processes or decision logic:
+```mermaid
+flowchart LR
+    A[Input] --> B{Validate}
+    B -->|Valid| C[Process]
+    B -->|Invalid| D[Error]
+    C --> E[Output]
+```
+
+**Sequence Diagram** - For features involving multiple components or services:
+```mermaid
+sequenceDiagram
+    User->>Service: Request
+    Service->>Database: Query
+    Database-->>Service: Result
+    Service-->>User: Response
+```
+
+**ERD** - For features with data model relationships:
+```mermaid
+erDiagram
+    ENTITY_A ||--o{ ENTITY_B : contains
+```
+
+**When to include diagrams:**
+- Features with 3+ components in the data flow
+- Features involving API calls or service interactions
+- Features with complex state or decision logic
+- Skip for simple CRUD or utility features
+
+### 7. Update Feature Index
+
+Edit `docs/features/README.md` to add/update the feature entry with:
 - Feature name (linked to README.md)
 - Status (active/deprecated)
 - Last Updated date (today)
 
-### 6. Dispatch Index Sentinel
+### 8. Dispatch Index Sentinel
 
-Use Task tool to dispatch `guilty-spark:sentinel-index` in background to update the main INDEX.md.
+Use Task tool to dispatch `guilty-spark:sentinel-index` in background to update the main docs/README.md.
 
-### 7. Atomic Commit
+### 9. Atomic Commit
 
 **CRITICAL: Check for staged changes first!**
 

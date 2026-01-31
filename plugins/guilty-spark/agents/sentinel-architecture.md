@@ -58,7 +58,60 @@ Look for evidence of architectural decisions:
 - Patterns used (MVC, microservices, etc.)
 - Technology selections
 
-### 5. Update Architecture Documentation
+### 5. Create Architecture Diagrams
+
+Use mermaid diagrams to visualize the architecture:
+
+**System Overview** - Show major components and their relationships:
+```mermaid
+flowchart TD
+    subgraph Frontend
+        A[Web App]
+    end
+    subgraph Backend
+        B[API Server]
+        C[Worker]
+    end
+    subgraph Data
+        D[(Database)]
+        E[(Cache)]
+    end
+
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+```
+
+**Request Lifecycle** - Show how requests flow through the system:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as API
+    participant S as Service
+    participant D as Database
+
+    C->>A: Request
+    A->>S: Process
+    S->>D: Query
+    D-->>S: Data
+    S-->>A: Result
+    A-->>C: Response
+```
+
+**Data Model** - Show entity relationships:
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ ITEM : contains
+```
+
+**When to include diagrams:**
+- System overview: Always include in OVERVIEW.md
+- Request lifecycle: Include for systems with multiple services
+- Data model: Include when documenting data layer components
+
+### 6. Update Architecture Documentation
 
 **Update docs/architecture/OVERVIEW.md:**
 - System design description
@@ -66,17 +119,19 @@ Look for evidence of architectural decisions:
 - Key decisions table
 - Directory structure
 - Data flow description
+- Include mermaid diagrams created in step 5
 
 **Create component docs in docs/architecture/components/:**
 - One file per major component/module
 - Follow template from `${CLAUDE_PLUGIN_ROOT}/skills/monitor/references/architecture-template.md`
 - Include code references
+- Include component-level diagrams where helpful
 
-### 6. Update Indexes
+### 7. Update Indexes
 
 Dispatch `guilty-spark:sentinel-index` in background to update indexes.
 
-### 7. Atomic Commit
+### 8. Atomic Commit
 
 Check for staged changes first:
 - If clean, stage docs/architecture/
