@@ -10,6 +10,8 @@ quickstop/
 │   └── marketplace.json    # Plugin registry - KEEP UPDATED
 ├── plugins/
 │   ├── arborist/           # Git worktree management
+│   ├── claudit/            # Configuration audit & optimization
+│   ├── guilty-spark/       # Branch-aware documentation management
 │   ├── miser/              # Mise version manager integration
 │   └── muxy/               # Tmux session management
 ├── scripts/
@@ -58,50 +60,13 @@ plugins/plugin-name/
 
 ## Marketplace Management
 
-### IMPORTANT: Keep marketplace.json and README.md Updated
-
-When adding, removing, or modifying plugins, update both:
-1. `.claude-plugin/marketplace.json` - Plugin registry for marketplace installation
-2. `README.md` - Public documentation with plugin table and features
-
-**marketplace.json format:**
-
-```json
-{
-  "plugins": [
-    {
-      "name": "plugin-name",
-      "version": "X.Y.Z",
-      "description": "Brief description",
-      "source": "./plugins/plugin-name",
-      "keywords": ["relevant", "keywords"]
-    }
-  ]
-}
-```
-
-Note: The `source` field is required (use relative path like `./plugins/name`). The `features` field is NOT part of the marketplace schema - document features in the plugin's README instead.
-
-**Update both files when:**
-- Adding a new plugin (add to marketplace.json and README plugin table)
-- Bumping a plugin version
-- Changing a plugin's description
-- Removing a plugin
-
-### Version Conventions
-
-- Use semantic versioning (MAJOR.MINOR.PATCH)
-- Bump MAJOR for breaking changes or complete rewrites
-- Bump MINOR for new features
-- Bump PATCH for bug fixes
-
-### CRITICAL: Always Bump Versions on Plugin Changes
+### When Modifying Plugins
 
 **Plugin cache is keyed by version number.** If you modify plugin files without bumping the version, users won't get the changes until they manually clear their cache or reinstall.
 
-**Before pushing changes to any plugin:**
+**Before pushing changes to any plugin, update all three files:**
 1. Bump the version in `plugins/[name]/.claude-plugin/plugin.json`
-2. Update the version in `.claude-plugin/marketplace.json`
+2. Update the version in `.claude-plugin/marketplace.json` (see the file for format; `source` field is required)
 3. Update the version in `README.md` plugin table
 
 **Run the version check script before pushing:**
@@ -109,16 +74,31 @@ Note: The `source` field is required (use relative path like `./plugins/name`). 
 ./scripts/check-plugin-versions.sh
 ```
 
-This script compares staged/committed changes against the main branch and warns if plugin files changed without a version bump.
-
 **Install git hooks for automatic enforcement:**
 ```bash
 ./scripts/install-hooks.sh
 ```
 
-This installs a pre-push hook that runs the version check automatically.
-
 ## Current Plugins
+
+### Claudit (v1.0.0)
+Configuration audit and optimization with dynamic best-practice research.
+
+**Key features:**
+- Research-first architecture (subagents fetch Anthropic docs before analysis)
+- Over-engineering detection as highest-weighted scoring category
+- 6-category health scoring with interactive fix selection
+- Persistent memory on research agents for faster subsequent runs
+- `/claudit` for comprehensive configuration audit
+
+### Guilty Spark (v3.2.0)
+Branch-aware documentation management for Claude Code projects.
+
+**Key features:**
+- Cross-referencing, link auditing, and README pattern generation
+- Stale documentation cleanup with sentinel agents
+- Branch-aware documentation with mermaid diagrams
+- `/guilty-spark:checkpoint` for documentation capture, `/guilty-spark:monitor` for docs management
 
 ### Arborist (v3.1.0)
 Git worktree management with automatic configuration syncing.
@@ -127,7 +107,6 @@ Git worktree management with automatic configuration syncing.
 - Auto-syncs gitignored config files from main on session start
 - `.worktreeignore` config for controlling file sync
 - `/arborist:tend` for interactive sync with source selection
-- `/arborist:doctor` for diagnostics
 
 ### Muxy (v3.0.0)
 Natural language tmux session management with templates.
@@ -160,7 +139,7 @@ PluginName vX.Y.Z: Brief description
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Testing Plugins
@@ -170,9 +149,3 @@ Test plugins locally before committing:
 ```bash
 claude --plugin-dir /path/to/quickstop/plugins/plugin-name
 ```
-
-Verify:
-- Skills trigger on expected phrases
-- Commands appear in `/help`
-- Hooks execute on events
-- MCP servers connect (check with `/mcp`)

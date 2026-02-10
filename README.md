@@ -7,6 +7,7 @@ A collection of Claude Code plugins for workflow enhancement and productivity.
 | Plugin | Version | Description |
 |--------|---------|-------------|
 | [Arborist](plugins/arborist/) | 3.1.0 | Sync gitignored config files across git worktrees |
+| [Claudit](plugins/claudit/) | 1.0.0 | Audit and optimize Claude Code configurations with dynamic best-practice research |
 | [Guilty Spark](plugins/guilty-spark/) | 3.2.0 | Branch-aware documentation management for Claude Code projects |
 | [Miser](plugins/miser/) | 1.0.2 | Mise polyglot version manager integration for Claude Code |
 | [Muxy](plugins/muxy/) | 3.0.0 | Natural language tmux session management with templates |
@@ -25,6 +26,7 @@ Then install individual plugins:
 
 ```bash
 /plugin install arborist@quickstop
+/plugin install claudit@quickstop
 /plugin install guilty-spark@quickstop
 /plugin install miser@quickstop
 /plugin install muxy@quickstop
@@ -40,6 +42,20 @@ claude --plugin-dir /path/to/quickstop/plugins/arborist
 ```
 
 ## Plugin Overview
+
+### Claudit
+
+Audit and optimize your Claude Code configuration with dynamic best-practice research.
+
+**Features:**
+- Research-first architecture: fetches official Anthropic docs before analysis
+- Over-engineering detection (highest-weighted scoring category)
+- 6-category health scoring with visual report
+- Interactive fix selection with before/after score delta
+- Persistent memory: research agents get faster across runs
+
+**Commands:**
+- `/claudit` - Run comprehensive configuration audit
 
 ### Arborist
 

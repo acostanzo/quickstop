@@ -33,6 +33,13 @@
       "description": "Branch-aware documentation management for Claude Code projects",
       "source": "./plugins/guilty-spark",
       "keywords": ["documentation", "automation", "architecture", "features", "docs", "mermaid"]
+    },
+    {
+      "name": "claudit",
+      "version": "1.0.0",
+      "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
+      "source": "./plugins/claudit",
+      "keywords": ["audit", "configuration", "optimization", "health-check", "best-practices"]
     }
   ]
 }
