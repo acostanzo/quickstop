@@ -4,36 +4,8 @@
     "name": "Anthony Costanzo",
     "email": "mail@acostanzo.com"
   },
-  "description": "A collection of Claude Code plugins for workflow enhancement and productivity",
+  "description": "A Claude Code plugin marketplace",
   "plugins": [
-    {
-      "name": "arborist",
-      "version": "3.1.0",
-      "description": "Sync gitignored config files across git worktrees",
-      "source": "./plugins/arborist",
-      "keywords": ["git", "worktree", "configuration", "sync", "env"]
-    },
-    {
-      "name": "muxy",
-      "version": "3.0.0",
-      "description": "Natural language tmux session management with templates",
-      "source": "./plugins/muxy",
-      "keywords": ["tmux", "terminal", "multiplexer", "sessions", "templates"]
-    },
-    {
-      "name": "miser",
-      "version": "1.0.2",
-      "description": "Mise polyglot version manager integration for Claude Code",
-      "source": "./plugins/miser",
-      "keywords": ["mise", "version-manager", "polyglot", "ruby", "node", "python", "tools"]
-    },
-    {
-      "name": "guilty-spark",
-      "version": "3.2.0",
-      "description": "Branch-aware documentation management for Claude Code projects",
-      "source": "./plugins/guilty-spark",
-      "keywords": ["documentation", "automation", "architecture", "features", "docs", "mermaid"]
-    },
     {
       "name": "claudit",
       "version": "1.0.0",
