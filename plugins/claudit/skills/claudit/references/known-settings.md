@@ -8,16 +8,16 @@ Research agents should fetch these pages to build expert context:
 
 | Topic | URL |
 |-------|-----|
-| Settings | `https://docs.anthropic.com/en/docs/claude-code/settings` |
-| Permissions | `https://docs.anthropic.com/en/docs/claude-code/permissions` |
-| Memory & CLAUDE.md | `https://docs.anthropic.com/en/docs/claude-code/memory` |
-| Best Practices | `https://docs.anthropic.com/en/docs/claude-code/best-practices` |
-| MCP Servers | `https://docs.anthropic.com/en/docs/claude-code/mcp-servers` |
-| Hooks | `https://docs.anthropic.com/en/docs/claude-code/hooks` |
-| Skills | `https://docs.anthropic.com/en/docs/claude-code/skills` |
-| Sub-agents | `https://docs.anthropic.com/en/docs/claude-code/sub-agents` |
-| Plugins | `https://docs.anthropic.com/en/docs/claude-code/plugins` |
-| Model Configuration | `https://docs.anthropic.com/en/docs/claude-code/model-configuration` |
+| Settings | `https://docs.anthropic.com/en/docs/claude-code/settings.md` |
+| Permissions | `https://docs.anthropic.com/en/docs/claude-code/permissions.md` |
+| Memory & CLAUDE.md | `https://docs.anthropic.com/en/docs/claude-code/memory.md` |
+| Best Practices | `https://docs.anthropic.com/en/docs/claude-code/best-practices.md` |
+| MCP Servers | `https://docs.anthropic.com/en/docs/claude-code/mcp.md` |
+| Hooks | `https://docs.anthropic.com/en/docs/claude-code/hooks.md` |
+| Skills | `https://docs.anthropic.com/en/docs/claude-code/skills.md` |
+| Sub-agents | `https://docs.anthropic.com/en/docs/claude-code/sub-agents.md` |
+| Plugins | `https://docs.anthropic.com/en/docs/claude-code/plugins.md` |
+| Model Configuration | `https://docs.anthropic.com/en/docs/claude-code/model-config.md` |
 | CLI Reference | `https://docs.anthropic.com/en/docs/claude-code/cli-reference` |
 
 ## settings.json Known Fields
