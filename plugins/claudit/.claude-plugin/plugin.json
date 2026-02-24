@@ -4,7 +4,7 @@
   "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
   "author": {
     "name": "quickstop",
-    "url": "https://github.com/quickstop"
+    "url": "https://github.com/acostanzo/quickstop"
   },
   "license": "MIT",
   "keywords": ["audit", "configuration", "optimization", "health-check", "best-practices"]
