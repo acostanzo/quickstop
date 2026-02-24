@@ -12,6 +12,12 @@ Claudit performs a comprehensive, research-backed audit of your Claude Code setu
 - **Over-engineering detection**: Identifies where configuration complexity actively hurts performance. Claude does the heavy lifting; verbose CLAUDE.md files, excessive hooks, and MCP sprawl get in the way
 - **Persistent memory**: Research agents remember findings across audit runs, getting faster and more accurate over time
 
+## Video Walkthrough
+
+[![I Audited My Claude Code Config and Found 32% Was Wasted](https://i.ytimg.com/vi/HJvtgldlzDI/hqdefault.jpg)](https://www.youtube.com/watch?v=HJvtgldlzDI)
+
+[**I Audited My Claude Code Config and Found 32% Was Wasted**](https://www.youtube.com/watch?v=HJvtgldlzDI) by [Damian Galarza](https://www.youtube.com/@damian.galarza)
+
 ## Usage
 
 ```
