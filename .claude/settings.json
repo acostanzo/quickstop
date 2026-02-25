@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/check-plugin-versions.sh",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}
