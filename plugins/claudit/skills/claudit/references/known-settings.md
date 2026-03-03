@@ -18,28 +18,37 @@ Research agents should fetch these pages to build expert context:
 | Sub-agents | `https://docs.anthropic.com/en/docs/claude-code/sub-agents.md` |
 | Plugins | `https://docs.anthropic.com/en/docs/claude-code/plugins.md` |
 | Model Configuration | `https://docs.anthropic.com/en/docs/claude-code/model-config.md` |
-| CLI Reference | `https://docs.anthropic.com/en/docs/claude-code/cli-reference` |
+| CLI Reference | `https://docs.anthropic.com/en/docs/claude-code/cli-reference.md` |
 
 ## settings.json Known Fields
+
+Settings can appear at multiple levels. The fields below are common across levels; project shared (`.claude/settings.json`) and project local (`.claude/settings.local.json`) support the same fields.
 
 Global settings (`~/.claude/settings.json`):
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `enabledPlugins` | string[] | Plugin paths or marketplace references |
 | `permissions` | object | Global permission overrides |
+| `allowedTools` | string[] | Tools allowed without confirmation |
+| `deniedTools` | string[] | Tools that are blocked |
+| `hooks` | object | Global hooks configuration |
 | `model` | string | Default model selection |
 | `smallModelOverride` | string | Override for haiku-class tasks |
+| `enabledPlugins` | string[] | Plugin paths or marketplace references |
+| `claudeMdExcludes` | string[] | Path globs to skip CLAUDE.md files from loading |
+| `autoMemoryEnabled` | boolean | Toggle auto-memory (default: true) |
 | `apiKey` | string | API key (should NOT be in settings) |
 
-Project settings (`.claude/settings.local.json`):
+Project settings (`.claude/settings.json` shared, `.claude/settings.local.json` local):
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `permissions` | object | Project-level permission rules |
 | `allowedTools` | string[] | Tools allowed without confirmation |
 | `deniedTools` | string[] | Tools that are blocked |
-| `hooks` | object | Project-level hooks |
+| `hooks` | object | Project-level hooks configuration |
+| `claudeMdExcludes` | string[] | Path globs to skip CLAUDE.md files |
+| `autoMemoryEnabled` | boolean | Toggle auto-memory for this project |
 
 ## Permission System
 

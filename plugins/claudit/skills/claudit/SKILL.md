@@ -38,6 +38,7 @@ Run parallel Glob calls to discover every Claude-related file. Cap at 50 total f
 | Agents | `{PROJECT_ROOT}/.claude/agents/*.md` | Project subagents |
 | Memory | `{PROJECT_ROOT}/.claude/MEMORY.md` | Project memory |
 | MCP | `{PROJECT_ROOT}/.mcp.json` | Project MCP servers |
+| Plugin hooks | `{PROJECT_ROOT}/.claude/plugins/*/hooks/hooks.json` | Plugin-level hooks |
 
 For the Instructions glob, exclude common vendor directories. Use Glob with pattern `**/CLAUDE.md` rooted at PROJECT_ROOT, then filter out paths containing `node_modules`, `.git`, `vendor`, `dist`, or `build`.
 
@@ -51,6 +52,7 @@ For the Instructions glob, exclude common vendor directories. Use Glob with patt
 | Memory | `~/.claude/MEMORY.md` | Global memory |
 | MCP | `~/.claude/.mcp.json` | Global MCP servers |
 | Plugins | `~/.claude/plugins/installed_plugins.json` | Installed plugins |
+| Marketplaces | `~/.claude/plugins/known_marketplaces.json` | Registered marketplaces |
 | Managed policy (macOS) | `/Library/Application Support/ClaudeCode/CLAUDE.md` | macOS managed policy |
 | Managed policy (Linux) | `/etc/claude-code/CLAUDE.md` | Linux/WSL managed policy |
 
@@ -208,8 +210,8 @@ Apply the rubric to the audit findings. For each of the 6 categories:
 | Context Efficiency | 15% | All audits (token cost estimates, aggregate instruction size) |
 
 **Scope-aware scoring:**
-- **Global only**: Skip categories that depend entirely on project data (CLAUDE.md Quality gets a neutral 75 with note "no project detected"). Renormalize remaining category weights to sum to 100%.
-- **Comprehensive**: Score all categories normally.
+- **Global only**: Exclude CLAUDE.md Quality from scoring (no project to evaluate). Renormalize the remaining 5 category weights to sum to 100% (Over-Engineering 25%, Security 19%, MCP 19%, Plugin 19%, Context 19%). Note "CLAUDE.md Quality: skipped (no project detected)" in the report.
+- **Comprehensive**: Score all 6 categories normally.
 
 ### Compute Overall Score
 
@@ -338,7 +340,7 @@ Before attempting PR delivery:
 
 If PR delivery is selected and prerequisites pass:
 
-1. **Create branch**: `git checkout -b claudit/improvements-YYYY-MM-DD` (use today's date)
+1. **Create branch**: `git checkout -b claudit/improvements-YYYY-MM-DD-HHMM` (use today's date and current time to avoid same-day collisions)
 2. **Stage changed project files**: Only stage project-scoped files that were modified in Phase 4. Never stage:
    - `CLAUDE.local.md` (gitignored/personal)
    - `.claude/settings.local.json` (personal local settings)
@@ -355,14 +357,25 @@ If PR delivery is selected and prerequisites pass:
    - Title: `claudit: improve Claude Code configuration`
    - Body: Concise summary with score delta, list of changes, and note that personal/global config was audited separately (if comprehensive)
 
-6. **Add inline review comments** via `gh api` for each changed file. Each comment follows this template:
-   - **What changed**: Brief description of the edit
-   - **Why it matters**: 1-2 sentences on the impact
-   - **Claude Code feature**: The feature this relates to
-   - **Docs**: Link to the relevant Anthropic docs page
-   - **Score impact**: Points gained from this change
+6. **Add inline review comments** via `gh api` for each changed file. Use this JSON structure:
 
-   Use `gh api repos/{owner}/{repo}/pulls/{pr_number}/comments` with POST to add line-level review comments.
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/comments \
+     --method POST \
+     --field commit_id="$(git rev-parse HEAD)" \
+     --field path="path/to/file" \
+     --field line=N \
+     --field side="RIGHT" \
+     --field body="**What changed:** Brief description
+
+   **Why it matters:** 1-2 sentences on impact
+
+   **Claude Code feature:** Feature name
+   **Docs:** https://docs.anthropic.com/en/docs/claude-code/relevant-page
+   **Score impact:** +N pts Category"
+   ```
+
+   Add one comment per significant change. Keep comments concise and educational.
 
 7. Return the PR URL to the user.
 

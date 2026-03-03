@@ -55,7 +55,7 @@ Read the known-settings reference file for additional context:
 ### Step 4: Supplementary Search
 
 Run 1 WebSearch for additional insights:
-- Query: "Claude Code CLAUDE.md optimization best practices 2025"
+- Query: "Claude Code CLAUDE.md optimization best practices"
 
 ### Step 5: Update Memory
 

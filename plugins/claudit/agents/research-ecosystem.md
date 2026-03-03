@@ -25,7 +25,7 @@ Before fetching anything, check if you have cached knowledge from a previous run
 
 Anthropic's docs are the source of truth. Fetch these pages:
 
-1. **MCP Servers**: `https://docs.anthropic.com/en/docs/claude-code/mcp-servers`
+1. **MCP Servers**: `https://docs.anthropic.com/en/docs/claude-code/mcp`
    - .mcp.json schema
    - Server configuration options
    - Transport types
@@ -61,7 +61,7 @@ Anthropic's docs are the source of truth. Fetch these pages:
 ### Step 3: Supplementary Search
 
 Run 1 WebSearch for additional insights:
-- Query: "Claude Code plugins MCP hooks best practices configuration 2025"
+- Query: "Claude Code plugins MCP hooks best practices configuration"
 
 ### Step 4: Update Memory
 

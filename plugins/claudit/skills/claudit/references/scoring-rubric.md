@@ -46,8 +46,8 @@ Category Name        ███████████████████�
 
 | Issue | Points | Description |
 |-------|--------|-------------|
-| CLAUDE.md > 2500 tokens | -20 | Excessive verbosity consuming context budget |
-| CLAUDE.md > 1500 tokens | -10 | Getting verbose, likely contains redundancy |
+| CLAUDE.md > 2500 tokens | -20 | Excessive verbosity consuming context budget (tiers are exclusive — apply highest matching only) |
+| CLAUDE.md > 1500 tokens | -10 | Getting verbose, likely contains redundancy (not applied if >2500 tier matches) |
 | Restated built-in behaviors | -10 each (max -30) | Instructions telling Claude what it already does |
 | Prescriptive formatting rules | -5 each (max -15) | Over-specifying how Claude should format output |
 | Redundant/duplicate instructions | -10 each (max -20) | Same instruction stated multiple ways |
@@ -83,7 +83,7 @@ Category Name        ███████████████████�
 | Duplicated instructions across project files | -5 each (max -25) | Same instruction in root ↔ subdirectory or root ↔ rules (within project scope only, never cross-scope) |
 | Conflicting instructions across project files | -15 each | Contradictory instructions between project instruction files (same scope only) |
 | Broken `@import` references | -10 each (max -20) | `@path/to/file` references pointing to files that don't exist |
-| `@import` depth > 3 levels | -5 | Import chains deeper than 3 levels add complexity (hard limit is 5) |
+| `@import` depth > 3 levels | -5 | Import chains deeper than 3 levels add complexity; hard limit is 5 but shallow trees (<=3) are preferred for maintainability |
 | Circular `@imports` | -15 | Import cycle detected in instruction files |
 
 ### Bonuses
@@ -161,10 +161,10 @@ Category Name        ███████████████████�
 
 | Issue | Points | Description |
 |-------|--------|-------------|
-| Total config > 5000 tokens | -20 | Combined config consuming too much context |
-| Total config > 3000 tokens | -10 | Getting heavy |
-| Aggregate instruction files > 8000 tokens | -15 | All CLAUDE.md + rules files combined are very large |
-| Aggregate instruction files > 5000 tokens | -10 | All CLAUDE.md + rules files combined are getting heavy |
+| Total config > 5000 tokens | -20 | Combined config consuming too much context (tiers are exclusive — apply highest matching only) |
+| Total config > 3000 tokens | -10 | Getting heavy (not applied if >5000 tier matches) |
+| Aggregate instruction files > 8000 tokens | -15 | All CLAUDE.md + rules files combined are very large (tiers are exclusive) |
+| Aggregate instruction files > 5000 tokens | -10 | All CLAUDE.md + rules files combined are getting heavy (not applied if >8000 tier matches) |
 | Redundant memory entries | -10 | MEMORY.md duplicating CLAUDE.md |
 | Large hook output | -10 | Hooks producing verbose output consumed as context |
 | Unused skill/agent definitions | -5 each | Loaded but never triggered |
