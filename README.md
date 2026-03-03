@@ -4,7 +4,7 @@ A Claude Code plugin marketplace.
 
 ## Plugins
 
-### Claudit (v1.0.0)
+### Claudit (v2.0.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
 

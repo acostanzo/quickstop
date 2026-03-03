@@ -79,6 +79,11 @@ Category Name        ███████████████████�
 | No directory structure | -5 | Missing repo layout |
 | Embeds full API docs | -15 | Should reference files, not embed |
 | Includes secrets/keys | -30 | Secrets should never be in CLAUDE.md |
+| Individual file > 200 lines | -10 each (max -20) | Per Anthropic docs, instruction files should be under 200 lines |
+| Duplicated instructions across project files | -5 each (max -15) | Same instruction in root ↔ subdirectory or root ↔ rules (within project scope only, never cross-scope) |
+| Conflicting instructions across project files | -15 each | Contradictory instructions between project instruction files (same scope only) |
+| Broken `@import` references | -10 each (max -20) | `@path/to/file` references pointing to files that don't exist |
+| Circular `@imports` | -15 | Import cycle detected in instruction files |
 
 ### Bonuses
 
@@ -87,6 +92,9 @@ Category Name        ███████████████████�
 | Well-structured sections | +10 | Clear headings, logical flow |
 | Links to reference files | +5 | Points to docs instead of embedding |
 | Project-specific conventions only | +5 | Doesn't repeat general knowledge |
+| Effective `.claude/rules/` usage | +10 | Path-specific rules with proper frontmatter scoping |
+| Good file decomposition | +5 | Subdirectory CLAUDE.md files scoped to their domain |
+| Clean `@import` tree | +5 | All imports valid, no circular refs, depth <= 3 |
 
 ## Category: Security Posture (15%)
 
@@ -154,6 +162,8 @@ Category Name        ███████████████████�
 |-------|--------|-------------|
 | Total config > 5000 tokens | -20 | Combined config consuming too much context |
 | Total config > 3000 tokens | -10 | Getting heavy |
+| Aggregate instruction files > 8000 tokens | -15 | All CLAUDE.md + rules files combined are very large |
+| Aggregate instruction files > 5000 tokens | -10 | All CLAUDE.md + rules files combined are getting heavy |
 | Redundant memory entries | -10 | MEMORY.md duplicating CLAUDE.md |
 | Large hook output | -10 | Hooks producing verbose output consumed as context |
 | Unused skill/agent definitions | -5 each | Loaded but never triggered |
@@ -165,6 +175,7 @@ Category Name        ███████████████████�
 | Lean total config | +10 | Under 1500 tokens total |
 | Effective memory usage | +5 | MEMORY.md complements (not duplicates) CLAUDE.md |
 | Minimal loaded context | +5 | Only what's needed is loaded |
+| On-demand-only subdirectory files | +5 | Good architecture — subdirectory CLAUDE.md files load only when needed, not always |
 
 ## Scoring Algorithm
 
