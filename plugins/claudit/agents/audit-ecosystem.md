@@ -15,11 +15,12 @@ You are an audit agent dispatched by the Claudit plugin. You receive **Expert Co
 
 ## Configuration Map Processing
 
-The orchestrator has already discovered all ecosystem-related files and passes them to you as a structured manifest. **Do not Glob for `.mcp.json` files or hunt for hooks** — read exactly what the orchestrator found. The map includes:
+The orchestrator has already discovered all ecosystem-related files and passes them to you as a structured manifest. **Do not Glob for `.mcp.json` files** — read exactly what the orchestrator found. The map includes:
 
 - **MCP configs**: Paths to all `.mcp.json` files (project and/or global, depending on scope)
 - **Plugins**: Path to `installed_plugins.json`
-- **Hooks**: Hooks extracted from settings files (paths to settings files containing hooks)
+- **Settings files**: Paths to settings files that may contain hooks (the orchestrator doesn't pre-read them — you read each settings file and check for a `hooks` key yourself)
+- **Plugin hooks**: Paths to plugin-level `hooks/hooks.json` files (if any were discovered)
 
 The map slice only contains files relevant to the detected scope (global-only or comprehensive).
 

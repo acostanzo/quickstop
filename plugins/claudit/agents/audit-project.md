@@ -82,7 +82,7 @@ Analyze every instruction file from the configuration map. This includes root `C
 
 ### 3. `@import` Resolution
 
-Extract all `@path/to/file` references from every instruction file:
+Extract all `@import` references from every instruction file. An `@import` is an `@` followed by a file path (must contain `/` or end with a file extension). Ignore email addresses (`user@domain`), social handles (`@username` without path separators), and decorator syntax. Look for patterns like `@path/to/file`, `@./relative/path`, or `@~/home/path`:
 - Verify each referenced file exists
 - Check for circular imports (A imports B imports A)
 - Check import depth — flag chains deeper than 5 levels

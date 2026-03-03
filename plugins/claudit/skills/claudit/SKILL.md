@@ -56,7 +56,7 @@ For the Instructions glob, exclude common vendor directories. Use Glob with patt
 | Managed policy (macOS) | `/Library/Application Support/ClaudeCode/CLAUDE.md` | macOS managed policy |
 | Managed policy (Linux) | `/etc/claude-code/CLAUDE.md` | Linux/WSL managed policy |
 
-For each file found, get its line count via `wc -l` (batch multiple files in a single Bash call for efficiency).
+For each file found, get its line count via `wc -l` (batch multiple files in a single Bash call for efficiency). Quote paths containing spaces (e.g., `/Library/Application Support/...`) in any Bash commands.
 
 ### Step 4: Build and Present the Configuration Map
 
@@ -162,7 +162,7 @@ Dispatch audit subagents using the Task tool. Each agent receives the **Expert C
 **For `audit-global`**, include:
 - Full Expert Context
 - Global slice of config map: global instructions, global rules, global settings, global memory, global MCP, plugins, managed policy paths
-- If comprehensive: also include the **content of the project's root CLAUDE.md** (read it and paste it in) so the agent can detect cross-scope redundancy
+- If comprehensive: also include the **content of the project's root CLAUDE.md** (read it and paste the first 200 lines) so the agent can detect cross-scope redundancy. Cap at 200 lines to avoid bloating the agent prompt for very large files.
 
 **For `audit-project`** (comprehensive only), include:
 - Full Expert Context
@@ -170,7 +170,7 @@ Dispatch audit subagents using the Task tool. Each agent receives the **Expert C
 
 **For `audit-ecosystem`**, include:
 - Full Expert Context
-- Ecosystem slice: all MCP config paths (global + project as applicable), plugins path, paths to settings files that may contain hooks
+- Ecosystem slice: all MCP config paths (global + project as applicable), plugins path, plugin hooks paths, paths to all settings files (agent reads them to check for hooks)
 
 ### Dispatch Based on Scope
 
@@ -352,7 +352,7 @@ If PR delivery is selected and prerequisites pass:
 
    - [List key changes]
    ```
-4. **Push** with `git push -u origin claudit/improvements-YYYY-MM-DD`
+4. **Push** with `git push -u origin claudit/improvements-YYYY-MM-DD-HHMM` (same branch name as step 1)
 5. **Create PR** via `gh pr create`:
    - Title: `claudit: improve Claude Code configuration`
    - Body: Concise summary with score delta, list of changes, and note that personal/global config was audited separately (if comprehensive)
@@ -374,6 +374,8 @@ If PR delivery is selected and prerequisites pass:
    **Docs:** https://docs.anthropic.com/en/docs/claude-code/relevant-page
    **Score impact:** +N pts Category"
    ```
+
+   To determine the correct `line` value, run `git diff HEAD~1 -- path/to/file` and find line numbers within changed hunks. The `line` must be a line number in the new file version that falls within a diff hunk range. Target the most representative changed line per hunk. If line targeting fails (422 error), fall back to a general PR comment without line numbers using `gh pr comment`.
 
    Add one comment per significant change. Keep comments concise and educational.
 

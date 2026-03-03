@@ -25,24 +25,24 @@ Before fetching anything, check if you have cached knowledge from a previous run
 
 Anthropic's docs are the source of truth. Fetch these pages:
 
-1. **Settings**: `https://docs.anthropic.com/en/docs/claude-code/settings`
+1. **Settings**: `https://docs.anthropic.com/en/docs/claude-code/settings.md`
    - All settings.json fields (global and project)
    - Configuration precedence rules
    - Environment variables
 
-2. **Permissions**: `https://docs.anthropic.com/en/docs/claude-code/permissions`
+2. **Permissions**: `https://docs.anthropic.com/en/docs/claude-code/permissions.md`
    - Permission modes (default, plan, auto-edit, full-auto)
    - allowedTools / deniedTools patterns
    - Bash permission patterns
    - Path-scoped permissions
 
-3. **Memory**: `https://docs.anthropic.com/en/docs/claude-code/memory`
+3. **Memory**: `https://docs.anthropic.com/en/docs/claude-code/memory.md`
    - CLAUDE.md system (project, user, enterprise levels)
    - Auto-memory (MEMORY.md)
    - Context management
    - How CLAUDE.md is loaded and consumed
 
-4. **Best Practices**: `https://docs.anthropic.com/en/docs/claude-code/best-practices`
+4. **Best Practices**: `https://docs.anthropic.com/en/docs/claude-code/best-practices.md`
    - Official recommendations for CLAUDE.md
    - Configuration anti-patterns
    - Performance considerations

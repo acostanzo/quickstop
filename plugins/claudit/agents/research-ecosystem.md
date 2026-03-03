@@ -25,34 +25,34 @@ Before fetching anything, check if you have cached knowledge from a previous run
 
 Anthropic's docs are the source of truth. Fetch these pages:
 
-1. **MCP Servers**: `https://docs.anthropic.com/en/docs/claude-code/mcp`
+1. **MCP Servers**: `https://docs.anthropic.com/en/docs/claude-code/mcp.md`
    - .mcp.json schema
    - Server configuration options
    - Transport types
    - Tool discovery and context cost
 
-2. **Hooks**: `https://docs.anthropic.com/en/docs/claude-code/hooks`
+2. **Hooks**: `https://docs.anthropic.com/en/docs/claude-code/hooks.md`
    - All hook event types (PreToolUse, PostToolUse, Notification, Stop, SubagentStop, SessionStart)
    - Hook configuration schema
    - Matcher patterns
    - Timeout behavior
    - Hook output handling
 
-3. **Skills**: `https://docs.anthropic.com/en/docs/claude-code/skills`
+3. **Skills**: `https://docs.anthropic.com/en/docs/claude-code/skills.md`
    - Skill definition (SKILL.md format)
    - Frontmatter fields
    - disable-model-invocation
    - Reference files
    - Skills vs legacy commands
 
-4. **Sub-agents**: `https://docs.anthropic.com/en/docs/claude-code/sub-agents`
+4. **Sub-agents**: `https://docs.anthropic.com/en/docs/claude-code/sub-agents.md`
    - Agent markdown format
    - Frontmatter fields (name, description, tools, model, memory)
    - Memory persistence (user vs project scope)
    - Agent teams (experimental)
    - Dispatching patterns
 
-5. **Plugins**: `https://docs.anthropic.com/en/docs/claude-code/plugins`
+5. **Plugins**: `https://docs.anthropic.com/en/docs/claude-code/plugins.md`
    - Plugin structure
    - Plugin discovery and installation
    - Marketplace system
