@@ -28,14 +28,14 @@ Claudit performs a comprehensive, research-backed audit of your Claude Code setu
 /claudit
 ```
 
-The audit runs through 5 phases:
+The audit runs through 6 phases:
 
-1. **Configuration Map** — Discovers all Claude-related files (instructions, rules, settings, skills, agents, memory, MCP) and presents a structured map
-2. **Build Expert Context** — 3 research agents fetch official Anthropic documentation in parallel
-3. **Expert-Informed Audit** — Audit agents analyze your global, project, and ecosystem config against expert knowledge (each receives only its relevant slice of the config map)
-4. **Scoring & Synthesis** — 6 categories scored with visual health report and ranked recommendations
-5. **Interactive Enhancement** — Select which recommendations to apply; changes implemented with before/after scoring
-6. **PR Delivery** — Optionally open a PR with educational inline comments, or keep as local edits
+0. **Configuration Map** — Discovers all Claude-related files (instructions, rules, settings, skills, agents, memory, MCP) and presents a structured map
+1. **Build Expert Context** — 3 research agents fetch official Anthropic documentation in parallel
+2. **Expert-Informed Audit** — Audit agents analyze your global, project, and ecosystem config against expert knowledge (each receives only its relevant slice of the config map)
+3. **Scoring & Synthesis** — 6 categories scored with visual health report and ranked recommendations
+4. **Interactive Enhancement** — Select which recommendations to apply; changes implemented with before/after scoring
+5. **PR Delivery** — Optionally open a PR with educational inline comments, or keep as local edits
 
 ## Scope Selection
 

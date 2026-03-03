@@ -80,9 +80,10 @@ Category Name        ███████████████████�
 | Embeds full API docs | -15 | Should reference files, not embed |
 | Includes secrets/keys | -30 | Secrets should never be in CLAUDE.md |
 | Individual file > 200 lines | -10 each (max -20) | Per Anthropic docs, instruction files should be under 200 lines |
-| Duplicated instructions across project files | -5 each (max -15) | Same instruction in root ↔ subdirectory or root ↔ rules (within project scope only, never cross-scope) |
+| Duplicated instructions across project files | -5 each (max -25) | Same instruction in root ↔ subdirectory or root ↔ rules (within project scope only, never cross-scope) |
 | Conflicting instructions across project files | -15 each | Contradictory instructions between project instruction files (same scope only) |
 | Broken `@import` references | -10 each (max -20) | `@path/to/file` references pointing to files that don't exist |
+| `@import` depth > 3 levels | -5 | Import chains deeper than 3 levels add complexity (hard limit is 5) |
 | Circular `@imports` | -15 | Import cycle detected in instruction files |
 
 ### Bonuses
@@ -94,7 +95,7 @@ Category Name        ███████████████████�
 | Project-specific conventions only | +5 | Doesn't repeat general knowledge |
 | Effective `.claude/rules/` usage | +10 | Path-specific rules with proper frontmatter scoping |
 | Good file decomposition | +5 | Subdirectory CLAUDE.md files scoped to their domain |
-| Clean `@import` tree | +5 | All imports valid, no circular refs, depth <= 3 |
+| Clean `@import` tree | +5 | All imports valid, no circular refs, depth <= 3 (bonus threshold is stricter than the hard limit of 5 to reward shallow, maintainable import trees) |
 
 ## Category: Security Posture (15%)
 

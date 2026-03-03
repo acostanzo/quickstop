@@ -23,7 +23,7 @@ You are the Claudit orchestrator. When the user runs `/claudit`, execute this 5-
 
 ### Step 3: Comprehensive Configuration Scan
 
-Run parallel Glob calls to discover every Claude-related file. Cap at 50 total files — if a project has more, report the cap and proceed with the first 50 by modification time.
+Run parallel Glob calls to discover every Claude-related file. Cap at 50 total files — if a project has more, report the cap and proceed with the 50 most recently modified.
 
 **Project-level (if comprehensive):**
 
@@ -51,7 +51,8 @@ For the Instructions glob, exclude common vendor directories. Use Glob with patt
 | Memory | `~/.claude/MEMORY.md` | Global memory |
 | MCP | `~/.claude/.mcp.json` | Global MCP servers |
 | Plugins | `~/.claude/plugins/installed_plugins.json` | Installed plugins |
-| Managed policy | `/Library/Application Support/ClaudeCode/CLAUDE.md` | macOS managed policy |
+| Managed policy (macOS) | `/Library/Application Support/ClaudeCode/CLAUDE.md` | macOS managed policy |
+| Managed policy (Linux) | `/etc/claude-code/CLAUDE.md` | Linux/WSL managed policy |
 
 For each file found, get its line count via `wc -l` (batch multiple files in a single Bash call for efficiency).
 
@@ -89,7 +90,7 @@ MANAGED POLICY: [found (N lines) / not found]
 === END MAP ===
 ```
 
-Estimate tokens for instruction files as `(total_lines * 40) / 4` (rough estimate: ~10 words per line, ~4 chars per word, divided by 4 chars per token). Show the aggregate token estimate for instruction files.
+Estimate tokens for instruction files as `(total_lines * 40) / 4` (rough estimate: ~10 words per line, ~4 chars per word, divided by 4 chars per token). This line-based estimate is for the config map display only. Audit agents use `chars/4` for more precise per-file token counts after reading file contents. Show the aggregate token estimate for instruction files.
 
 After presenting the map, tell the user:
 
@@ -296,6 +297,7 @@ Common fix types:
 **Scope safety for fixes:**
 - Project-scoped files (CLAUDE.md, .claude/settings.json, .claude/rules/): eligible for direct edit and PR
 - `CLAUDE.local.md`: edit directly, never include in PR (it's gitignored/personal)
+- `.claude/settings.local.json`: edit directly, never include in PR (it's personal/local)
 - `~/.claude/` files: edit directly, never include in PR (they're personal)
 
 ### Re-Score and Show Delta
@@ -339,6 +341,7 @@ If PR delivery is selected and prerequisites pass:
 1. **Create branch**: `git checkout -b claudit/improvements-YYYY-MM-DD` (use today's date)
 2. **Stage changed project files**: Only stage project-scoped files that were modified in Phase 4. Never stage:
    - `CLAUDE.local.md` (gitignored/personal)
+   - `.claude/settings.local.json` (personal local settings)
    - Any file under `~/.claude/` (personal config)
    - Any file outside the project root
 3. **Commit** with a clear message including the score delta:

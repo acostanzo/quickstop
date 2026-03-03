@@ -25,7 +25,7 @@ The orchestrator has already discovered all global-level Claude files and passes
 - **Memory**: `~/.claude/MEMORY.md`
 - **MCP**: `~/.claude/.mcp.json`
 - **Plugins**: `~/.claude/plugins/installed_plugins.json`
-- **Managed policy**: `/Library/Application Support/ClaudeCode/CLAUDE.md` (macOS)
+- **Managed policy**: `/Library/Application Support/ClaudeCode/CLAUDE.md` (macOS), `/etc/claude-code/CLAUDE.md` (Linux/WSL)
 
 ## What You Audit
 
@@ -71,9 +71,11 @@ If found, analyze:
 
 ### 5. Managed Policy
 
-Check `/Library/Application Support/ClaudeCode/CLAUDE.md` (macOS):
-- If found: report its content and note that it's admin-managed
-- If not found: report as "not found" (this is normal for non-enterprise setups)
+Check the managed policy path for the current platform:
+- macOS: `/Library/Application Support/ClaudeCode/CLAUDE.md`
+- Linux/WSL: `/etc/claude-code/CLAUDE.md`
+
+If found: report its content and note that it's admin-managed. If not found: report as "not found" (this is normal for non-enterprise setups).
 
 ### 6. Global Memory
 

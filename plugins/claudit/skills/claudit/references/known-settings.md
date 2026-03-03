@@ -98,7 +98,9 @@ Claude Code loads instruction files from multiple locations with different behav
 | `.claude/rules/*.md` | Project `.claude/rules/` | Team — modular rules with optional path filtering | Yes |
 | `~/.claude/CLAUDE.md` | Home `.claude/` dir | Personal — global instructions across all projects | No |
 | `~/CLAUDE.md` | Home dir (legacy) | Personal — legacy global location | No |
-| Managed policy | `/Library/Application Support/ClaudeCode/CLAUDE.md` (macOS) | Enterprise — admin-managed | N/A |
+| Managed policy (macOS) | `/Library/Application Support/ClaudeCode/CLAUDE.md` | Enterprise — admin-managed | N/A |
+| Managed policy (Linux/WSL) | `/etc/claude-code/CLAUDE.md` | Enterprise — admin-managed | N/A |
+| Managed policy (Windows) | `C:\Program Files\ClaudeCode\CLAUDE.md` | Enterprise — admin-managed | N/A |
 
 **`@import` Syntax:**
 
