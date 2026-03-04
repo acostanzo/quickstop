@@ -68,6 +68,7 @@ If found, analyze:
 - Content quality and relevance
 - Whether it contains general preferences (keep) vs project-specific instructions (shouldn't be here)
 - For rules files: validate YAML frontmatter, check paths patterns
+- **Cross-file duplication within global scope**: If both `~/.claude/CLAUDE.md` and `~/.claude/rules/*.md` files exist, check for duplicated instructions between them (same analysis as project-level cross-file duplication)
 
 ### 5. Managed Policy
 

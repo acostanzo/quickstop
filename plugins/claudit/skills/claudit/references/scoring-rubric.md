@@ -51,7 +51,7 @@ Category Name        ███████████████████�
 | Restated built-in behaviors | -10 each (max -30) | Instructions telling Claude what it already does |
 | Prescriptive formatting rules | -5 each (max -15) | Over-specifying how Claude should format output |
 | Redundant/duplicate instructions | -10 each (max -20) | Same instruction stated multiple ways |
-| Instruction conflicts | -15 each | Contradictory instructions |
+| Instruction conflicts (within-file) | -15 each | Contradictory instructions within the same file (cross-file conflicts are scored under CLAUDE.md Quality, not here) |
 | Permission over-specification | -15 | Dozens of granular rules when a mode would suffice |
 | Hook sprawl | -10 | Hooks duplicating built-in behavior |
 | MCP server sprawl | -10 | Servers configured but rarely/never used |

@@ -210,7 +210,7 @@ Apply the rubric to the audit findings. For each of the 6 categories:
 | Context Efficiency | 15% | All audits (token cost estimates, aggregate instruction size) |
 
 **Scope-aware scoring:**
-- **Global only**: Exclude CLAUDE.md Quality from scoring (no project to evaluate). Renormalize the remaining 5 category weights to sum to 100% (Over-Engineering 25%, Security 19%, MCP 19%, Plugin 19%, Context 19%). Note "CLAUDE.md Quality: skipped (no project detected)" in the report.
+- **Global only**: Exclude CLAUDE.md Quality from scoring (no project to evaluate). Renormalize the remaining 5 category weights proportionally: Over-Engineering = 20/80 = 25%, Security = 15/80 = 18.75%, MCP = 18.75%, Plugin = 18.75%, Context = 18.75%. Note "CLAUDE.md Quality: skipped (no project detected)" in the report.
 - **Comprehensive**: Score all 6 categories normally.
 
 ### Compute Overall Score
@@ -340,24 +340,26 @@ Before attempting PR delivery:
 
 If PR delivery is selected and prerequisites pass:
 
-1. **Create branch**: `git checkout -b claudit/improvements-YYYY-MM-DD-HHMM` (use today's date and current time to avoid same-day collisions)
-2. **Stage changed project files**: Only stage project-scoped files that were modified in Phase 4. Never stage:
+1. **Record the current branch**: `CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)` — this is the branch the user was on before claudit creates its own branch. The PR will target this branch so the diff only shows claudit changes.
+2. **Create branch**: `git checkout -b claudit/improvements-YYYY-MM-DD-HHMM` (use today's date and current time to avoid same-day collisions)
+3. **Stage changed project files**: Only stage project-scoped files that were modified in Phase 4. Never stage:
    - `CLAUDE.local.md` (gitignored/personal)
    - `.claude/settings.local.json` (personal local settings)
    - Any file under `~/.claude/` (personal config)
    - Any file outside the project root
-3. **Commit** with a clear message including the score delta:
+4. **Commit** with a clear message including the score delta:
    ```
    claudit: improve Claude Code configuration (score XX → YY)
 
    - [List key changes]
    ```
-4. **Push** with `git push -u origin claudit/improvements-YYYY-MM-DD-HHMM` (same branch name as step 1)
-5. **Create PR** via `gh pr create`:
+5. **Push** with `git push -u origin claudit/improvements-YYYY-MM-DD-HHMM` (same branch name as step 2)
+6. **Create PR** via `gh pr create --base $CURRENT_BRANCH`:
    - Title: `claudit: improve Claude Code configuration`
    - Body: Concise summary with score delta, list of changes, and note that personal/global config was audited separately (if comprehensive)
+   - The `--base` flag ensures the PR targets the user's original branch, not the repo default — so the diff only contains claudit's changes
 
-6. **Add inline review comments** via `gh api` for each changed file. Use this JSON structure:
+7. **Add inline review comments** via `gh api` for each changed file. Use this JSON structure:
 
    ```bash
    gh api repos/{owner}/{repo}/pulls/{pr_number}/comments \
