@@ -25,18 +25,18 @@ Before fetching anything, check if you have cached knowledge from a previous run
 
 Anthropic's docs are the source of truth. Fetch these pages:
 
-1. **Model Configuration**: `https://docs.anthropic.com/en/docs/claude-code/model-configuration`
+1. **Model Configuration**: `https://docs.anthropic.com/en/docs/claude-code/model-config.md`
    - Available models and their capabilities
    - Model selection for different tasks
    - Reasoning effort levels
    - Token budgets and context windows
 
-2. **CLI Reference**: `https://docs.anthropic.com/en/docs/claude-code/cli-reference`
+2. **CLI Reference**: `https://docs.anthropic.com/en/docs/claude-code/cli-reference.md`
    - All CLI flags and their effects
    - Environment variables
    - Configuration precedence
 
-3. **Best Practices (Performance)**: `https://docs.anthropic.com/en/docs/claude-code/best-practices`
+3. **Best Practices (Performance)**: `https://docs.anthropic.com/en/docs/claude-code/best-practices.md`
    - Context management strategies
    - Performance optimization tips
    - What to avoid
@@ -45,8 +45,8 @@ Anthropic's docs are the source of truth. Fetch these pages:
 
 Run 2 WebSearches for community insights:
 
-1. "Claude Code context window optimization token management 2025"
-2. "Claude Code CLAUDE.md over-engineering anti-patterns less is more 2025"
+1. "Claude Code context window optimization token management"
+2. "Claude Code CLAUDE.md over-engineering anti-patterns less is more"
 
 ### Step 4: Update Memory
 

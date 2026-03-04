@@ -25,24 +25,24 @@ Before fetching anything, check if you have cached knowledge from a previous run
 
 Anthropic's docs are the source of truth. Fetch these pages:
 
-1. **Settings**: `https://docs.anthropic.com/en/docs/claude-code/settings`
+1. **Settings**: `https://docs.anthropic.com/en/docs/claude-code/settings.md`
    - All settings.json fields (global and project)
    - Configuration precedence rules
    - Environment variables
 
-2. **Permissions**: `https://docs.anthropic.com/en/docs/claude-code/permissions`
+2. **Permissions**: `https://docs.anthropic.com/en/docs/claude-code/permissions.md`
    - Permission modes (default, plan, auto-edit, full-auto)
    - allowedTools / deniedTools patterns
    - Bash permission patterns
    - Path-scoped permissions
 
-3. **Memory**: `https://docs.anthropic.com/en/docs/claude-code/memory`
+3. **Memory**: `https://docs.anthropic.com/en/docs/claude-code/memory.md`
    - CLAUDE.md system (project, user, enterprise levels)
    - Auto-memory (MEMORY.md)
    - Context management
    - How CLAUDE.md is loaded and consumed
 
-4. **Best Practices**: `https://docs.anthropic.com/en/docs/claude-code/best-practices`
+4. **Best Practices**: `https://docs.anthropic.com/en/docs/claude-code/best-practices.md`
    - Official recommendations for CLAUDE.md
    - Configuration anti-patterns
    - Performance considerations
@@ -55,7 +55,7 @@ Read the known-settings reference file for additional context:
 ### Step 4: Supplementary Search
 
 Run 1 WebSearch for additional insights:
-- Query: "Claude Code CLAUDE.md optimization best practices 2025"
+- Query: "Claude Code CLAUDE.md optimization best practices"
 
 ### Step 5: Update Memory
 
@@ -84,6 +84,7 @@ Return your findings as structured markdown:
 - [Comprehensive list of all known settings.json fields]
 - [Configuration precedence: CLI > project > user > enterprise]
 - [Any new or deprecated fields]
+- [claudeMdExcludes: path globs for skipping CLAUDE.md files]
 
 ### Permission System
 - [All permission modes and what they grant]
@@ -91,12 +92,31 @@ Return your findings as structured markdown:
 - [Best practices for permission configuration]
 - [Common anti-patterns]
 
-### CLAUDE.md System
-- [File loading order and precedence]
+### CLAUDE.md File Hierarchy
+- [File types: CLAUDE.md, CLAUDE.local.md, subdirectory CLAUDE.md, .claude/rules/*.md, managed policy]
+- [Loading behavior: always-loaded vs on-demand (subdirectory) vs path-filtered (rules)]
+- [Managed policy locations by OS]
+- [File precedence and override semantics]
+- [200-line guideline per individual instruction file]
+
+### @import System
+- [@import syntax: @path/to/file]
+- [Maximum import depth: 5 levels]
+- [Circular import detection]
+- [Path resolution: relative to importing file]
+
+### .claude/rules/ System
+- [YAML frontmatter format for rules files]
+- [paths: field with glob pattern syntax]
+- [Rules without paths: apply globally within the project]
+- [Best practices for modular rule organization]
+
+### CLAUDE.md Best Practices
 - [Recommended structure and sections]
 - [Size guidelines and token implications]
 - [What belongs in CLAUDE.md vs what doesn't]
 - [Over-engineering signals]
+- [Decomposition strategies: when to use subdirectory files vs rules]
 
 ### Memory System
 - [MEMORY.md purpose and behavior]

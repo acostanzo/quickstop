@@ -1,6 +1,6 @@
 {
   "name": "claudit",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
   "author": {
     "name": "quickstop",

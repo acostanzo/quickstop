@@ -18,28 +18,37 @@ Research agents should fetch these pages to build expert context:
 | Sub-agents | `https://docs.anthropic.com/en/docs/claude-code/sub-agents.md` |
 | Plugins | `https://docs.anthropic.com/en/docs/claude-code/plugins.md` |
 | Model Configuration | `https://docs.anthropic.com/en/docs/claude-code/model-config.md` |
-| CLI Reference | `https://docs.anthropic.com/en/docs/claude-code/cli-reference` |
+| CLI Reference | `https://docs.anthropic.com/en/docs/claude-code/cli-reference.md` |
 
 ## settings.json Known Fields
+
+Settings can appear at multiple levels. The fields below are common across levels; project shared (`.claude/settings.json`) and project local (`.claude/settings.local.json`) support the same fields.
 
 Global settings (`~/.claude/settings.json`):
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `enabledPlugins` | string[] | Plugin paths or marketplace references |
 | `permissions` | object | Global permission overrides |
+| `allowedTools` | string[] | Tools allowed without confirmation |
+| `deniedTools` | string[] | Tools that are blocked |
+| `hooks` | object | Global hooks configuration |
 | `model` | string | Default model selection |
 | `smallModelOverride` | string | Override for haiku-class tasks |
+| `enabledPlugins` | string[] | Plugin paths or marketplace references |
+| `claudeMdExcludes` | string[] | Path globs to skip CLAUDE.md files from loading |
+| `autoMemoryEnabled` | boolean | Toggle auto-memory (default: true) |
 | `apiKey` | string | API key (should NOT be in settings) |
 
-Project settings (`.claude/settings.local.json`):
+Project settings (`.claude/settings.json` shared, `.claude/settings.local.json` local):
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `permissions` | object | Project-level permission rules |
 | `allowedTools` | string[] | Tools allowed without confirmation |
 | `deniedTools` | string[] | Tools that are blocked |
-| `hooks` | object | Project-level hooks |
+| `hooks` | object | Project-level hooks configuration |
+| `claudeMdExcludes` | string[] | Path globs to skip CLAUDE.md files |
+| `autoMemoryEnabled` | boolean | Toggle auto-memory for this project |
 
 ## Permission System
 
@@ -75,6 +84,66 @@ Project settings (`.claude/settings.local.json`):
 - Mixing `allowedTools` with a permission mode that already grants those tools
 
 ## CLAUDE.md Configuration
+
+### CLAUDE.md File Hierarchy
+
+Claude Code loads instruction files from multiple locations with different behaviors:
+
+**Loading Behavior:**
+
+| Load Type | Behavior | Description |
+|-----------|----------|-------------|
+| Always loaded | Automatic | Root `CLAUDE.md`, `CLAUDE.local.md`, `~/.claude/CLAUDE.md` |
+| On-demand (subdirectory) | Loaded when working in that directory | `**/CLAUDE.md` files in subdirectories |
+| Path-filtered (rules) | Loaded when file path matches `paths:` frontmatter | `.claude/rules/*.md` files |
+
+**File Types:**
+
+| File | Location | Scope | Git Tracked |
+|------|----------|-------|-------------|
+| `CLAUDE.md` | Project root | Team — shared project instructions | Yes |
+| `CLAUDE.local.md` | Project root | Personal — gitignored project overrides | No |
+| `**/CLAUDE.md` | Any subdirectory | Team — scoped to that directory tree | Yes |
+| `.claude/rules/*.md` | Project `.claude/rules/` | Team — modular rules with optional path filtering | Yes |
+| `~/.claude/CLAUDE.md` | Home `.claude/` dir | Personal — global instructions across all projects | No |
+| `~/CLAUDE.md` | Home dir (legacy) | Personal — legacy global location | No |
+| Managed policy (macOS) | `/Library/Application Support/ClaudeCode/CLAUDE.md` | Enterprise — admin-managed | N/A |
+| Managed policy (Linux/WSL) | `/etc/claude-code/CLAUDE.md` | Enterprise — admin-managed | N/A |
+| Managed policy (Windows) | `C:\Program Files\ClaudeCode\CLAUDE.md` | Enterprise — admin-managed | N/A |
+
+**`@import` Syntax:**
+
+- Reference other files from within instruction files: `@path/to/file`
+- Max 5 levels of import depth
+- Circular import detection is built-in
+- Paths are relative to the file containing the import
+
+**`.claude/rules/` YAML Frontmatter:**
+
+```yaml
+---
+paths:
+  - "src/api/**"
+  - "tests/api/**"
+---
+
+# API Development Rules
+These rules apply only when working in the API source or test directories.
+```
+
+The `paths:` field accepts glob patterns. Rules without `paths:` frontmatter apply globally within the project.
+
+**`claudeMdExcludes` Setting:**
+
+In `settings.json`, the `claudeMdExcludes` field accepts path globs to skip specific CLAUDE.md files from loading:
+
+```json
+{
+  "claudeMdExcludes": ["vendor/**/CLAUDE.md", "third_party/**/CLAUDE.md"]
+}
+```
+
+**Size Guideline:** Individual instruction files should be under 200 lines per file (per Anthropic docs). Prefer decomposing large files into `.claude/rules/` or subdirectory `CLAUDE.md` files.
 
 ### Recommended Structure
 

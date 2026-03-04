@@ -46,12 +46,12 @@ Category Name        ███████████████████�
 
 | Issue | Points | Description |
 |-------|--------|-------------|
-| CLAUDE.md > 2500 tokens | -20 | Excessive verbosity consuming context budget |
-| CLAUDE.md > 1500 tokens | -10 | Getting verbose, likely contains redundancy |
+| CLAUDE.md > 2500 tokens | -20 | Excessive verbosity consuming context budget (tiers are exclusive — apply highest matching only) |
+| CLAUDE.md > 1500 tokens | -10 | Getting verbose, likely contains redundancy (not applied if >2500 tier matches) |
 | Restated built-in behaviors | -10 each (max -30) | Instructions telling Claude what it already does |
 | Prescriptive formatting rules | -5 each (max -15) | Over-specifying how Claude should format output |
 | Redundant/duplicate instructions | -10 each (max -20) | Same instruction stated multiple ways |
-| Instruction conflicts | -15 each | Contradictory instructions |
+| Instruction conflicts (within-file) | -15 each | Contradictory instructions within the same file (cross-file conflicts are scored under CLAUDE.md Quality, not here) |
 | Permission over-specification | -15 | Dozens of granular rules when a mode would suffice |
 | Hook sprawl | -10 | Hooks duplicating built-in behavior |
 | MCP server sprawl | -10 | Servers configured but rarely/never used |
@@ -79,6 +79,12 @@ Category Name        ███████████████████�
 | No directory structure | -5 | Missing repo layout |
 | Embeds full API docs | -15 | Should reference files, not embed |
 | Includes secrets/keys | -30 | Secrets should never be in CLAUDE.md |
+| Individual file > 200 lines | -10 each (max -20) | Per Anthropic docs, instruction files should be under 200 lines |
+| Duplicated instructions across project files | -5 each (max -25) | Same instruction in root ↔ subdirectory or root ↔ rules (within project scope only, never cross-scope) |
+| Conflicting instructions across project files | -15 each | Contradictory instructions between project instruction files (same scope only) |
+| Broken `@import` references | -10 each (max -20) | `@path/to/file` references pointing to files that don't exist |
+| `@import` depth > 3 levels | -5 | Import chains deeper than 3 levels add complexity; hard limit is 5 but shallow trees (<=3) are preferred for maintainability |
+| Circular `@imports` | -15 | Import cycle detected in instruction files |
 
 ### Bonuses
 
@@ -87,6 +93,9 @@ Category Name        ███████████████████�
 | Well-structured sections | +10 | Clear headings, logical flow |
 | Links to reference files | +5 | Points to docs instead of embedding |
 | Project-specific conventions only | +5 | Doesn't repeat general knowledge |
+| Effective `.claude/rules/` usage | +10 | Path-specific rules with proper frontmatter scoping |
+| Good file decomposition | +5 | Subdirectory CLAUDE.md files scoped to their domain |
+| Clean `@import` tree | +5 | All imports valid, no circular refs, depth <= 3 (bonus threshold is stricter than the hard limit of 5 to reward shallow, maintainable import trees) |
 
 ## Category: Security Posture (15%)
 
@@ -152,8 +161,10 @@ Category Name        ███████████████████�
 
 | Issue | Points | Description |
 |-------|--------|-------------|
-| Total config > 5000 tokens | -20 | Combined config consuming too much context |
-| Total config > 3000 tokens | -10 | Getting heavy |
+| Total config > 5000 tokens | -20 | Combined config consuming too much context (tiers are exclusive — apply highest matching only) |
+| Total config > 3000 tokens | -10 | Getting heavy (not applied if >5000 tier matches) |
+| Aggregate instruction files > 8000 tokens | -15 | All CLAUDE.md + rules files combined are very large (tiers are exclusive) |
+| Aggregate instruction files > 5000 tokens | -10 | All CLAUDE.md + rules files combined are getting heavy (not applied if >8000 tier matches) |
 | Redundant memory entries | -10 | MEMORY.md duplicating CLAUDE.md |
 | Large hook output | -10 | Hooks producing verbose output consumed as context |
 | Unused skill/agent definitions | -5 each | Loaded but never triggered |
@@ -165,6 +176,7 @@ Category Name        ███████████████████�
 | Lean total config | +10 | Under 1500 tokens total |
 | Effective memory usage | +5 | MEMORY.md complements (not duplicates) CLAUDE.md |
 | Minimal loaded context | +5 | Only what's needed is loaded |
+| On-demand-only subdirectory files | +5 | Good architecture — subdirectory CLAUDE.md files load only when needed, not always |
 
 ## Scoring Algorithm
 
