@@ -9,7 +9,8 @@ quickstop/
 ├── .claude-plugin/
 │   └── marketplace.json    # Plugin registry
 ├── plugins/
-│   └── claudit/            # Configuration audit & optimization
+│   ├── claudit/            # Configuration audit & optimization
+│   └── bifrost/            # Memory bridge for AI agents
 ├── scripts/
 │   ├── check-plugin-versions.sh  # Version validation script
 │   ├── install-hooks.sh          # Git hooks installer
