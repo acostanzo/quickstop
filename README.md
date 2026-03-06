@@ -15,6 +15,17 @@ Audit and optimize Claude Code configurations with dynamic best-practice researc
 
 **Command:** `/claudit` — run a comprehensive configuration audit
 
+### Bifrost (v1.0.0)
+
+Memory bridge for AI agents — portable context that persists across sessions and machines.
+
+- Loads memory (preferences, project context, recent history) at session start
+- Captures session transcripts to an inbox for later processing
+- Works with any Git-backed memory repo
+- Zero-noise async capture — no interruption to your workflow
+
+**Commands:** `/bifrost setup` — configure memory repo and machine | `/bifrost status` — show bridge diagnostics
+
 ## Installation
 
 ### From Marketplace

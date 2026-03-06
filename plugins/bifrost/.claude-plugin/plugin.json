@@ -1,0 +1,11 @@
+{
+  "name": "bifrost",
+  "version": "1.0.0",
+  "description": "Memory bridge for AI agents — portable context that persists across sessions and machines",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["memory", "context", "sessions", "agents", "persistence"]
+}
