@@ -20,6 +20,11 @@ if [[ -z "${BIFROST_REPO:-}" ]]; then
   exit 0
 fi
 
+# Validate machine name format (defense in depth — SKILL.md also validates during setup)
+if [[ -n "${BIFROST_MACHINE:-}" && ! "$BIFROST_MACHINE" =~ ^[a-z0-9-]+$ ]]; then
+  exit 0
+fi
+
 # Expand ~ in repo path
 BIFROST_REPO="${BIFROST_REPO/#\~/$HOME}"
 
@@ -61,6 +66,13 @@ if [[ -n "$YESTERDAY" && -f "$BIFROST_REPO/journal/$YESTERDAY.md" ]]; then
   CONTEXT+="# Journal — $YESTERDAY"$'\n'
   CONTEXT+="$(cat "$BIFROST_REPO/journal/$YESTERDAY.md")"
   CONTEXT+=$'\n\n'
+fi
+
+# Cap total context to ~3000 tokens to protect context window
+MAX_CONTEXT_CHARS=12000
+if [[ ${#CONTEXT} -gt $MAX_CONTEXT_CHARS ]]; then
+  CONTEXT="${CONTEXT:0:$MAX_CONTEXT_CHARS}"
+  CONTEXT+=$'\n\n[Bifrost: context truncated — consider trimming memory files]'
 fi
 
 # Output as additionalContext if we have anything

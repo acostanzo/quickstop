@@ -19,7 +19,7 @@ Session Start                          Session End
 | Read:    |                          | transcript   |
 | MEMORY.md|                          | to inbox/    |
 | journal/ |                          | git commit   |
-| procs/   |                          | git push     |
+| procedures/|                        | git push     |
 +---------+                          +-------------+
      |                                      |
      v                                      v
@@ -111,6 +111,10 @@ BIFROST_MACHINE=personal-laptop
 - Python 3 (for JSON escaping in hooks)
 
 `/bifrost setup` checks for these and will warn you if anything is missing.
+
+## Security & Privacy
+
+Session transcripts captured to `inbox/` may contain sensitive information — API keys in error messages, discussed credentials, or confidential project details. These transcripts are automatically committed and pushed to the memory repo's git remote. Ensure your memory repo is private and hosted on a service you trust.
 
 ## Installation
 
