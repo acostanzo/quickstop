@@ -19,6 +19,13 @@
       "description": "Memory bridge for AI agents — portable context that persists across sessions and machines",
       "source": "./plugins/bifrost",
       "keywords": ["memory", "context", "sessions", "agents", "persistence"]
+    },
+    {
+      "name": "heimdall",
+      "version": "1.0.0",
+      "description": "Memory consolidation — processes inbox transcripts into structured memory",
+      "source": "./plugins/heimdall",
+      "keywords": ["memory", "consolidation", "transcripts", "journal", "procedures"]
     }
   ]
 }
