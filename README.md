@@ -37,6 +37,17 @@ Memory consolidation — the gatekeeper that processes inbox transcripts into st
 
 **Commands:** `/heimdall process` — consolidate inbox into memory | `/heimdall status` — memory health dashboard | `/heimdall search <query>` — cross-layer search | `/heimdall archive` — archive old journals
 
+### Munin (v1.0.0)
+
+Memory intelligence — makes Claude memory-aware during sessions with persistent rules and deep recall.
+
+- Plants a persistent rules file so Claude reads MEMORY.md at session start
+- Deep cross-layer recall agent for searching all memory layers
+- Works independently or with Bifrost + Heimdall for the full memory loop
+- No hooks or scripts — intelligence through instruction-level rules
+
+**Commands:** `/munin setup` — configure memory repo and plant awareness rules | `/munin recall <topic>` — deep search across all memory layers
+
 ## Installation
 
 ### From Marketplace

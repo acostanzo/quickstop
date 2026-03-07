@@ -1,0 +1,11 @@
+{
+  "name": "munin",
+  "version": "1.0.0",
+  "description": "Memory intelligence — makes Claude memory-aware during sessions with persistent rules and deep recall",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["memory", "intelligence", "recall", "awareness", "rules"]
+}

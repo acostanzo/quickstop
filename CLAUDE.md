@@ -11,7 +11,8 @@ quickstop/
 ├── plugins/
 │   ├── claudit/            # Configuration audit & optimization
 │   ├── bifrost/            # Memory bridge for AI agents
-│   └── heimdall/           # Memory consolidation
+│   ├── heimdall/           # Memory consolidation
+│   └── munin/              # Memory intelligence
 ├── scripts/
 │   ├── check-plugin-versions.sh  # Version validation script
 │   ├── install-hooks.sh          # Git hooks installer
