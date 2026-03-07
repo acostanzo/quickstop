@@ -26,6 +26,13 @@
       "description": "Memory consolidation — processes inbox transcripts into structured memory",
       "source": "./plugins/heimdall",
       "keywords": ["memory", "consolidation", "transcripts", "journal", "procedures"]
+    },
+    {
+      "name": "munin",
+      "version": "1.0.0",
+      "description": "Memory intelligence — makes Claude memory-aware during sessions with persistent rules and deep recall",
+      "source": "./plugins/munin",
+      "keywords": ["memory", "intelligence", "recall", "awareness", "rules"]
     }
   ]
 }
