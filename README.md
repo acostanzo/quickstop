@@ -26,6 +26,17 @@ Memory bridge for AI agents — portable context that persists across sessions a
 
 **Commands:** `/bifrost setup` — configure memory repo and machine | `/bifrost status` — show bridge diagnostics
 
+### Heimdall (v1.0.0)
+
+Memory consolidation — the gatekeeper that processes inbox transcripts into structured memory.
+
+- Extracts structured observations from raw session transcripts
+- Two-agent pipeline: extractor (read-only) + consolidator (read-write)
+- Updates MEMORY.md, journal entries, and procedure files
+- Cross-layer search and memory health dashboard
+
+**Commands:** `/heimdall process` — consolidate inbox into memory | `/heimdall status` — memory health dashboard | `/heimdall search <query>` — cross-layer search | `/heimdall archive` — archive old journals
+
 ## Installation
 
 ### From Marketplace

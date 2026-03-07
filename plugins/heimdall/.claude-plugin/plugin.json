@@ -1,0 +1,11 @@
+{
+  "name": "heimdall",
+  "version": "1.0.0",
+  "description": "Memory consolidation — processes inbox transcripts into structured memory",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["memory", "consolidation", "transcripts", "journal", "procedures"]
+}

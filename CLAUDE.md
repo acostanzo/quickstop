@@ -10,7 +10,8 @@ quickstop/
 │   └── marketplace.json    # Plugin registry
 ├── plugins/
 │   ├── claudit/            # Configuration audit & optimization
-│   └── bifrost/            # Memory bridge for AI agents
+│   ├── bifrost/            # Memory bridge for AI agents
+│   └── heimdall/           # Memory consolidation
 ├── scripts/
 │   ├── check-plugin-versions.sh  # Version validation script
 │   ├── install-hooks.sh          # Git hooks installer
