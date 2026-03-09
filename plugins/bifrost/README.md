@@ -36,7 +36,7 @@ Session Start                                              Session End
 |-------|-------|------|
 | Transport | Hooks | Pulls memory at session start, captures transcripts at session end |
 | Processing | `/heimdall` | Extracts observations from transcripts, consolidates into structured memory |
-| Intelligence | `/recall` | Deep cross-layer recall across all memory layers |
+| Intelligence | `/odin` | Search memory — quick grep, then deep agent search if needed |
 
 ## Getting Started
 
@@ -80,8 +80,7 @@ Periodically run `/heimdall process` to consolidate captured transcripts into st
 | `/setup` | Full setup wizard — config, repo, rules |
 | `/status` | System health dashboard |
 | `/heimdall` | Consolidate inbox transcripts into structured memory |
-| `/recall <topic>` | Deep agent-powered search across all memory layers |
-| `/search <query>` | Quick grep across all memory files |
+| `/odin <topic>` | Search memory — sends Huginn (quick grep), then Munin (deep search) if needed |
 | `/archive` | Archive old journals, report cap pressure |
 
 ## Memory Repo Structure

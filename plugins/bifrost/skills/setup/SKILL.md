@@ -122,7 +122,7 @@ The layers below require explicit Read/Grep when relevant:
 
 Before planning or making decisions that could benefit from historical context:
 - Use Grep on `journal/` and `procedures/` for specific topics
-- For deep searches across all layers, use `/recall <topic>`
+- For deep searches across all layers, use `/odin <topic>`
 
 ## Corrections
 
