@@ -81,7 +81,6 @@ Periodically run `/heimdall process` to consolidate captured transcripts into st
 | `/status` | System health dashboard |
 | `/heimdall` | Consolidate inbox transcripts into structured memory |
 | `/odin <topic>` | Search memory — sends Huginn (quick grep), then Munin (deep search) if needed |
-| `/archive` | Archive old journals, report cap pressure |
 
 ## Memory Repo Structure
 
