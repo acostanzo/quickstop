@@ -2,6 +2,31 @@
 
 Reference for both the extractor and consolidator agents. Defines what to extract from transcripts and how to organize it in memory.
 
+## Transcript Format
+
+Inbox files are JSONL. Line 1 is Asgard metadata (`_type: "asgard_meta"`). Remaining lines are Claude Code session events.
+
+### Navigating the JSONL
+
+Each line has a `type` field. Focus on these:
+
+- **`type: "user"`** — Human messages. The `message.content` field is a string containing what the user said.
+- **`type: "assistant"`** — Agent responses. The `message.content` field is an **array** of content blocks:
+  - `{"type": "text", "text": "..."}` — Agent's written response. **Read these.**
+  - `{"type": "tool_use", ...}` — Tool calls (Read, Bash, Edit, etc.). **Skip these.**
+  - `{"type": "thinking", ...}` — Internal reasoning. **Skip these.**
+
+Skip these line types entirely:
+- `type: "progress"` — Tool execution output (~70% of lines). Contains file reads, grep results, git logs.
+- `type: "file-history-snapshot"` — Internal file state tracking.
+- `type: "system"` — System events.
+
+**In a typical 800-line transcript, ~95 lines are user messages, ~130 are assistant messages, and ~580 are progress events.** The extractable dialogue is <25% of the file.
+
+## Parallel Extraction
+
+Extractors may run in parallel across multiple inbox files. Temporal ordering of observations is determined by the `timestamp` field in each transcript's metadata line, not by processing order. The consolidator sorts all observations by timestamp before processing.
+
 ## Observation Categories
 
 | Category | Description | Priority |

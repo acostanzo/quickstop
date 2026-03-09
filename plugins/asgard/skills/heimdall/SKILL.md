@@ -33,7 +33,7 @@ List files in `inbox/` (excluding `inbox/processed/` and subdirectories). Sort b
 
 If no files found: "Inbox is empty — nothing to process."
 
-**Idempotency check:** Before processing, check `inbox/processed/` for files with matching session IDs. If a file was already processed (exists in `processed/` with the same session ID fragment), skip it to avoid double-processing.
+**Idempotency check:** Before processing, extract the session ID fragment from each inbox filename (the 8 characters after the last `-` and before the extension — e.g., `a1b2c3d4` from `20260306-143000-personal-laptop-a1b2c3d4.jsonl`). Check if any file in `inbox/processed/` contains the same fragment. If so, skip that inbox file to avoid double-processing.
 
 #### Step 4: Extract Observations
 
@@ -102,20 +102,30 @@ After consolidation, check for journals older than 7 days:
    - Create `journal/archive/YYYY-MM/` if needed
    - Move the file: `git mv journal/<date>.md journal/archive/YYYY-MM/<date>.md`
 
-#### Step 8: Move Processed Inbox Files
+#### Step 8: Git Commit and Push
 
-1. Create `inbox/processed/` if it doesn't exist
-2. For each processed inbox file: `git mv inbox/<file> inbox/processed/<file>`
-
-#### Step 9: Git Commit and Push
+Commit the consolidation results (memory updates, journal entries, archived journals):
 
 ```bash
-git add MEMORY.md journal/ procedures/ context-trees/ inbox/
+git add MEMORY.md journal/ procedures/ context-trees/
 git commit -m "memory: consolidate <N> inbox transcripts"
 git push
 ```
 
-If push fails (no remote), warn but don't error.
+If push fails (no remote), warn but don't error. If the commit fails, **stop here** — do not move inbox files to processed, so the next run can retry.
+
+#### Step 9: Move Processed Inbox Files
+
+Only after a successful commit, move the inbox files:
+
+1. Create `inbox/processed/` if it doesn't exist
+2. For each processed inbox file: `git mv inbox/<file> inbox/processed/<file>`
+3. Commit the inbox move separately:
+
+```bash
+git commit -m "memory: archive <N> processed inbox files"
+git push
+```
 
 #### Step 10: Report Summary
 

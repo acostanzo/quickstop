@@ -86,10 +86,11 @@ GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git -C "$ASGARD_REPO" pull --quiet 2>/
 CONTEXT=""
 BUDGET=$ASGARD_CONTEXT_CHARS
 
-TRUNCATION_SUFFIX=$'\n\n[Asgard: context truncated — consider trimming memory files]'
-TRUNCATION_SUFFIX_LEN=${#TRUNCATION_SUFFIX}
-
-append_with_budget() {
+# Skip entire files that don't fit rather than truncating mid-content.
+# Partial content is worse than missing content — Claude may hallucinate
+# from a half-finished preference or a cut-off procedure step.
+# Priority-based loading ensures the most important files come first.
+append_if_fits() {
   local content="$1"
   local content_len=${#content}
   if [[ $content_len -le $BUDGET ]]; then
@@ -97,26 +98,19 @@ append_with_budget() {
     CONTEXT+=$'\n\n'
     BUDGET=$((BUDGET - content_len - 2))
     return 0
-  else
-    # Partial fill: reserve space for the truncation suffix
-    local available=$((BUDGET - TRUNCATION_SUFFIX_LEN))
-    if [[ $available -gt 100 ]]; then
-      CONTEXT+="${content:0:$available}"
-      CONTEXT+="$TRUNCATION_SUFFIX"
-      BUDGET=0
-    fi
-    return 1
   fi
+  # Doesn't fit — skip entirely
+  return 1
 }
 
 # Priority 1: MEMORY.md (always — highest priority)
 if [[ -f "$ASGARD_REPO/MEMORY.md" ]]; then
-  append_with_budget "$(cat "$ASGARD_REPO/MEMORY.md")" || true
+  append_if_fits "$(cat "$ASGARD_REPO/MEMORY.md")" || true
 fi
 
 # Priority 2: Procedures index
 if [[ $BUDGET -gt 0 && -f "$ASGARD_REPO/procedures/procedures.md" ]]; then
-  append_with_budget "$(cat "$ASGARD_REPO/procedures/procedures.md")" || true
+  append_if_fits "$(cat "$ASGARD_REPO/procedures/procedures.md")" || true
 fi
 
 # Priority 3: Journals newest-first, up to ASGARD_JOURNAL_DAYS (B-3)
@@ -126,7 +120,7 @@ if [[ $BUDGET -gt 0 ]]; then
     JDATE=$(date -d "$i days ago" +%Y-%m-%d 2>/dev/null || date -v-${i}d +%Y-%m-%d 2>/dev/null || true)
     if [[ -n "$JDATE" && -f "$ASGARD_REPO/journal/$JDATE.md" ]]; then
       JCONTENT="# Journal — $JDATE"$'\n'"$(cat "$ASGARD_REPO/journal/$JDATE.md")"
-      append_with_budget "$JCONTENT" || break
+      append_if_fits "$JCONTENT" || break
     fi
   done
 fi

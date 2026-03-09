@@ -65,7 +65,7 @@ Project status tracking. `projects.md` contains high-level status for active pro
 
 ### Inbox
 
-Raw session transcripts land here via Asgard's SessionEnd hook. Each file has YAML frontmatter with machine, session_id, cwd, and timestamp. After processing by `/heimdall process`, files move to `inbox/processed/`.
+Raw session transcripts land here via Asgard's SessionEnd hook. Each file is JSONL — line 1 is Asgard metadata (`_type: "asgard_meta"` with machine, session_id, cwd, timestamp), remaining lines are the raw Claude Code session log. After processing by `/heimdall process`, files move to `inbox/processed/`.
 
 ## Search Strategies by Question Type
 

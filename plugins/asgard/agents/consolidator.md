@@ -27,6 +27,8 @@ Read the extraction guide at `${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.
 
 ## Process
 
+**Process observations in timestamp order (oldest first).** When two observations contradict each other, the one with the later `timestamp` wins — check the `timestamp` field on each observation to determine which is newer.
+
 ### Step 1: Categorize Observations
 
 Group observations by what they affect:

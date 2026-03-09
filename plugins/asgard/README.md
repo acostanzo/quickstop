@@ -81,7 +81,6 @@ Periodically run `/heimdall process` to consolidate captured transcripts into st
 |---------|-------------|
 | `/asgard setup` | Full setup wizard — config, repo, rules |
 | `/asgard status` | System health dashboard |
-| `/bifrost status` | Transport diagnostics |
 | `/heimdall process` | Process inbox transcripts into memory |
 | `/heimdall status` | Memory health dashboard |
 | `/heimdall search <query>` | Cross-layer search across all memory files |
@@ -134,4 +133,13 @@ ASGARD_JOURNAL_DAYS=2
 
 ## Security & Privacy
 
-Session transcripts captured to `inbox/` may contain sensitive information — API keys in error messages, discussed credentials, or confidential project details. These transcripts are automatically committed and pushed to the memory repo's git remote. Ensure your memory repo is private and hosted on a service you trust.
+Session transcripts captured to `inbox/` contain the full conversation and tool output from each session. This may include:
+
+- **API keys and credentials** that appeared in error messages, config files, or environment variables
+- **Confidential project details** discussed during the session
+- **File contents** read by the agent (source code, configs, data files)
+- **Command output** including git logs, environment state, and system information
+
+These transcripts are automatically committed and pushed to the memory repo's git remote. **Your memory repo should be private** — use a private repository on a service you trust. Do not use a public repository for your memory repo.
+
+If you use a shared machine, be aware that `~/.config/asgard/config` contains the repo path and the transcript capture runs on every session end.

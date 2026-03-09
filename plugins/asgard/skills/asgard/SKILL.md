@@ -106,25 +106,24 @@ Write the rules file to the chosen location. **Critical: Do NOT hardcode the rep
 You have persistent memory. To find its location, read `~/.config/asgard/config`
 and use the `ASGARD_REPO` value.
 
-## Session Start
+## Session Context
 
-At the beginning of any substantive task (not trivial lookups), read
-`ASGARD_REPO/MEMORY.md`. This contains your stable knowledge: identity,
-preferences, active projects, technical environment, and key people.
+Your core memory (MEMORY.md) and recent journal entries have been loaded as
+session context automatically by the Asgard bootstrap hook. You don't need to
+re-read MEMORY.md unless you need to verify a specific fact.
 
-## Memory Layers
+The layers below require explicit Read/Grep when relevant:
 
 | Layer | Path (relative to ASGARD_REPO) | Use |
 |-------|------|-----|
-| Core memory | `MEMORY.md` | Stable facts — read first |
-| Procedures | `procedures/` | Learned workflows — check when doing multi-step tasks |
-| Journal | `journal/` | Recent events and decisions — grep for temporal context |
+| Core memory | `MEMORY.md` | Stable facts — already loaded as context |
+| Procedures | `procedures/` | Learned workflows — Read when doing multi-step tasks |
+| Journal | `journal/` | Recent events and decisions — Grep for temporal context |
 | Context trees | `context-trees/` | Project status and relationships |
 
 ## When to Recall
 
 Before planning or making decisions that could benefit from historical context:
-- Use Read on MEMORY.md for quick reference
 - Use Grep on `journal/` and `procedures/` for specific topics
 - For deep searches across all layers, use `/munin recall <topic>`
 
@@ -168,6 +167,7 @@ Full system health dashboard — combines and extends the individual layer statu
    - **Journal:** today's journal exists? entry count? stale journals older than 7 days?
    - **Procedures:** file count in `procedures/`
    - **Rules file:** check both `~/.claude/rules/asgard.md` and `.claude/rules/asgard.md` — report which exists
+   - **Bootstrap:** check if `${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.sh` exists and is executable
    - **Last commit:** date on current branch
 
 Format as a clean status panel:
@@ -186,6 +186,7 @@ Journal:    today exists (12 entries)
 Procedures: 5 files
 Stale:      0 journals older than 7 days
 Rules:      ~/.claude/rules/asgard.md
+Bootstrap:  healthy
 Last commit: 2026-03-06 14:30
 ```
 
@@ -200,8 +201,6 @@ Asgard — Memory System
 ══════════════════════════════
 /asgard setup       Full setup wizard — config, repo, rules
 /asgard status      System health dashboard
-
-/bifrost status     Transport diagnostics
 
 /heimdall process   Process inbox transcripts into memory
 /heimdall status    Memory health dashboard

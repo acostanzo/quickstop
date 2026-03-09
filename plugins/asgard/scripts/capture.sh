@@ -65,33 +65,32 @@ fi
 # Generate inbox filename (include session ID fragment to prevent same-second collisions)
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 SID_SHORT="${SESSION_ID:0:8}"
-INBOX_FILE="$ASGARD_REPO/inbox/${TIMESTAMP}-${ASGARD_MACHINE}-${SID_SHORT}.md"
+INBOX_FILE="$ASGARD_REPO/inbox/${TIMESTAMP}-${ASGARD_MACHINE}-${SID_SHORT}.jsonl"
 
 # Ensure inbox directory exists
 mkdir -p "$ASGARD_REPO/inbox"
 
-# Generate YAML frontmatter with properly escaped values
+# Write pure JSONL: metadata as first line, then raw transcript
+# The transcript is already JSONL (Claude Code's native format)
 TIMESTAMP_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-FRONTMATTER=$(python3 -c '
-import sys, json
-machine, sid, cwd, ts = sys.argv[1:5]
-print("---")
-print(f"machine: {json.dumps(machine)}")
-print(f"session_id: {json.dumps(sid)}")
-print(f"cwd: {json.dumps(cwd)}")
-print(f"timestamp: {json.dumps(ts)}")
-print("---")
-' "$ASGARD_MACHINE" "$SESSION_ID" "$CWD" "$TIMESTAMP_UTC")
-
-# Write frontmatter + transcript content
 {
-  printf '%s\n\n' "$FRONTMATTER"
+  python3 -c '
+import sys, json
+meta = {
+    "_type": "asgard_meta",
+    "machine": sys.argv[1],
+    "session_id": sys.argv[2],
+    "cwd": sys.argv[3],
+    "timestamp": sys.argv[4]
+}
+print(json.dumps(meta))
+' "$ASGARD_MACHINE" "$SESSION_ID" "$CWD" "$TIMESTAMP_UTC"
   cat "$TRANSCRIPT_PATH"
 } > "$INBOX_FILE"
 
 # Pull (rebase to handle concurrent pushes), add, commit, push — silent, best-effort
 cd "$ASGARD_REPO"
-INBOX_FILENAME="inbox/${TIMESTAMP}-${ASGARD_MACHINE}-${SID_SHORT}.md"
+INBOX_FILENAME="inbox/${TIMESTAMP}-${ASGARD_MACHINE}-${SID_SHORT}.jsonl"
 GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git pull --rebase --quiet 2>/dev/null || true
 git add "$INBOX_FILENAME"
 git commit --quiet -m "session: ${ASGARD_MACHINE} $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true

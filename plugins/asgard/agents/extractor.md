@@ -17,10 +17,34 @@ Read the transcript and identify **durable knowledge** — facts, preferences, d
 ## Input
 
 You receive:
-1. **Transcript path** — the inbox file to analyze
+1. **Transcript path** — the inbox file to analyze (JSONL format)
 2. **Extraction guide** — reference document with categories, compression targets, and examples
 
 Read both before starting extraction.
+
+## Transcript Format
+
+Inbox files are **JSONL** (one JSON object per line):
+
+- **Line 1** is always Asgard metadata: `{"_type": "asgard_meta", "machine": "...", "session_id": "...", "cwd": "...", "timestamp": "..."}`
+- **Remaining lines** are Claude Code session events, each with a `type` field.
+
+### Line Types to Focus On
+
+| `type` | What It Contains | Action |
+|--------|-----------------|--------|
+| `user` | Human messages. `message.content` is a string. | **Read carefully** — this is where preferences, corrections, and decisions live. |
+| `assistant` | Agent responses. `message.content` is an array of blocks with `type`: `text`, `tool_use`, `thinking`. | **Read `text` blocks** — skip `tool_use` and `thinking` blocks. |
+
+### Line Types to Skip
+
+| `type` | What It Contains | Action |
+|--------|-----------------|--------|
+| `progress` | Tool execution progress, hook output. ~70% of transcript lines. | **Skip entirely.** |
+| `file-history-snapshot` | Internal file state tracking. | **Skip entirely.** |
+| `system` | Internal system events. | **Skip entirely.** |
+
+In a typical transcript, meaningful human-agent dialogue is **<25% of total lines**. The rest is tool execution noise.
 
 ## Process
 
@@ -30,13 +54,13 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md` for category definit
 
 ### Step 2: Read the Transcript
 
-Read the inbox file. Note the frontmatter metadata (machine, timestamp, cwd, session_id).
+Read the inbox file. Extract metadata from the first line (`_type: "asgard_meta"`).
 
-**Malformed Input Handling:** If the transcript lacks YAML frontmatter, is empty, or cannot be parsed, output a single observation noting the issue and continue:
+**Malformed Input Handling:** If the file is empty, not valid JSONL, or lacks the metadata line, output a single observation noting the issue and continue:
 ```yaml
 observations:
   - type: event
-    content: "Transcript file was malformed or empty — no frontmatter found"
+    content: "Transcript file was malformed or empty — no metadata line found"
     confidence: low
     source_context: "<first 100 chars of file or 'empty file'>"
     timestamp: "unknown"
@@ -46,15 +70,15 @@ observations:
 
 ### Step 3: Extract Observations
 
-Scan the transcript for high-value signals. For each observation, record:
+Scan `user` and `assistant` (text blocks only) lines for high-value signals. For each observation, record:
 
 ```yaml
 - type: fact | preference | correction | procedure | project_update | event
   content: Concise statement (1-2 sentences max)
   confidence: high | medium | low
   source_context: Brief quote from transcript that supports this observation
-  timestamp: From inbox frontmatter
-  machine: From inbox frontmatter
+  timestamp: From metadata line
+  machine: From metadata line
   project: Inferred from cwd or transcript content
 ```
 
@@ -62,9 +86,9 @@ Scan the transcript for high-value signals. For each observation, record:
 
 - **Corrections are highest priority** — the user told the agent it was wrong
 - **Target 3-6x compression** — a 500-line transcript should yield 10-30 observations
-- **Skip tool output** — file reads, grep results, git logs, compile output
-- **Skip mechanical actions** — git add, file edits, mkdir
-- **Focus on dialogue** — the parts where human and agent communicate and decide
+- **Skip `progress` lines entirely** — these are tool execution, file reads, grep results, git logs
+- **Skip `thinking` and `tool_use` blocks** in assistant messages
+- **Focus on `user` messages and `text` blocks** — the parts where human and agent communicate and decide
 
 ## Output Format
 
@@ -104,4 +128,4 @@ Summary: N observations extracted from M-line transcript (Nx compression)
 - **Concise observations** — 1-2 sentences per observation. If you need more, it's too verbose.
 - **Quote the source** — every observation must have a `source_context` with a brief quote from the transcript.
 - **Don't invent** — only extract what's actually in the transcript. Don't infer beyond what's stated.
-- **Skip low-value content** — tool output, file contents, mechanical actions, boilerplate conversation.
+- **Skip low-value content** — `progress` lines, `tool_use` blocks, `thinking` blocks, file contents, mechanical actions.
