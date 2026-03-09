@@ -1,6 +1,7 @@
 ---
 name: setup
 description: Bifrost memory system setup wizard
+disable-model-invocation: true
 ---
 
 # Bifrost Setup

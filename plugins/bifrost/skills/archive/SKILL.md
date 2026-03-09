@@ -1,7 +1,7 @@
 ---
 name: archive
 description: Archive old journals and report memory cap pressure
-argument-hint: ""
+disable-model-invocation: true
 ---
 
 # Archive

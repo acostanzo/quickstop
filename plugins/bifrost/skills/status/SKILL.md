@@ -1,6 +1,7 @@
 ---
 name: status
 description: Bifrost memory system health dashboard
+disable-model-invocation: true
 ---
 
 # Bifrost Status

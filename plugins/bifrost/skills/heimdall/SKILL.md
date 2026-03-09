@@ -1,7 +1,7 @@
 ---
 name: heimdall
 description: Consolidate inbox transcripts into structured memory — extracts observations and merges into MEMORY.md, journal, and procedures
-argument-hint: ""
+disable-model-invocation: true
 ---
 
 # Heimdall: Memory Consolidation
