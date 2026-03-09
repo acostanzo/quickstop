@@ -1,12 +1,13 @@
 ---
-name: bifrost:consolidator
-description: "Read-write agent that merges extracted observations into MEMORY.md, journal, and procedures. Dispatched by /heimdall process."
+name: bifrost-consolidator
+description: "Read-write agent that merges extracted observations into MEMORY.md, journal, and procedures. Dispatched by /heimdall."
 tools:
   - Read
   - Edit
   - Write
   - Glob
   - Grep
+model: inherit
 ---
 
 # Consolidator Agent
@@ -22,8 +23,9 @@ You receive:
 4. **Procedures index** — current procedures/procedures.md
 5. **Context trees** — current context-trees/projects.md if it exists
 6. **Memory repo path** — the root of the memory repo
+7. **Extraction guide path** — path to the reference document for formatting conventions
 
-Read the extraction guide at `${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md` for conventions on formatting, priority, and contradiction resolution.
+Read the extraction guide at the path provided in your prompt for conventions on formatting, priority, and contradiction resolution.
 
 ## Process
 

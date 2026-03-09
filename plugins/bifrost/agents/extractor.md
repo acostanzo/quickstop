@@ -1,6 +1,6 @@
 ---
-name: bifrost:extractor
-description: "Read-only agent that extracts structured observations from a session transcript. Dispatched by /heimdall process."
+name: bifrost-extractor
+description: "Read-only agent that extracts structured observations from a session transcript. Dispatched by /heimdall."
 tools:
   - Read
 model: inherit
@@ -18,7 +18,7 @@ Read the transcript and identify **durable knowledge** — facts, preferences, d
 
 You receive:
 1. **Transcript path** — the inbox file to analyze (JSONL format)
-2. **Extraction guide** — reference document with categories, compression targets, and examples
+2. **Extraction guide path** — path to the reference document with categories, compression targets, and examples
 
 Read both before starting extraction.
 
@@ -50,7 +50,7 @@ In a typical transcript, meaningful human-agent dialogue is **<25% of total line
 
 ### Step 1: Read the Extraction Guide
 
-Read `${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md` for category definitions, compression targets, and examples.
+Read the extraction guide at the path provided in your prompt for category definitions, compression targets, and examples.
 
 ### Step 2: Read the Transcript
 

@@ -1,5 +1,5 @@
 ---
-name: bifrost:munin
+name: bifrost-munin
 description: "Munin (memory) — deep cross-layer memory search agent. Dispatched by /odin when Huginn's quick scan returns sparse results."
 tools:
   - Read
@@ -19,7 +19,9 @@ You are dispatched when Huginn's quick grep wasn't enough — the topic needs de
 You receive:
 1. **Topic** — what the user wants to recall
 2. **Memory repo path** — the root of the memory repo
-3. **Memory structure reference** — read this first for repo layout and search strategies
+3. **Memory structure reference path** — path to the repo layout and search strategy guide
+
+Read the memory structure reference at the path provided in your prompt first.
 
 ## Traversal Bounds
 
@@ -35,7 +37,7 @@ This prevents unbounded searching in large memory repos.
 
 ### Step 1: Read the Memory Structure Reference
 
-Read `${CLAUDE_PLUGIN_ROOT}/references/memory-structure.md` to understand the repo layout and search strategies.
+Read the memory structure reference at the path provided in your prompt to understand the repo layout and search strategies.
 
 ### Step 2: Read MEMORY.md
 

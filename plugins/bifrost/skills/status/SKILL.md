@@ -23,7 +23,7 @@ Full system health dashboard.
    - **Journal:** today's journal exists? entry count? stale journals older than 7 days?
    - **Procedures:** file count in `procedures/`
    - **Rules file:** check both `~/.claude/rules/bifrost.md` and `.claude/rules/bifrost.md` — report which exists
-   - **Bootstrap:** check if `${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.sh` exists and is executable
+   - **Bootstrap:** check if `${CLAUDE_SKILL_DIR}/../../scripts/bootstrap.sh` exists and is executable
    - **Last commit:** date on current branch
 
 Format as a clean status panel:

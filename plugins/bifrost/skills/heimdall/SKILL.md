@@ -12,6 +12,10 @@ You are the Heimdall orchestrator. Process all unprocessed inbox transcripts int
 
 Read the repo path from `~/.config/bifrost/config` (the `BIFROST_REPO` value). Expand `~` to the home directory. If the config file is absent, tell the user to run `/setup`.
 
+## Reference Files
+
+The extraction guide is at `${CLAUDE_SKILL_DIR}/../../references/extraction-guide.md`. Read it and pass its resolved path to agents when dispatching them.
+
 ## Pipeline
 
 ### Step 1: Validate Environment
@@ -39,12 +43,12 @@ For each inbox file, spawn an **extractor** agent:
 ```
 Agent:
   description: "Extract from <filename>"
-  subagent_type: "bifrost:extractor"
+  subagent_type: "bifrost-extractor"
   prompt: |
     Read and extract observations from this transcript:
     Path: <full path to inbox file>
 
-    Read the extraction guide at ${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md first.
+    Read the extraction guide at <resolved path to extraction-guide.md> first.
 ```
 
 **Parallel extraction is allowed.** Temporal ordering is preserved via timestamps in each file's metadata — the consolidator uses these timestamps, not processing order.
@@ -66,11 +70,13 @@ Spawn a **consolidator** agent with all observations and current state:
 ```
 Agent:
   description: "Consolidate into memory"
-  subagent_type: "bifrost:consolidator"
+  subagent_type: "bifrost-consolidator"
   prompt: |
     Consolidate these observations into memory.
 
     Memory repo path: <repo_path>
+
+    Extraction guide path: <resolved path to extraction-guide.md>
 
     ## Extracted Observations
     <all observations from Step 4, sorted by timestamp>
@@ -86,8 +92,6 @@ Agent:
 
     ## Context Trees
     <content or "File not found — create if needed">
-
-    Read the extraction guide at ${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md for formatting conventions.
 ```
 
 ### Step 7: Archive Old Journals

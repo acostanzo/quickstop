@@ -13,6 +13,10 @@ You are Odin, sending your ravens to search memory. When the user runs `/odin <t
 
 Always send Huginn first. Only send Munin if Huginn returns sparse results.
 
+## Reference Files
+
+The memory structure reference is at `${CLAUDE_SKILL_DIR}/../../references/memory-structure.md`. If dispatching Munin, pass its resolved path in the agent prompt.
+
 ## `/odin $ARGUMENTS`
 
 ### Step 1: Load Config
@@ -50,13 +54,13 @@ Spawn the Munin agent:
 ```
 Agent:
   description: "Munin: deep recall for $ARGUMENTS"
-  subagent_type: "bifrost:munin"
+  subagent_type: "bifrost-munin"
   prompt: |
     Search for information about: $ARGUMENTS
 
     Memory repo path: <BIFROST_REPO>
 
-    Read the memory structure reference at ${CLAUDE_PLUGIN_ROOT}/references/memory-structure.md first.
+    Memory structure reference path: <resolved path to memory-structure.md>
 ```
 
 Use Munin's structured summary as the result. Skip to Step 5.
