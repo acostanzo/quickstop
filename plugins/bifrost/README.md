@@ -79,11 +79,10 @@ Periodically run `/heimdall process` to consolidate captured transcripts into st
 |---------|-------------|
 | `/setup` | Full setup wizard — config, repo, rules |
 | `/status` | System health dashboard |
-| `/heimdall process` | Process inbox transcripts into memory |
-| `/heimdall status` | Memory health dashboard |
-| `/heimdall search <query>` | Cross-layer search across all memory files |
-| `/heimdall archive` | Archive old journals, report cap pressure |
-| `/recall <topic>` | Deep search across all memory layers |
+| `/heimdall` | Consolidate inbox transcripts into structured memory |
+| `/recall <topic>` | Deep agent-powered search across all memory layers |
+| `/search <query>` | Quick grep across all memory files |
+| `/archive` | Archive old journals, report cap pressure |
 
 ## Memory Repo Structure
 

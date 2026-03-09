@@ -14,7 +14,7 @@ Memory system for AI agents — capture, consolidate, and recall knowledge acros
 - Deep cross-layer recall with bounded traversal
 - Single config file, unified setup wizard
 
-**Commands:** `/setup`, `/status`, `/heimdall process`, `/recall <topic>`
+**Commands:** `/setup`, `/status`, `/heimdall`, `/recall <topic>`, `/search <query>`, `/archive`
 
 ### Claudit (v2.0.0)
 

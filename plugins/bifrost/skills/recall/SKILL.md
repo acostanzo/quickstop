@@ -1,13 +1,14 @@
 ---
 name: recall
 description: Deep recall across all memory layers
+argument-hint: "<topic>"
 ---
 
 # Recall
 
 Deep search across all memory layers for a given topic.
 
-## `/recall <topic>`
+## `/recall $ARGUMENTS`
 
 ### Step 1: Load Config
 
@@ -25,10 +26,10 @@ Spawn the recall agent:
 
 ```
 Agent:
-  description: "Recall <topic>"
+  description: "Recall $ARGUMENTS"
   subagent_type: "bifrost:recall"
   prompt: |
-    Search for information about: <topic>
+    Search for information about: $ARGUMENTS
 
     Memory repo path: <BIFROST_REPO>
 

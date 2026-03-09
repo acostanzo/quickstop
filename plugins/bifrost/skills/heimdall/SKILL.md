@@ -1,33 +1,30 @@
 ---
 name: heimdall
-description: Memory consolidation — process inbox transcripts into structured memory, check status, search, and archive
+description: Consolidate inbox transcripts into structured memory — extracts observations and merges into MEMORY.md, journal, and procedures
+argument-hint: ""
 ---
 
 # Heimdall: Memory Consolidation
 
-You are the Heimdall orchestrator. When the user runs `/heimdall`, determine what they need from the subcommand and execute the appropriate pipeline.
+You are the Heimdall orchestrator. Process all unprocessed inbox transcripts into structured memory.
 
 ## Repo Discovery
 
-**Read the repo path from `~/.config/bifrost/config`** (the `BIFROST_REPO` value). Expand `~` to the home directory. If the config file is absent, fall back to the current working directory and check for `MEMORY.md` there.
+Read the repo path from `~/.config/bifrost/config` (the `BIFROST_REPO` value). Expand `~` to the home directory. If the config file is absent, tell the user to run `/setup`.
 
-## Subcommands
+## Pipeline
 
-### `/heimdall process`
-
-The core consolidation pipeline. Processes all unprocessed inbox transcripts into structured memory.
-
-#### Step 1: Validate Environment
+### Step 1: Validate Environment
 
 Using the discovered repo path:
 - Check for `MEMORY.md` — if missing, stop: "This doesn't look like a memory repo. Run `/setup` first."
 - Check for `inbox/` — if missing, stop: "No inbox/ directory found. Run `/setup` to create the memory repo structure."
 
-#### Step 2: Git Pull
+### Step 2: Git Pull
 
 Run `git pull` in the memory repo to get the latest state. If it fails (no remote, merge conflict), warn but continue.
 
-#### Step 3: List Unprocessed Files
+### Step 3: List Unprocessed Files
 
 List files in `inbox/` (excluding `inbox/processed/` and subdirectories). Sort by filename (which sorts by timestamp since filenames start with YYYYMMDD-HHMMSS).
 
@@ -35,7 +32,7 @@ If no files found: "Inbox is empty — nothing to process."
 
 **Idempotency check:** Before processing, extract the session ID fragment from each inbox filename (the 8 characters after the last `-` and before the extension — e.g., `a1b2c3d4` from `20260306-143000-personal-laptop-a1b2c3d4.jsonl`). Check if any file in `inbox/processed/` contains the same fragment. If so, skip that inbox file to avoid double-processing.
 
-#### Step 4: Extract Observations
+### Step 4: Extract Observations
 
 For each inbox file, spawn an **extractor** agent:
 
@@ -50,11 +47,11 @@ Agent:
     Read the extraction guide at ${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md first.
 ```
 
-**Parallel extraction is allowed.** Temporal ordering is preserved via timestamps in each file's frontmatter — the consolidator uses these timestamps, not processing order.
+**Parallel extraction is allowed.** Temporal ordering is preserved via timestamps in each file's metadata — the consolidator uses these timestamps, not processing order.
 
 Collect all observations from all extractors into a single merged list, sorted by timestamp (oldest first).
 
-#### Step 5: Read Current Memory State
+### Step 5: Read Current Memory State
 
 Read these files from the memory repo (skip any that don't exist):
 - `MEMORY.md`
@@ -62,7 +59,7 @@ Read these files from the memory repo (skip any that don't exist):
 - `procedures/procedures.md`
 - `context-trees/projects.md`
 
-#### Step 6: Consolidate
+### Step 6: Consolidate
 
 Spawn a **consolidator** agent with all observations and current state:
 
@@ -93,7 +90,7 @@ Agent:
     Read the extraction guide at ${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md for formatting conventions.
 ```
 
-#### Step 7: Archive Old Journals
+### Step 7: Archive Old Journals
 
 After consolidation, check for journals older than 7 days:
 
@@ -102,7 +99,7 @@ After consolidation, check for journals older than 7 days:
    - Create `journal/archive/YYYY-MM/` if needed
    - Move the file: `git mv journal/<date>.md journal/archive/YYYY-MM/<date>.md`
 
-#### Step 8: Git Commit and Push
+### Step 8: Git Commit and Push
 
 Commit the consolidation results (memory updates, journal entries, archived journals):
 
@@ -114,7 +111,7 @@ git push
 
 If push fails (no remote), warn but don't error. If the commit fails, **stop here** — do not move inbox files to processed, so the next run can retry.
 
-#### Step 9: Move Processed Inbox Files
+### Step 9: Move Processed Inbox Files
 
 Only after a successful commit, move the inbox files:
 
@@ -127,7 +124,7 @@ git commit -m "memory: archive <N> processed inbox files"
 git push
 ```
 
-#### Step 10: Report Summary
+### Step 10: Report Summary
 
 Show the consolidation summary from the consolidator agent, plus:
 - Number of transcripts processed
@@ -135,111 +132,3 @@ Show the consolidation summary from the consolidator agent, plus:
 - Journal entries added
 - Procedures created/updated
 - Files archived
-
----
-
-### `/heimdall status`
-
-Memory health dashboard. No agents needed — read files directly.
-
-#### Steps
-
-1. Discover repo path from config (as described in Repo Discovery above).
-2. Check for `MEMORY.md` — if missing, stop: "Not a memory repo."
-3. Read/compute:
-   - MEMORY.md line count (out of 200 cap)
-   - Unprocessed inbox file count
-   - Today's journal: exists? Entry count?
-   - Procedure file count in `procedures/`
-   - Journals older than 7 days (candidates for archival)
-   - Last git commit date on current branch
-4. Display:
-
-```
-Heimdall Status
-──────────────────────────────
-MEMORY.md:  45/200 lines (23%)
-Inbox:      3 unprocessed
-Journal:    today exists (5 entries)
-Procedures: 2 files
-Stale:      0 journals older than 7 days
-Last commit: 2026-03-06 14:30
-```
-
----
-
-### `/heimdall search <query>`
-
-Cross-layer grep across all memory files.
-
-#### Steps
-
-1. Discover repo path from config.
-2. Check for `MEMORY.md` — if missing, stop.
-3. Search these locations for `<query>` (case-insensitive):
-   - `MEMORY.md`
-   - `journal/` (all files, including archive)
-   - `procedures/` (all files)
-   - `context-trees/` (all files)
-4. Display results grouped by layer:
-
-```
-Search: "<query>"
-──────────────────────────────
-MEMORY.md:
-  Line 15: - Prefers bun over npm for JavaScript projects
-
-Journal:
-  journal/2026-03-06.md:12: - Switched from npm to bun
-  journal/archive/2026-02/2026-02-28.md:8: - First tried bun
-
-Procedures:
-  procedures/js-setup.md:5: 2. Run bun install
-
-No matches in context-trees/
-```
-
-If no results in any layer: "No matches found for '<query>'."
-
----
-
-### `/heimdall archive`
-
-Standalone maintenance — archive old journals and report cap pressure.
-
-#### Steps
-
-1. Discover repo path from config.
-2. Check for `MEMORY.md` — if missing, stop.
-3. **Archive journals > 7 days old:**
-   - List journal files, identify those older than 7 days
-   - Move to `journal/archive/YYYY-MM/` via `git mv`
-   - Report how many archived
-4. **Report MEMORY.md cap pressure:**
-   - Count lines
-   - If > 180: warn about approaching cap, suggest running `/heimdall process` to trigger compression
-   - If > 200: error — cap violated, needs immediate attention
-5. **Git commit and push:**
-
-```bash
-git add journal/
-git commit -m "memory: archive journals older than 7 days"
-git push
-```
-
-If nothing to archive: "No journals older than 7 days. Nothing to archive."
-
----
-
-### `/heimdall` (no subcommand)
-
-Show available subcommands:
-
-```
-Heimdall — Memory Consolidation
-──────────────────────────────
-/heimdall process    Process inbox transcripts into structured memory
-/heimdall status     Memory health dashboard
-/heimdall search Q   Cross-layer search across all memory files
-/heimdall archive    Archive old journals, report cap pressure
-```
