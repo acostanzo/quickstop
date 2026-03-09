@@ -8,11 +8,10 @@ A Claude Code plugin marketplace.
 
 Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines.
 
-- Automatic memory injection at session start via hooks
-- Transcript capture at session end for later processing
-- Two-agent consolidation pipeline (extractor + consolidator)
-- Deep cross-layer recall with bounded traversal
-- Single config file, unified setup wizard
+- Automatic memory injection at session start, transcript capture at session end
+- Two-agent consolidation pipeline (extractor + consolidator) via `/heimdall`
+- Progressive memory search via `/odin` — quick grep first, deep agent search if needed
+- Feedback loop prevention — hooks skip when session is inside the memory repo
 
 **Commands:** `/setup`, `/status`, `/heimdall`, `/odin <topic>`
 
