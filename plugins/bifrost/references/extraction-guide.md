@@ -4,7 +4,7 @@ Reference for both the extractor and consolidator agents. Defines what to extrac
 
 ## Transcript Format
 
-Inbox files are JSONL. Line 1 is Asgard metadata (`_type: "asgard_meta"`). Remaining lines are Claude Code session events.
+Inbox files are JSONL. Line 1 is Bifrost metadata (`_type: "bifrost_meta"`). Remaining lines are Claude Code session events.
 
 ### Navigating the JSONL
 

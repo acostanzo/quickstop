@@ -1,6 +1,6 @@
 # Memory Repo Structure
 
-Single source of truth for the memory repo layout. Referenced by all Asgard agents and skills.
+Single source of truth for the memory repo layout. Referenced by all Bifrost agents and skills.
 
 ## Directory Layout
 
@@ -17,7 +17,7 @@ memory-repo/
         YYYY-MM-DD.md
   context-trees/
     projects.md          # Project status tracker
-  inbox/                 # Raw session transcripts (captured by Asgard hooks)
+  inbox/                 # Raw session transcripts (captured by Bifrost hooks)
     processed/           # Transcripts after consolidation
   .gitignore
 ```
@@ -65,7 +65,7 @@ Project status tracking. `projects.md` contains high-level status for active pro
 
 ### Inbox
 
-Raw session transcripts land here via Asgard's SessionEnd hook. Each file is JSONL — line 1 is Asgard metadata (`_type: "asgard_meta"` with machine, session_id, cwd, timestamp), remaining lines are the raw Claude Code session log. After processing by `/heimdall process`, files move to `inbox/processed/`.
+Raw session transcripts land here via Bifrost's SessionEnd hook. Each file is JSONL — line 1 is Bifrost metadata (`_type: "bifrost_meta"` with machine, session_id, cwd, timestamp), remaining lines are the raw Claude Code session log. After processing by `/heimdall process`, files move to `inbox/processed/`.
 
 ## Search Strategies by Question Type
 

@@ -14,10 +14,10 @@
       "keywords": ["audit", "configuration", "optimization", "health-check", "best-practices"]
     },
     {
-      "name": "asgard",
+      "name": "bifrost",
       "version": "1.0.0",
       "description": "Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines",
-      "source": "./plugins/asgard",
+      "source": "./plugins/bifrost",
       "keywords": ["memory", "context", "sessions", "consolidation", "recall", "agents"]
     }
   ]

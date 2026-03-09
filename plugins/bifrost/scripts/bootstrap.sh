@@ -1,16 +1,16 @@
 #!/bin/bash
-# Asgard — Bootstrap memory into Claude Code session
+# Bifrost — Bootstrap memory into Claude Code session
 # Reads memory files from configured repo and injects as additionalContext
 #
-# Fixes over Bifrost v1:
+# Fixes over original Bifrost:
 # - B-1: Priority-based loading with budget tracking (not naive truncation)
 # - B-2: Injects warnings via additionalContext instead of silently exiting
-# - B-3: Configurable journal window via ASGARD_JOURNAL_DAYS (default 2)
+# - B-3: Configurable journal window via BIFROST_JOURNAL_DAYS (default 2)
 # - B-4: Validates python3 and surfaces error if missing
 
 set -euo pipefail
 
-CONFIG_FILE="${HOME}/.config/asgard/config"
+CONFIG_FILE="${HOME}/.config/bifrost/config"
 
 # --- Helper: output a warning as additionalContext ---
 # JSON-escapes the message to handle quotes/backslashes in config-derived values.
@@ -39,52 +39,52 @@ ENDJSON
 
 # Check config exists (B-2: warn instead of silent exit)
 if [[ ! -f "$CONFIG_FILE" ]]; then
-  warn_and_exit "Asgard: not configured — run /asgard setup"
+  warn_and_exit "Bifrost: not configured — run /setup"
 fi
 
 # Read config values safely (no arbitrary code execution)
-ASGARD_REPO=$(grep '^ASGARD_REPO=' "$CONFIG_FILE" | cut -d= -f2- || true)
-ASGARD_MACHINE=$(grep '^ASGARD_MACHINE=' "$CONFIG_FILE" | cut -d= -f2- || true)
-ASGARD_JOURNAL_DAYS=$(grep '^ASGARD_JOURNAL_DAYS=' "$CONFIG_FILE" | cut -d= -f2- || true)
-ASGARD_CONTEXT_CHARS=$(grep '^ASGARD_CONTEXT_CHARS=' "$CONFIG_FILE" | cut -d= -f2- || true)
+BIFROST_REPO=$(grep '^BIFROST_REPO=' "$CONFIG_FILE" | cut -d= -f2- || true)
+BIFROST_MACHINE=$(grep '^BIFROST_MACHINE=' "$CONFIG_FILE" | cut -d= -f2- || true)
+BIFROST_JOURNAL_DAYS=$(grep '^BIFROST_JOURNAL_DAYS=' "$CONFIG_FILE" | cut -d= -f2- || true)
+BIFROST_CONTEXT_CHARS=$(grep '^BIFROST_CONTEXT_CHARS=' "$CONFIG_FILE" | cut -d= -f2- || true)
 
 # Defaults with integer validation — fall back to defaults if non-numeric
-ASGARD_JOURNAL_DAYS="${ASGARD_JOURNAL_DAYS:-2}"
-ASGARD_CONTEXT_CHARS="${ASGARD_CONTEXT_CHARS:-12000}"
-[[ "$ASGARD_JOURNAL_DAYS" =~ ^[0-9]+$ ]] || ASGARD_JOURNAL_DAYS=2
-[[ "$ASGARD_CONTEXT_CHARS" =~ ^[0-9]+$ ]] || ASGARD_CONTEXT_CHARS=12000
+BIFROST_JOURNAL_DAYS="${BIFROST_JOURNAL_DAYS:-2}"
+BIFROST_CONTEXT_CHARS="${BIFROST_CONTEXT_CHARS:-12000}"
+[[ "$BIFROST_JOURNAL_DAYS" =~ ^[0-9]+$ ]] || BIFROST_JOURNAL_DAYS=2
+[[ "$BIFROST_CONTEXT_CHARS" =~ ^[0-9]+$ ]] || BIFROST_CONTEXT_CHARS=12000
 
 # Validate required config
-if [[ -z "${ASGARD_REPO:-}" ]]; then
-  warn_and_exit "Asgard: ASGARD_REPO not set in config — run /asgard setup"
+if [[ -z "${BIFROST_REPO:-}" ]]; then
+  warn_and_exit "Bifrost: BIFROST_REPO not set in config — run /setup"
 fi
 
 # Validate machine name format
-if [[ -n "${ASGARD_MACHINE:-}" && ! "$ASGARD_MACHINE" =~ ^[a-z0-9-]+$ ]]; then
-  warn_and_exit "Asgard: invalid machine name '${ASGARD_MACHINE}' — must be [a-z0-9-]+"
+if [[ -n "${BIFROST_MACHINE:-}" && ! "$BIFROST_MACHINE" =~ ^[a-z0-9-]+$ ]]; then
+  warn_and_exit "Bifrost: invalid machine name '${BIFROST_MACHINE}' — must be [a-z0-9-]+"
 fi
 
 # Expand ~ in repo path
-ASGARD_REPO="${ASGARD_REPO/#\~/$HOME}"
+BIFROST_REPO="${BIFROST_REPO/#\~/$HOME}"
 
 # Check repo exists (B-2: warn instead of silent exit)
-if [[ ! -d "$ASGARD_REPO" ]]; then
-  warn_and_exit "Asgard: memory repo not found at ${ASGARD_REPO}"
+if [[ ! -d "$BIFROST_REPO" ]]; then
+  warn_and_exit "Bifrost: memory repo not found at ${BIFROST_REPO}"
 fi
 
 # Check python3 (B-4: validate and surface error)
 if ! command -v python3 &>/dev/null; then
-  warn_and_exit "Asgard: python3 not found — memory loading unavailable"
+  warn_and_exit "Bifrost: python3 not found — memory loading unavailable"
 fi
 
 # Pull latest (short SSH timeout to avoid blocking session start)
 # B-2: warn on failure instead of silently continuing
 PULL_FAILED=""
-GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git -C "$ASGARD_REPO" pull --quiet 2>/dev/null || PULL_FAILED="true"
+GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git -C "$BIFROST_REPO" pull --quiet 2>/dev/null || PULL_FAILED="true"
 
 # --- B-1: Priority-based loading with budget tracking ---
 CONTEXT=""
-BUDGET=$ASGARD_CONTEXT_CHARS
+BUDGET=$BIFROST_CONTEXT_CHARS
 
 # Skip entire files that don't fit rather than truncating mid-content.
 # Partial content is worse than missing content — Claude may hallucinate
@@ -104,22 +104,22 @@ append_if_fits() {
 }
 
 # Priority 1: MEMORY.md (always — highest priority)
-if [[ -f "$ASGARD_REPO/MEMORY.md" ]]; then
-  append_if_fits "$(cat "$ASGARD_REPO/MEMORY.md")" || true
+if [[ -f "$BIFROST_REPO/MEMORY.md" ]]; then
+  append_if_fits "$(cat "$BIFROST_REPO/MEMORY.md")" || true
 fi
 
 # Priority 2: Procedures index
-if [[ $BUDGET -gt 0 && -f "$ASGARD_REPO/procedures/procedures.md" ]]; then
-  append_if_fits "$(cat "$ASGARD_REPO/procedures/procedures.md")" || true
+if [[ $BUDGET -gt 0 && -f "$BIFROST_REPO/procedures/procedures.md" ]]; then
+  append_if_fits "$(cat "$BIFROST_REPO/procedures/procedures.md")" || true
 fi
 
-# Priority 3: Journals newest-first, up to ASGARD_JOURNAL_DAYS (B-3)
+# Priority 3: Journals newest-first, up to BIFROST_JOURNAL_DAYS (B-3)
 if [[ $BUDGET -gt 0 ]]; then
-  for i in $(seq 0 $((ASGARD_JOURNAL_DAYS - 1))); do
+  for i in $(seq 0 $((BIFROST_JOURNAL_DAYS - 1))); do
     # Cross-platform date math: GNU (-d) and BSD/macOS (-v)
     JDATE=$(date -d "$i days ago" +%Y-%m-%d 2>/dev/null || date -v-${i}d +%Y-%m-%d 2>/dev/null || true)
-    if [[ -n "$JDATE" && -f "$ASGARD_REPO/journal/$JDATE.md" ]]; then
-      JCONTENT="# Journal — $JDATE"$'\n'"$(cat "$ASGARD_REPO/journal/$JDATE.md")"
+    if [[ -n "$JDATE" && -f "$BIFROST_REPO/journal/$JDATE.md" ]]; then
+      JCONTENT="# Journal — $JDATE"$'\n'"$(cat "$BIFROST_REPO/journal/$JDATE.md")"
       append_if_fits "$JCONTENT" || break
     fi
   done
@@ -127,7 +127,7 @@ fi
 
 # Prepend pull failure warning if applicable (B-2)
 if [[ -n "$PULL_FAILED" ]]; then
-  CONTEXT="[Asgard: git pull failed — memory may be stale]"$'\n\n'"$CONTEXT"
+  CONTEXT="[Bifrost: git pull failed — memory may be stale]"$'\n\n'"$CONTEXT"
 fi
 
 # Output as additionalContext if we have anything

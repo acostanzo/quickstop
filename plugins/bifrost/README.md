@@ -1,4 +1,4 @@
-# Asgard
+# Bifrost
 
 Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines.
 
@@ -30,34 +30,32 @@ Session Start                                              Session End
               Memory grows session over session
 ```
 
-## Three Layers, One Plugin
+## How It Works
 
-| Layer | Component | Role |
-|-------|-----------|------|
-| Transport | **Bifrost** | Pulls memory at session start, captures transcripts at session end |
-| Processing | **Heimdall** | Extracts observations from transcripts, consolidates into structured memory |
-| Intelligence | **Munin** | Deep cross-layer recall, memory-aware rules for sessions |
-
-Each layer was previously a separate plugin. Asgard unifies them into a single plugin with shared config, shared references, and coordinated skills.
+| Layer | Skill | Role |
+|-------|-------|------|
+| Transport | Hooks | Pulls memory at session start, captures transcripts at session end |
+| Processing | `/heimdall` | Extracts observations from transcripts, consolidates into structured memory |
+| Intelligence | `/recall` | Deep cross-layer recall across all memory layers |
 
 ## Getting Started
 
 ### 1. Install
 
 ```bash
-/plugin install asgard@quickstop
+/plugin install bifrost@quickstop
 ```
 
 Or from source:
 
 ```bash
-claude --plugin-dir /path/to/quickstop/plugins/asgard
+claude --plugin-dir /path/to/quickstop/plugins/bifrost
 ```
 
 ### 2. Setup
 
 ```
-/asgard setup
+/setup
 ```
 
 The setup wizard walks you through:
@@ -65,7 +63,7 @@ The setup wizard walks you through:
 - **Memory repo** — create new or point to existing
 - **Machine name** — identifies this machine in transcripts
 - **Rules file** — plants memory awareness instructions for Claude
-- **Config** — writes `~/.config/asgard/config`
+- **Config** — writes `~/.config/bifrost/config`
 
 ### 3. Use
 
@@ -79,13 +77,13 @@ Periodically run `/heimdall process` to consolidate captured transcripts into st
 
 | Command | Description |
 |---------|-------------|
-| `/asgard setup` | Full setup wizard — config, repo, rules |
-| `/asgard status` | System health dashboard |
+| `/setup` | Full setup wizard — config, repo, rules |
+| `/status` | System health dashboard |
 | `/heimdall process` | Process inbox transcripts into memory |
 | `/heimdall status` | Memory health dashboard |
 | `/heimdall search <query>` | Cross-layer search across all memory files |
 | `/heimdall archive` | Archive old journals, report cap pressure |
-| `/munin recall <topic>` | Deep search across all memory layers |
+| `/recall <topic>` | Deep search across all memory layers |
 
 ## Memory Repo Structure
 
@@ -108,20 +106,20 @@ See `references/memory-structure.md` for full details.
 
 ## Configuration
 
-Config lives at `~/.config/asgard/config`:
+Config lives at `~/.config/bifrost/config`:
 
 ```bash
-ASGARD_REPO=~/projects/your-memory-repo
-ASGARD_MACHINE=personal-laptop
-ASGARD_JOURNAL_DAYS=2
+BIFROST_REPO=~/projects/your-memory-repo
+BIFROST_MACHINE=personal-laptop
+BIFROST_JOURNAL_DAYS=2
 ```
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ASGARD_REPO` | Path to memory git repo | (required) |
-| `ASGARD_MACHINE` | Machine identifier for transcripts | (required) |
-| `ASGARD_JOURNAL_DAYS` | Number of journal days to load at session start | `2` |
-| `ASGARD_CONTEXT_CHARS` | Max characters injected as context | `12000` |
+| `BIFROST_REPO` | Path to memory git repo | (required) |
+| `BIFROST_MACHINE` | Machine identifier for transcripts | (required) |
+| `BIFROST_JOURNAL_DAYS` | Number of journal days to load at session start | `2` |
+| `BIFROST_CONTEXT_CHARS` | Max characters injected as context | `12000` |
 
 ## Requirements
 
@@ -129,7 +127,7 @@ ASGARD_JOURNAL_DAYS=2
 - Git (for repo sync)
 - Python 3 (for JSON escaping in hooks)
 
-`/asgard setup` checks for these and warns if anything is missing.
+`/setup` checks for these and warns if anything is missing.
 
 ## Security & Privacy
 
@@ -142,4 +140,4 @@ Session transcripts captured to `inbox/` contain the full conversation and tool 
 
 These transcripts are automatically committed and pushed to the memory repo's git remote. **Your memory repo should be private** — use a private repository on a service you trust. Do not use a public repository for your memory repo.
 
-If you use a shared machine, be aware that `~/.config/asgard/config` contains the repo path and the transcript capture runs on every session end.
+If you use a shared machine, be aware that `~/.config/bifrost/config` contains the repo path and the transcript capture runs on every session end.

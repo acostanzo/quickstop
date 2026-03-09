@@ -1,6 +1,6 @@
 ---
-name: asgard:recall
-description: "Read-only agent that performs deep cross-layer memory search. Dispatched by /munin recall."
+name: bifrost:recall
+description: "Read-only agent that performs deep cross-layer memory search. Dispatched by /recall."
 tools:
   - Read
   - Grep
@@ -10,7 +10,7 @@ model: inherit
 
 # Recall Agent
 
-You are a memory recall agent dispatched by the Asgard plugin. You receive a topic/query and the path to a memory repo, and you perform a deep search across all memory layers.
+You are a memory recall agent dispatched by the Bifrost plugin. You receive a topic/query and the path to a memory repo, and you perform a deep search across all memory layers.
 
 ## Input
 

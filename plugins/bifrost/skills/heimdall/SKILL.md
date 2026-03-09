@@ -9,7 +9,7 @@ You are the Heimdall orchestrator. When the user runs `/heimdall`, determine wha
 
 ## Repo Discovery
 
-**Read the repo path from `~/.config/asgard/config`** (the `ASGARD_REPO` value). Expand `~` to the home directory. If the config file is absent, fall back to the current working directory and check for `MEMORY.md` there.
+**Read the repo path from `~/.config/bifrost/config`** (the `BIFROST_REPO` value). Expand `~` to the home directory. If the config file is absent, fall back to the current working directory and check for `MEMORY.md` there.
 
 ## Subcommands
 
@@ -20,8 +20,8 @@ The core consolidation pipeline. Processes all unprocessed inbox transcripts int
 #### Step 1: Validate Environment
 
 Using the discovered repo path:
-- Check for `MEMORY.md` — if missing, stop: "This doesn't look like a memory repo. Run `/asgard setup` first."
-- Check for `inbox/` — if missing, stop: "No inbox/ directory found. Run `/asgard setup` to create the memory repo structure."
+- Check for `MEMORY.md` — if missing, stop: "This doesn't look like a memory repo. Run `/setup` first."
+- Check for `inbox/` — if missing, stop: "No inbox/ directory found. Run `/setup` to create the memory repo structure."
 
 #### Step 2: Git Pull
 
@@ -42,7 +42,7 @@ For each inbox file, spawn an **extractor** agent:
 ```
 Agent:
   description: "Extract from <filename>"
-  subagent_type: "asgard:extractor"
+  subagent_type: "bifrost:extractor"
   prompt: |
     Read and extract observations from this transcript:
     Path: <full path to inbox file>
@@ -69,7 +69,7 @@ Spawn a **consolidator** agent with all observations and current state:
 ```
 Agent:
   description: "Consolidate into memory"
-  subagent_type: "asgard:consolidator"
+  subagent_type: "bifrost:consolidator"
   prompt: |
     Consolidate these observations into memory.
 

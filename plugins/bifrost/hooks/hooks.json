@@ -1,5 +1,5 @@
 {
-  "description": "Asgard memory system hooks",
+  "description": "Bifrost memory system hooks",
   "hooks": {
     "SessionStart": [
       {

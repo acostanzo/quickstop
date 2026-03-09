@@ -1,5 +1,5 @@
 ---
-name: asgard:consolidator
+name: bifrost:consolidator
 description: "Read-write agent that merges extracted observations into MEMORY.md, journal, and procedures. Dispatched by /heimdall process."
 tools:
   - Read
@@ -11,7 +11,7 @@ tools:
 
 # Consolidator Agent
 
-You are a memory consolidation agent dispatched by the Asgard plugin. You receive structured observations (from the extractor) plus the current state of memory files, and you write updates to MEMORY.md, journal, and procedures.
+You are a memory consolidation agent dispatched by the Bifrost plugin. You receive structured observations (from the extractor) plus the current state of memory files, and you write updates to MEMORY.md, journal, and procedures.
 
 ## Input
 

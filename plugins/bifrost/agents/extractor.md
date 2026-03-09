@@ -1,5 +1,5 @@
 ---
-name: asgard:extractor
+name: bifrost:extractor
 description: "Read-only agent that extracts structured observations from a session transcript. Dispatched by /heimdall process."
 tools:
   - Read
@@ -8,7 +8,7 @@ model: inherit
 
 # Extractor Agent
 
-You are a transcript analysis agent dispatched by the Asgard plugin. You receive a single inbox transcript file and extract structured observations from it.
+You are a transcript analysis agent dispatched by the Bifrost plugin. You receive a single inbox transcript file and extract structured observations from it.
 
 ## Your Mission
 
@@ -26,7 +26,7 @@ Read both before starting extraction.
 
 Inbox files are **JSONL** (one JSON object per line):
 
-- **Line 1** is always Asgard metadata: `{"_type": "asgard_meta", "machine": "...", "session_id": "...", "cwd": "...", "timestamp": "..."}`
+- **Line 1** is always Bifrost metadata: `{"_type": "bifrost_meta", "machine": "...", "session_id": "...", "cwd": "...", "timestamp": "..."}`
 - **Remaining lines** are Claude Code session events, each with a `type` field.
 
 ### Line Types to Focus On
@@ -54,7 +54,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/extraction-guide.md` for category definit
 
 ### Step 2: Read the Transcript
 
-Read the inbox file. Extract metadata from the first line (`_type: "asgard_meta"`).
+Read the inbox file. Extract metadata from the first line (`_type: "bifrost_meta"`).
 
 **Malformed Input Handling:** If the file is empty, not valid JSONL, or lacks the metadata line, output a single observation noting the issue and continue:
 ```yaml

@@ -1,42 +1,42 @@
 #!/bin/bash
-# Asgard — Capture session transcript to memory inbox
+# Bifrost — Capture session transcript to memory inbox
 # Runs async on SessionEnd — zero noise, zero blocking
 #
-# Fix over Bifrost v1:
+# Fix over original Bifrost:
 # - B-5: Basic validation of stdin JSON structure before processing
 
 set -euo pipefail
 
-CONFIG_FILE="${HOME}/.config/asgard/config"
+CONFIG_FILE="${HOME}/.config/bifrost/config"
 
 # Check config exists
 if [[ ! -f "$CONFIG_FILE" ]]; then
-  echo "asgard: config not found at $CONFIG_FILE" >&2
+  echo "bifrost: config not found at $CONFIG_FILE" >&2
   exit 0
 fi
 
 # Read config values safely (no arbitrary code execution)
-ASGARD_REPO=$(grep '^ASGARD_REPO=' "$CONFIG_FILE" | cut -d= -f2- || true)
-ASGARD_MACHINE=$(grep '^ASGARD_MACHINE=' "$CONFIG_FILE" | cut -d= -f2- || true)
+BIFROST_REPO=$(grep '^BIFROST_REPO=' "$CONFIG_FILE" | cut -d= -f2- || true)
+BIFROST_MACHINE=$(grep '^BIFROST_MACHINE=' "$CONFIG_FILE" | cut -d= -f2- || true)
 
 # Validate required config
-if [[ -z "${ASGARD_REPO:-}" || -z "${ASGARD_MACHINE:-}" ]]; then
-  echo "asgard: ASGARD_REPO or ASGARD_MACHINE not set in config" >&2
+if [[ -z "${BIFROST_REPO:-}" || -z "${BIFROST_MACHINE:-}" ]]; then
+  echo "bifrost: BIFROST_REPO or BIFROST_MACHINE not set in config" >&2
   exit 0
 fi
 
 # Validate machine name format
-if [[ ! "$ASGARD_MACHINE" =~ ^[a-z0-9-]+$ ]]; then
-  echo "asgard: invalid machine name '${ASGARD_MACHINE}'" >&2
+if [[ ! "$BIFROST_MACHINE" =~ ^[a-z0-9-]+$ ]]; then
+  echo "bifrost: invalid machine name '${BIFROST_MACHINE}'" >&2
   exit 0
 fi
 
 # Expand ~ in repo path
-ASGARD_REPO="${ASGARD_REPO/#\~/$HOME}"
+BIFROST_REPO="${BIFROST_REPO/#\~/$HOME}"
 
 # Check repo exists
-if [[ ! -d "$ASGARD_REPO" ]]; then
-  echo "asgard: memory repo not found at ${ASGARD_REPO}" >&2
+if [[ ! -d "$BIFROST_REPO" ]]; then
+  echo "bifrost: memory repo not found at ${BIFROST_REPO}" >&2
   exit 0
 fi
 
@@ -51,7 +51,7 @@ try:
 except (json.JSONDecodeError, ValueError):
     sys.exit(1)
 ' 2>/dev/null) || {
-  echo "asgard: invalid JSON on stdin" >&2
+  echo "bifrost: invalid JSON on stdin" >&2
   exit 0
 }
 
@@ -65,10 +65,10 @@ fi
 # Generate inbox filename (include session ID fragment to prevent same-second collisions)
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 SID_SHORT="${SESSION_ID:0:8}"
-INBOX_FILE="$ASGARD_REPO/inbox/${TIMESTAMP}-${ASGARD_MACHINE}-${SID_SHORT}.jsonl"
+INBOX_FILE="$BIFROST_REPO/inbox/${TIMESTAMP}-${BIFROST_MACHINE}-${SID_SHORT}.jsonl"
 
 # Ensure inbox directory exists
-mkdir -p "$ASGARD_REPO/inbox"
+mkdir -p "$BIFROST_REPO/inbox"
 
 # Write pure JSONL: metadata as first line, then raw transcript
 # The transcript is already JSONL (Claude Code's native format)
@@ -77,21 +77,21 @@ TIMESTAMP_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
   python3 -c '
 import sys, json
 meta = {
-    "_type": "asgard_meta",
+    "_type": "bifrost_meta",
     "machine": sys.argv[1],
     "session_id": sys.argv[2],
     "cwd": sys.argv[3],
     "timestamp": sys.argv[4]
 }
 print(json.dumps(meta))
-' "$ASGARD_MACHINE" "$SESSION_ID" "$CWD" "$TIMESTAMP_UTC"
+' "$BIFROST_MACHINE" "$SESSION_ID" "$CWD" "$TIMESTAMP_UTC"
   cat "$TRANSCRIPT_PATH"
 } > "$INBOX_FILE"
 
 # Pull (rebase to handle concurrent pushes), add, commit, push — silent, best-effort
-cd "$ASGARD_REPO"
-INBOX_FILENAME="inbox/${TIMESTAMP}-${ASGARD_MACHINE}-${SID_SHORT}.jsonl"
+cd "$BIFROST_REPO"
+INBOX_FILENAME="inbox/${TIMESTAMP}-${BIFROST_MACHINE}-${SID_SHORT}.jsonl"
 GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git pull --rebase --quiet 2>/dev/null || true
 git add "$INBOX_FILENAME"
-git commit --quiet -m "session: ${ASGARD_MACHINE} $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
+git commit --quiet -m "session: ${BIFROST_MACHINE} $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
 GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git push --quiet 2>/dev/null || true

@@ -4,7 +4,7 @@ A Claude Code plugin marketplace.
 
 ## Plugins
 
-### Asgard (v1.0.0)
+### Bifrost (v1.0.0)
 
 Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines.
 
@@ -14,7 +14,7 @@ Memory system for AI agents — capture, consolidate, and recall knowledge acros
 - Deep cross-layer recall with bounded traversal
 - Single config file, unified setup wizard
 
-**Commands:** `/asgard setup`, `/asgard status`, `/heimdall process`, `/munin recall <topic>`
+**Commands:** `/setup`, `/status`, `/heimdall process`, `/recall <topic>`
 
 ### Claudit (v2.0.0)
 
