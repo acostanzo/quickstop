@@ -62,6 +62,14 @@ if [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]]; then
   exit 0
 fi
 
+# Skip if session was inside the memory repo — avoid feedback loops
+RESOLVED_REPO=$(cd "$BIFROST_REPO" && pwd -P)
+RESOLVED_CWD=$(cd "$CWD" 2>/dev/null && pwd -P || echo "")
+if [[ -n "$RESOLVED_CWD" && ( "$RESOLVED_CWD" == "$RESOLVED_REPO" || "$RESOLVED_CWD" == "$RESOLVED_REPO"/* ) ]]; then
+  echo "bifrost: skipping capture — session was inside memory repo" >&2
+  exit 0
+fi
+
 # Generate inbox filename (include session ID fragment to prevent same-second collisions)
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 SID_SHORT="${SESSION_ID:0:8}"

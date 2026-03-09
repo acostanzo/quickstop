@@ -72,6 +72,13 @@ if [[ ! -d "$BIFROST_REPO" ]]; then
   warn_and_exit "Bifrost: memory repo not found at ${BIFROST_REPO}"
 fi
 
+# Skip if session is inside the memory repo — avoid feedback loops
+RESOLVED_REPO=$(cd "$BIFROST_REPO" && pwd -P)
+RESOLVED_CWD=$(pwd -P)
+if [[ "$RESOLVED_CWD" == "$RESOLVED_REPO" || "$RESOLVED_CWD" == "$RESOLVED_REPO"/* ]]; then
+  exit 0
+fi
+
 # Check python3 (B-4: validate and surface error)
 if ! command -v python3 &>/dev/null; then
   warn_and_exit "Bifrost: python3 not found — memory loading unavailable"
