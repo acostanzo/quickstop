@@ -12,6 +12,13 @@
       "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
       "source": "./plugins/claudit",
       "keywords": ["audit", "configuration", "optimization", "health-check", "best-practices"]
+    },
+    {
+      "name": "bifrost",
+      "version": "1.0.0",
+      "description": "Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines",
+      "source": "./plugins/bifrost",
+      "keywords": ["memory", "context", "sessions", "consolidation", "recall", "agents"]
     }
   ]
 }

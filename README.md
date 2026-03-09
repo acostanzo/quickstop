@@ -4,6 +4,17 @@ A Claude Code plugin marketplace.
 
 ## Plugins
 
+### Bifrost (v1.0.0)
+
+Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines.
+
+- Automatic memory injection at session start, transcript capture at session end
+- Two-agent consolidation pipeline (extractor + consolidator) via `/heimdall`
+- Progressive memory search via `/odin` — quick grep first, deep agent search if needed
+- Feedback loop prevention — hooks skip when session is inside the memory repo
+
+**Commands:** `/setup`, `/status`, `/heimdall`, `/odin <topic>`
+
 ### Claudit (v2.0.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
