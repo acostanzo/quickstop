@@ -71,7 +71,7 @@ Every session now automatically:
 - **Starts** with your memory loaded as context
 - **Ends** with the transcript captured in `inbox/`
 
-Periodically run `/heimdall` to consolidate captured transcripts into structured memory. This can be run manually or on a cron.
+Periodically run `/heimdall` to consolidate captured transcripts into structured memory. This can be run manually or on a cron. Journal archival (moving journals older than 7 days to `journal/archive/`) happens automatically during consolidation.
 
 ## Commands
 

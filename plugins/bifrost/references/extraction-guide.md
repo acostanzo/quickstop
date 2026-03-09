@@ -61,7 +61,7 @@ Focus on **human-agent dialogue** — the parts where the user and agent are com
 
 ## Compression Targets
 
-**Target: 3-6x compression.** A 500-line transcript should yield 10-30 observations.
+**Target: 3-6x compression of the full transcript.** A 500-line transcript should yield 10-30 observations. Since ~75% of lines are tool execution noise (`progress`, `file-history-snapshot`, `system`), this is roughly 10-25x compression of the actual extractable dialogue.
 
 ### Good Observation (Concise)
 ```

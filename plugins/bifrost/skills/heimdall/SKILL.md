@@ -21,8 +21,8 @@ The extraction guide is at `${CLAUDE_SKILL_DIR}/../../references/extraction-guid
 ### Step 1: Validate Environment
 
 Using the discovered repo path:
-- Check for `MEMORY.md` — if missing, stop: "This doesn't look like a memory repo. Run `/setup` first."
-- Check for `inbox/` — if missing, stop: "No inbox/ directory found. Run `/setup` to create the memory repo structure."
+- Check for `MEMORY.md` — if missing, stop: "This doesn't look like a memory repo. Run `/bifrost:setup` first."
+- Check for `inbox/` — if missing, stop: "No inbox/ directory found. Run `/bifrost:setup` to create the memory repo structure."
 
 ### Step 2: Git Pull
 

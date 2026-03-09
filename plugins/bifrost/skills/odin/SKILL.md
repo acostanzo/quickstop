@@ -22,10 +22,10 @@ The memory structure reference is at `${CLAUDE_SKILL_DIR}/../../references/memor
 ### Step 1: Load Config
 
 Read `~/.config/bifrost/config` to get `BIFROST_REPO`. If the file doesn't exist:
-"Bifrost is not configured. Run `/setup` first."
+"Bifrost is not configured. Run `/bifrost:setup` first."
 
 Expand `~` in `BIFROST_REPO`. Check that the directory exists and contains `MEMORY.md`. If not:
-"Memory repo not found at `<path>`. Run `/setup` to reconfigure."
+"Memory repo not found at `<path>`. Run `/bifrost:setup` to reconfigure."
 
 ### Step 2: Send Huginn (Quick Scan)
 

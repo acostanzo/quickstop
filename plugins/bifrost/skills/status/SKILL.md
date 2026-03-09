@@ -12,7 +12,7 @@ Full system health dashboard.
 
 ### Steps
 
-1. **Read config** from `~/.config/bifrost/config`. If missing, tell the user to run `/setup`.
+1. **Read config** from `~/.config/bifrost/config`. If missing, tell the user to run `/bifrost:setup`.
 2. Expand `~` in `BIFROST_REPO` and validate the repo directory exists.
 3. **Report all of the following:**
 

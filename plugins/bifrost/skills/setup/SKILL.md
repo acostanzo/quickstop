@@ -105,11 +105,10 @@ and use the `BIFROST_REPO` value.
 
 ## Session Context
 
-Your core memory (MEMORY.md) and recent journal entries have been loaded as
-session context automatically by the Bifrost bootstrap hook. You don't need to
-re-read MEMORY.md unless you need to verify a specific fact.
-
-The layers below require explicit Read/Grep when relevant:
+Your core memory (MEMORY.md) and recent journal entries are already in your
+context — loaded by the bootstrap hook at session start. Don't re-read them.
+Use Read/Grep on the layers below when you need specific workflows or
+historical context that wasn't loaded at startup:
 
 | Layer | Path (relative to BIFROST_REPO) | Use |
 |-------|------|-----|
