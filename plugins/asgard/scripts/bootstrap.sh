@@ -13,13 +13,24 @@ set -euo pipefail
 CONFIG_FILE="${HOME}/.config/asgard/config"
 
 # --- Helper: output a warning as additionalContext ---
+# JSON-escapes the message to handle quotes/backslashes in config-derived values.
+# Uses python3 if available, falls back to bash string replacement.
 warn_and_exit() {
   local msg="$1"
+  local escaped
+  if command -v python3 &>/dev/null; then
+    escaped=$(python3 -c 'import sys,json; print(json.dumps(sys.argv[1]))' "$msg")
+  else
+    # Minimal bash escaping: backslashes first, then double quotes
+    msg="${msg//\\/\\\\}"
+    msg="${msg//\"/\\\"}"
+    escaped="\"$msg\""
+  fi
   cat <<ENDJSON
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "$msg"
+    "additionalContext": ${escaped}
   }
 }
 ENDJSON
@@ -37,9 +48,11 @@ ASGARD_MACHINE=$(grep '^ASGARD_MACHINE=' "$CONFIG_FILE" | cut -d= -f2- || true)
 ASGARD_JOURNAL_DAYS=$(grep '^ASGARD_JOURNAL_DAYS=' "$CONFIG_FILE" | cut -d= -f2- || true)
 ASGARD_CONTEXT_CHARS=$(grep '^ASGARD_CONTEXT_CHARS=' "$CONFIG_FILE" | cut -d= -f2- || true)
 
-# Defaults (B-3: configurable journal window)
+# Defaults with integer validation — fall back to defaults if non-numeric
 ASGARD_JOURNAL_DAYS="${ASGARD_JOURNAL_DAYS:-2}"
 ASGARD_CONTEXT_CHARS="${ASGARD_CONTEXT_CHARS:-12000}"
+[[ "$ASGARD_JOURNAL_DAYS" =~ ^[0-9]+$ ]] || ASGARD_JOURNAL_DAYS=2
+[[ "$ASGARD_CONTEXT_CHARS" =~ ^[0-9]+$ ]] || ASGARD_CONTEXT_CHARS=12000
 
 # Validate required config
 if [[ -z "${ASGARD_REPO:-}" ]]; then
@@ -73,6 +86,9 @@ GIT_SSH_COMMAND="ssh -o ConnectTimeout=3" git -C "$ASGARD_REPO" pull --quiet 2>/
 CONTEXT=""
 BUDGET=$ASGARD_CONTEXT_CHARS
 
+TRUNCATION_SUFFIX=$'\n\n[Asgard: context truncated — consider trimming memory files]'
+TRUNCATION_SUFFIX_LEN=${#TRUNCATION_SUFFIX}
+
 append_with_budget() {
   local content="$1"
   local content_len=${#content}
@@ -82,10 +98,11 @@ append_with_budget() {
     BUDGET=$((BUDGET - content_len - 2))
     return 0
   else
-    # Partial fill with remaining budget
-    if [[ $BUDGET -gt 100 ]]; then
-      CONTEXT+="${content:0:$BUDGET}"
-      CONTEXT+=$'\n\n[Asgard: context truncated — consider trimming memory files]'
+    # Partial fill: reserve space for the truncation suffix
+    local available=$((BUDGET - TRUNCATION_SUFFIX_LEN))
+    if [[ $available -gt 100 ]]; then
+      CONTEXT+="${content:0:$available}"
+      CONTEXT+="$TRUNCATION_SUFFIX"
       BUDGET=0
     fi
     return 1

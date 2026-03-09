@@ -11,6 +11,7 @@ CONFIG_FILE="${HOME}/.config/asgard/config"
 
 # Check config exists
 if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "asgard: config not found at $CONFIG_FILE" >&2
   exit 0
 fi
 
@@ -20,11 +21,13 @@ ASGARD_MACHINE=$(grep '^ASGARD_MACHINE=' "$CONFIG_FILE" | cut -d= -f2- || true)
 
 # Validate required config
 if [[ -z "${ASGARD_REPO:-}" || -z "${ASGARD_MACHINE:-}" ]]; then
+  echo "asgard: ASGARD_REPO or ASGARD_MACHINE not set in config" >&2
   exit 0
 fi
 
 # Validate machine name format
 if [[ ! "$ASGARD_MACHINE" =~ ^[a-z0-9-]+$ ]]; then
+  echo "asgard: invalid machine name '${ASGARD_MACHINE}'" >&2
   exit 0
 fi
 
@@ -33,23 +36,26 @@ ASGARD_REPO="${ASGARD_REPO/#\~/$HOME}"
 
 # Check repo exists
 if [[ ! -d "$ASGARD_REPO" ]]; then
+  echo "asgard: memory repo not found at ${ASGARD_REPO}" >&2
   exit 0
 fi
 
 # Read session info from stdin JSON (Claude Code SessionEnd hook contract)
+# B-5: Single python3 call validates JSON and extracts fields (or exits on bad input)
 INPUT=$(cat)
-
-# B-5: Validate JSON structure before processing
-if ! printf '%s' "$INPUT" | python3 -c 'import sys,json; json.load(sys.stdin)' 2>/dev/null; then
+PARSED=$(printf '%s' "$INPUT" | python3 -c '
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    print(d.get("transcript_path", ""), d.get("session_id", ""), d.get("cwd", ""), sep="\t")
+except (json.JSONDecodeError, ValueError):
+    sys.exit(1)
+' 2>/dev/null) || {
   echo "asgard: invalid JSON on stdin" >&2
   exit 0
-fi
+}
 
-IFS=$'\t' read -r TRANSCRIPT_PATH SESSION_ID CWD <<< "$(printf '%s' "$INPUT" | python3 -c '
-import sys,json
-d=json.load(sys.stdin)
-print(d.get("transcript_path",""), d.get("session_id",""), d.get("cwd",""), sep="\t")
-' 2>/dev/null || printf '')"
+IFS=$'\t' read -r TRANSCRIPT_PATH SESSION_ID CWD <<< "$PARSED"
 
 # Need a transcript to capture
 if [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]]; then
