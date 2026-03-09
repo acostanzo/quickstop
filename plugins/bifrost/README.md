@@ -17,7 +17,7 @@ Session Start                                              Session End
  Agent has memory                                      Raw transcript saved
  from previous sessions                                for later processing
      |                                                          |
-     |              /heimdall process                           |
+     |              /heimdall                                   |
      |    +--------------------------------------------+        |
      |    |  Extractor (read-only)     Consolidator    |        |
      |    |  Analyze transcripts  -->  Write to:       |        |
@@ -32,11 +32,11 @@ Session Start                                              Session End
 
 ## How It Works
 
-| Layer | Skill | Role |
-|-------|-------|------|
+| Layer | Component | Role |
+|-------|-----------|------|
 | Transport | Hooks | Pulls memory at session start, captures transcripts at session end |
 | Processing | `/heimdall` | Extracts observations from transcripts, consolidates into structured memory |
-| Intelligence | `/odin` | Search memory — quick grep, then deep agent search if needed |
+| Intelligence | `/odin` | Searches memory — sends Huginn (quick grep), then Munin (deep agent search) if needed |
 
 ## Getting Started
 
@@ -71,16 +71,26 @@ Every session now automatically:
 - **Starts** with your memory loaded as context
 - **Ends** with the transcript captured in `inbox/`
 
-Periodically run `/heimdall process` to consolidate captured transcripts into structured memory.
+Periodically run `/heimdall` to consolidate captured transcripts into structured memory. This can be run manually or on a cron.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/setup` | Full setup wizard — config, repo, rules |
-| `/status` | System health dashboard |
-| `/heimdall` | Consolidate inbox transcripts into structured memory |
-| `/odin <topic>` | Search memory — sends Huginn (quick grep), then Munin (deep search) if needed |
+| Command | Auto | Description |
+|---------|------|-------------|
+| `/setup` | No | Full setup wizard — config, repo, rules |
+| `/status` | No | System health dashboard |
+| `/heimdall` | No | Consolidate inbox transcripts into structured memory |
+| `/odin <topic>` | Yes | Search memory — sends Huginn (quick grep), then Munin (deep search) if needed |
+
+Commands marked **Auto: Yes** can be invoked proactively by Claude when it needs context. The others only run when you explicitly call them.
+
+## Agents
+
+| Agent | Type | Dispatched by |
+|-------|------|--------------|
+| Extractor | Read-only | `/heimdall` — analyzes transcripts, extracts observations |
+| Consolidator | Read-write | `/heimdall` — merges observations into MEMORY.md, journal, procedures |
+| Munin | Read-only | `/odin` — deep cross-layer search with synonym expansion and cross-referencing |
 
 ## Memory Repo Structure
 
@@ -118,15 +128,13 @@ BIFROST_JOURNAL_DAYS=2
 | `BIFROST_JOURNAL_DAYS` | Number of journal days to load at session start | `2` |
 | `BIFROST_CONTEXT_CHARS` | Max characters injected as context | `12000` |
 
-## Requirements
+## Safety
 
-- Claude Code CLI
-- Git (for repo sync)
-- Python 3 (for JSON escaping in hooks)
+### Feedback Loop Prevention
 
-`/setup` checks for these and warns if anything is missing.
+Both hooks detect when a session is running inside the memory repo and silently skip. This prevents a loop where editing memory generates a transcript that gets consolidated back into memory.
 
-## Security & Privacy
+### Transcript Privacy
 
 Session transcripts captured to `inbox/` contain the full conversation and tool output from each session. This may include:
 
@@ -138,3 +146,11 @@ Session transcripts captured to `inbox/` contain the full conversation and tool 
 These transcripts are automatically committed and pushed to the memory repo's git remote. **Your memory repo should be private** — use a private repository on a service you trust. Do not use a public repository for your memory repo.
 
 If you use a shared machine, be aware that `~/.config/bifrost/config` contains the repo path and the transcript capture runs on every session end.
+
+## Requirements
+
+- Claude Code CLI
+- Git (for repo sync)
+- Python 3 (for JSON escaping in hooks)
+
+`/setup` checks for these and warns if anything is missing.
