@@ -256,7 +256,7 @@ plugin-name/
 |-------|----------|-------------|
 | `name` | Yes | Agent identifier |
 | `description` | Yes | What the agent does (include examples) |
-| `tools` | Yes | List of tools the agent can use |
+| `tools` | No | List of tools the agent can use (defaults to all) |
 | `model` | No | `inherit`, `haiku`, `sonnet`, `opus` |
 | `memory` | No | `user` (persists across sessions) or `project` |
 | `color` | No | Terminal color for output |

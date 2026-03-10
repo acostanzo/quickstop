@@ -3,9 +3,9 @@ name: audit-project
 description: "Audits project Claude Code configuration (.claude/, CLAUDE.md, subdirectory files, rules) against expert knowledge. Dispatched by /claudit during Phase 2."
 tools:
   - Read
-  - Glob
   - Grep
   - Bash
+maxTurns: 30
 model: inherit
 ---
 
@@ -146,76 +146,18 @@ This is the most important part of the audit. For each instruction in every file
 
 ## Output Format
 
-Return findings as structured markdown:
+Return findings as structured markdown with these sections:
 
-```markdown
-## Project Configuration Audit
-
-### Configuration Map Summary
-- **Instruction files**: N files (~N tokens aggregate)
-- **Rules**: N files
-- **Settings**: N files
-- **Skills**: N | **Agents**: N | **Memory**: found/not found
-
-### Per-File Analysis
-
-#### {path/to/file} (N lines, ~N tokens)
-- **Structure**: [well-structured / adequate / poor]
-- **Over-engineering issues**: [list with quotes]
-- **Stale references**: [list]
-- **Secrets**: [list or "none"]
-- **Line count**: [OK / exceeds 200-line guideline]
-- For rules: **Frontmatter**: [valid / invalid / missing], **Paths**: [patterns]
-
-[Repeat for each instruction file]
-
-### @import Resolution
-- **Import tree**: [tree visualization]
-- **Broken imports**: [list]
-- **Circular imports**: [list or "none"]
-- **Max depth**: N
-
-### Cross-File Findings
-- **Duplications**: [list pairs with quotes]
-- **Conflicts**: [list pairs with quotes]
-- **Architecture assessment**: [well-modularized / monolithic / over-fragmented]
-- **Modularization opportunities**: [list]
-
-### Over-Engineering Findings (aggregate)
-- **Restated built-ins** (count: N):
-  - [Quote each with file path and explanation]
-- **Prescriptive formatting** (count: N):
-  - [Quote each with file path]
-- **Redundant instructions** (count: N):
-  - [Quote pairs with file paths]
-- **Conflicts** (count: N):
-  - [Quote conflicting pairs with file paths]
-- **Estimated wasted tokens**: ~N
-
-### Permission Analysis
-- **Mode**: [mode or "custom rules"]
-- **Allow rules**: N rules
-- **Deny rules**: N rules
-- **Issues**: [over-specification, conflicts, missing patterns]
-- **Recommendation**: [simpler approach if applicable]
-
-### Skills & Agents Quality
-- **Skills**: [list with quality assessment]
-- **Agents**: [list with quality assessment]
-- **Issues**: [frontmatter problems, overly broad tools, etc.]
-
-### Memory Analysis
-- **MEMORY.md**: [found/not found, size, quality, duplication with instruction files]
-
-### Missing Features
-- [Project-level features from Expert Context not being used]
-
-### Estimated Token Cost
-- **Always-loaded instruction tokens**: ~N (root CLAUDE.md + CLAUDE.local.md)
-- **On-demand instruction tokens**: ~N (subdirectory files, path-filtered rules)
-- **Total project config tokens**: ~N
-- **Breakdown**: instructions (~N) + settings (~N) + memory (~N)
-```
+1. **Configuration Map Summary** — file counts and aggregate token estimates
+2. **Per-File Analysis** — for each instruction file: structure quality, over-engineering issues (with quotes), stale references, secrets, line count check. For rules files: frontmatter validity and path patterns
+3. **@import Resolution** — import tree, broken imports, circular imports, max depth
+4. **Cross-File Findings** — duplications (with quotes), conflicts (with quotes), architecture assessment (well-modularized / monolithic / over-fragmented), modularization opportunities
+5. **Over-Engineering Findings** — aggregate counts of restated built-ins, prescriptive formatting, redundant instructions, conflicts. Quote each with file path. Include estimated wasted tokens
+6. **Permission Analysis** — mode, allow/deny rule counts, issues, recommendation
+7. **Skills & Agents Quality** — list with quality assessment and frontmatter issues
+8. **Memory Analysis** — size, quality, duplication with instruction files
+9. **Missing Features** — project-level features from Expert Context not being used
+10. **Estimated Token Cost** — always-loaded tokens, on-demand tokens, total breakdown
 
 ## Critical Rules
 
