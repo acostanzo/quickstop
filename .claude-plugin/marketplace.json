@@ -19,6 +19,13 @@
       "description": "Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines",
       "source": "./plugins/bifrost",
       "keywords": ["memory", "context", "sessions", "consolidation", "recall", "agents"]
+    },
+    {
+      "name": "commventional",
+      "version": "1.0.0",
+      "description": "Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews",
+      "source": "./plugins/commventional",
+      "keywords": ["commits", "conventions", "reviews", "comments", "pull-requests"]
     }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "name": "commventional",
+  "version": "1.0.0",
+  "description": "Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["commits", "conventions", "reviews", "comments", "pull-requests"]
+}
