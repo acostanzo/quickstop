@@ -1,6 +1,6 @@
 {
   "name": "commventional",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews",
   "author": {
     "name": "quickstop",
