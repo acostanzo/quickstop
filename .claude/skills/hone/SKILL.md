@@ -148,7 +148,7 @@ Read all plugin files before dispatching. Each agent needs:
 ## Phase 3: Scoring
 
 Once all 4 audit agents return, read the scoring rubric:
-- Read `.claude/skills/hone/references/scoring-rubric.md`
+- Read `${SKILL_ROOT}/references/scoring-rubric.md`
 
 ### Score Each Category
 
@@ -222,7 +222,7 @@ After the scorecard, present:
 
 ### Present Recommendations for Selection
 
-Use AskUserQuestion to let the user choose which recommendations to apply. Group by priority (Critical, High, Medium, Low). Include estimated score impact.
+Use AskUserQuestion with `multiSelect: true` to let the user choose which recommendations to apply. Group by priority (Critical, High, Medium, Low). Include estimated score impact.
 
 Format each option as:
 - Label: Short description

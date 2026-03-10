@@ -294,8 +294,9 @@ Next steps:
   1. Fill in skill instructions (the TODO sections)
   2. Fill in agent instructions
   3. Test: claude --plugin-dir plugins/<name>
-  4. Run /hone <name> to check quality
-  5. Bump to v1.0.0 when ready for release
+  4. Run ./scripts/check-plugin-versions.sh to verify versions
+  5. Run /hone <name> to check quality
+  6. Bump to v1.0.0 when ready for release
 === END ===
 ```
 
