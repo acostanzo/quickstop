@@ -2,41 +2,6 @@
 
 A Claude Code plugin marketplace.
 
-## Repository Structure
-
-```
-quickstop/
-├── .claude-plugin/
-│   └── marketplace.json    # Plugin registry
-├── plugins/
-│   └── claudit/            # Configuration audit & optimization
-├── scripts/
-│   ├── check-plugin-versions.sh  # Version validation script
-│   ├── install-hooks.sh          # Git hooks installer
-│   └── git-hooks/
-│       └── pre-push              # Runs version check before push
-├── CLAUDE.md
-└── README.md
-```
-
-## Plugin Structure
-
-Plugins live in `plugins/[plugin-name]/`:
-
-```
-plugins/plugin-name/
-├── .claude-plugin/
-│   └── plugin.json         # Required: name, version, description
-├── commands/               # Slash commands (.md files)
-├── skills/                 # Skills (subdirs with SKILL.md)
-│   └── skill-name/
-│       └── SKILL.md
-├── hooks/                  # Event hooks
-│   └── hooks.json
-├── .mcp.json              # MCP server config (if needed)
-└── README.md
-```
-
 ## Marketplace Management
 
 Plugin cache is keyed by version number. If you modify plugin files without bumping the version, users won't get the changes until they reinstall.
@@ -55,6 +20,13 @@ Plugin cache is keyed by version number. If you modify plugin files without bump
 ```bash
 ./scripts/install-hooks.sh
 ```
+
+## Dev Tools
+
+Repo-level skills in `.claude/` for plugin authors:
+
+- **`/smith <plugin-name>`** — Scaffold a new plugin with correct structure, frontmatter, and marketplace registration
+- **`/hone <plugin-name>`** — Audit an existing plugin's quality against the Claude Code plugin spec (8-category scoring)
 
 ## Commit Conventions
 
