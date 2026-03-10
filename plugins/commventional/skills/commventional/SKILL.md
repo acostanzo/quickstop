@@ -2,7 +2,8 @@
 name: commventional
 description: "Enforces conventional commits, conventional comments, and no-AI-credit conventions. Auto-invokes when creating commits, pull requests, or reviewing code."
 disable-model-invocation: false
-allowed-tools: Task, Read, Glob, Grep, Bash
+user-invocable: false
+allowed-tools: Task, Read, Grep, Bash
 ---
 
 # Commventional: Convention Enforcement
@@ -77,12 +78,16 @@ prompt: |
   [include review context and feedback points]
 ```
 
+## Error Handling
+
+- If no files are staged when committing, tell the user — do not dispatch the agent
+- If the user is not in a git repo, tell them conventional commits require git
+- If an agent dispatch fails, craft the message directly using the reference specs
+- If a diff is too large for the agent to process, summarize the key changes and craft from the summary
+
 ## Important Rules
 
 - NEVER add `Co-Authored-By` trailers for AI tools
 - ALWAYS use conventional commit format — no exceptions
 - ALWAYS use conventional comment format for reviews — no exceptions
 - When in doubt about commit type, prefer `feat` for new functionality, `fix` for bug fixes, `refactor` for restructuring, `docs` for documentation, `chore` for maintenance
-- Breaking changes get a `!` after the type/scope and a `BREAKING CHANGE:` footer
-- Keep commit subjects under 72 characters
-- Use imperative mood in commit subjects ("add feature" not "added feature")

@@ -3,7 +3,6 @@ name: commit-crafter
 description: "Analyzes staged diffs to craft conventional commit messages and PR titles/descriptions. Dispatched by commventional skill."
 tools:
   - Read
-  - Glob
   - Grep
   - Bash
 model: inherit
@@ -19,42 +18,9 @@ You receive either:
 - **Staged diff** — for crafting a single commit message
 - **Branch diff** — for crafting a PR title and description (all commits since divergence)
 
-## Conventional Commit Format
+## Conventional Commit Spec
 
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### Types
-
-| Type | When to Use |
-|------|-------------|
-| `feat` | New feature or capability |
-| `fix` | Bug fix |
-| `refactor` | Code restructuring without behavior change |
-| `docs` | Documentation only |
-| `test` | Adding or updating tests |
-| `chore` | Maintenance, dependencies, tooling |
-| `style` | Formatting, whitespace, semicolons |
-| `perf` | Performance improvement |
-| `ci` | CI/CD configuration |
-| `build` | Build system or external dependencies |
-| `revert` | Reverting a previous commit |
-
-### Scope
-
-Optional. Use when changes are confined to a specific area:
-- Module name, component, or directory
-- Examples: `feat(auth):`, `fix(api):`, `docs(readme):`
-
-### Breaking Changes
-
-- Add `!` after type/scope: `feat!:` or `feat(api)!:`
-- Include `BREAKING CHANGE:` footer explaining the incompatibility
+Read the full spec before crafting any message: `${CLAUDE_PLUGIN_ROOT}/skills/commventional/references/conventional-commits.md`
 
 ## Process
 
@@ -113,6 +79,12 @@ Body:
 - [ ] Verification step 1
 - [ ] Verification step 2
 ```
+
+## Budget
+
+- Read diffs up to 5000 lines. For larger diffs, use `--stat` and read only the most significant file diffs.
+- Limit to 3 Bash calls for single commits, 5 for PR descriptions.
+- If the diff is too large to fully analyze, summarize from `--stat` output.
 
 ## Rules
 
