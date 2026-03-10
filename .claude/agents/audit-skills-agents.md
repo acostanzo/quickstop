@@ -5,7 +5,6 @@ tools:
   - Read
   - Glob
   - Grep
-  - Bash
 model: inherit
 ---
 
