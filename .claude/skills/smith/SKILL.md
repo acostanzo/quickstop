@@ -33,11 +33,11 @@ Phase 1: Building expert context from official plugin documentation...
 
 ## Phase 1: Build Expert Context
 
-Dispatch **2 research subagents in parallel** using the Agent tool. Both must be foreground.
+Dispatch **2 research subagents in parallel** using the Task tool. Both must be foreground.
 
 ### Dispatch Both Simultaneously
 
-In a single message, dispatch both Agent tool calls:
+In a single message, dispatch both Task tool calls:
 
 **Research Plugin Spec:**
 - `description`: "Research plugin spec docs"

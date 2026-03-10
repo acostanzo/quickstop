@@ -151,6 +151,7 @@ Full instruction prompt. Supports the same variable substitution as skills.
 {
   "mcpServers": {
     "server-name": {
+      "type": "stdio",                // Transport: "stdio" (default) or "sse"
       "command": "binary",
       "args": ["arg1", "arg2"],
       "env": {

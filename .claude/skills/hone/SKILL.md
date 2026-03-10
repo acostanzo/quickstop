@@ -70,11 +70,11 @@ Phase 1: Building expert context from official plugin documentation...
 
 ## Phase 1: Build Expert Context
 
-Dispatch **2 research subagents in parallel** using the Agent tool. Both must be foreground.
+Dispatch **2 research subagents in parallel** using the Task tool. Both must be foreground.
 
 ### Dispatch Both Simultaneously
 
-In a single message, dispatch both Agent tool calls:
+In a single message, dispatch both Task tool calls:
 
 **Research Plugin Spec:**
 - `description`: "Research plugin spec docs"
@@ -113,7 +113,7 @@ Phase 2: Analyzing plugin against expert knowledge...
 
 ## Phase 2: Audit
 
-Dispatch **4 audit agents in parallel** using the Agent tool. Each receives Expert Context plus its relevant file slice.
+Dispatch **4 audit agents in parallel** using the Task tool. Each receives Expert Context plus its relevant file slice.
 
 ### Build Agent Prompts
 
