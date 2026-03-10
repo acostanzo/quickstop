@@ -15,6 +15,17 @@ Memory system for AI agents — capture, consolidate, and recall knowledge acros
 
 **Commands:** `/setup`, `/status`, `/heimdall`, `/odin <topic>`
 
+### Commventional (v1.0.0)
+
+Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews.
+
+- Passive auto-invocation — activates on commit, PR, and review context without explicit commands
+- Sub-agent architecture: commit-crafter for diffs, review-formatter for feedback
+- Three conventions: conventional commits, conventional comments, no AI co-author credit
+- Reference specs bundled for consistent enforcement
+
+**Auto-invokes on:** commits, pull requests, code reviews
+
 ### Claudit (v2.0.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.

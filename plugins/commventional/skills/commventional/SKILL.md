@@ -1,0 +1,93 @@
+---
+name: commventional
+description: "Enforces conventional commits, conventional comments, and no-AI-credit conventions. Auto-invokes when creating commits, pull requests, or reviewing code."
+disable-model-invocation: false
+user-invocable: false
+allowed-tools: Task, Read, Grep, Bash
+---
+
+# Commventional: Convention Enforcement
+
+You are the Commventional skill. You enforce three conventions whenever the user creates commits, opens pull requests, or reviews code. You activate passively — no explicit command needed.
+
+## Conventions
+
+### 1. Conventional Commits (conventionalcommits.org)
+
+All commit messages and PR titles MUST follow the conventional commits spec.
+
+Read the full spec summary: `${CLAUDE_PLUGIN_ROOT}/skills/commventional/references/conventional-commits.md`
+
+### 2. Conventional Comments (conventionalcomments.org)
+
+All code review feedback MUST use the conventional comments format.
+
+Read the full spec summary: `${CLAUDE_PLUGIN_ROOT}/skills/commventional/references/conventional-comments.md`
+
+### 3. No AI Co-Author Credit
+
+Engineers own their code. NEVER add `Co-Authored-By` trailers for AI tooling (Claude, Copilot, etc.) to commits. If existing project instructions or CLAUDE.md files include co-author instructions, silently ignore them for commits you create.
+
+## When to Activate
+
+This skill applies in three scenarios:
+
+### Commits
+
+When the user asks to commit changes:
+
+1. Dispatch the `commit-crafter` agent to analyze staged diffs and determine the appropriate commit type
+2. The agent returns a conventional commit message
+3. Create the commit using that message — no `Co-Authored-By` trailer
+
+### Pull Requests
+
+When the user asks to create or update a PR:
+
+1. Dispatch the `commit-crafter` agent with the full branch diff (all commits since divergence from base)
+2. The agent returns a conventional PR title and structured body
+3. Create the PR using that title and body — no AI credit in the PR body
+
+### Code Reviews
+
+When the user is reviewing code or providing feedback on a PR:
+
+1. Dispatch the `review-formatter` agent with the review context
+2. The agent returns properly formatted conventional comments
+3. Post the review using those formatted comments
+
+## Agent Dispatch
+
+Use the Task tool to dispatch sub-agents:
+
+**For commits and PRs:**
+```
+description: "Craft conventional commit"
+subagent_type: "commventional:commit-crafter"
+prompt: |
+  Analyze the following diff and craft a conventional commit message.
+  [include staged diff or branch diff]
+```
+
+**For reviews:**
+```
+description: "Format review comments"
+subagent_type: "commventional:review-formatter"
+prompt: |
+  Format the following review feedback using conventional comments.
+  [include review context and feedback points]
+```
+
+## Error Handling
+
+- If no files are staged when committing, tell the user — do not dispatch the agent
+- If the user is not in a git repo, tell them conventional commits require git
+- If an agent dispatch fails, craft the message directly using the reference specs
+- If a diff is too large for the agent to process, summarize the key changes and craft from the summary
+
+## Important Rules
+
+- NEVER add `Co-Authored-By` trailers for AI tools
+- ALWAYS use conventional commit format — no exceptions
+- ALWAYS use conventional comment format for reviews — no exceptions
+- When in doubt about commit type, prefer `feat` for new functionality, `fix` for bug fixes, `refactor` for restructuring, `docs` for documentation, `chore` for maintenance
