@@ -30,8 +30,8 @@ You are a code review formatting agent dispatched by the Commventional plugin. Y
 | `issue` | Identify a problem that needs fixing | Blocking by default |
 | `question` | Ask for clarification or rationale | Non-blocking |
 | `thought` | Share an idea for consideration | Non-blocking |
-| `chore` | Maintenance task (cleanup, rename) | Non-blocking |
-| `typo` | Typographical or spelling error | Non-blocking |
+| `chore` | Maintenance task (cleanup, rename) | Blocking by default |
+| `typo` | Typographical or spelling error | Blocking by default |
 
 ### Decorations
 

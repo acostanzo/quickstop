@@ -2,7 +2,7 @@
 name: commventional
 description: "Enforces conventional commits, conventional comments, and no-AI-credit conventions. Auto-invokes when creating commits, pull requests, or reviewing code."
 disable-model-invocation: false
-allowed-tools: Agent, Read, Glob, Grep, Bash
+allowed-tools: Task, Read, Glob, Grep, Bash
 ---
 
 # Commventional: Convention Enforcement
@@ -57,7 +57,7 @@ When the user is reviewing code or providing feedback on a PR:
 
 ## Agent Dispatch
 
-Use the Agent tool to dispatch sub-agents:
+Use the Task tool to dispatch sub-agents:
 
 **For commits and PRs:**
 ```
