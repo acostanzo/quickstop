@@ -3,9 +3,9 @@ name: audit-ecosystem
 description: "Audits MCP servers, plugins, and hooks against expert knowledge. Dispatched by /claudit during Phase 2."
 tools:
   - Read
-  - Glob
   - Grep
   - Bash
+maxTurns: 30
 model: inherit
 ---
 

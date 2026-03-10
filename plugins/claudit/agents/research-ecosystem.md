@@ -5,8 +5,6 @@ tools:
   - WebSearch
   - WebFetch
   - Read
-  - Glob
-  - Grep
 model: haiku
 memory: user
 ---
