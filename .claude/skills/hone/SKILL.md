@@ -303,7 +303,7 @@ If gh is not available or PR creation fails, show `git diff --stat` and explain 
 
 ## Error Handling
 
-- If a research agent fails, continue with local baseline from `plugin-spec.md`
+- If a research agent fails, continue with local baseline from `.claude/skills/smith/references/plugin-spec.md`
 - If an audit agent fails, score its categories as "N/A — audit failed" and note the gap
 - If a plugin has no skills, flag it as a critical issue but continue auditing other components
 - If score is 90+, congratulate and suggest advanced patterns from Expert Context

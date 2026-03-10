@@ -32,10 +32,12 @@ Plugins live in `plugins/[plugin-name]/`:
 plugins/plugin-name/
 ├── .claude-plugin/
 │   └── plugin.json         # Required: name, version, description
-├── commands/               # Slash commands (.md files)
 ├── skills/                 # Skills (subdirs with SKILL.md)
 │   └── skill-name/
-│       └── SKILL.md
+│       ├── SKILL.md
+│       └── references/     # Optional reference files loaded on demand
+├── agents/                 # Sub-agent definitions
+│   └── agent-name.md
 ├── hooks/                  # Event hooks
 │   └── hooks.json
 ├── .mcp.json              # MCP server config (if needed)
