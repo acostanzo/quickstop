@@ -26,6 +26,17 @@ Audit and optimize Claude Code configurations with dynamic best-practice researc
 
 **Command:** `/claudit` — run a comprehensive configuration audit
 
+## Dev Tools
+
+Repo-level skills for plugin authors (not distributable plugins — these live in `.claude/`):
+
+| Command | Purpose |
+|---------|---------|
+| `/smith <name>` | Scaffold a new plugin with correct structure and conventions |
+| `/hone <name>` | Audit an existing plugin's quality (8-category scoring with interactive fixes) |
+
+Both tools dispatch research agents to fetch the latest Anthropic plugin docs before operating, ensuring scaffolds and audits reflect the current spec.
+
 ## Installation
 
 ### From Marketplace

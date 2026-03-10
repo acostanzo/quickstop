@@ -6,15 +6,20 @@ A Claude Code plugin marketplace.
 
 ```
 quickstop/
+├── .claude/
+│   ├── skills/
+│   │   ├── smith/              # /smith — plugin scaffolder
+│   │   └── hone/               # /hone — plugin auditor
+│   └── agents/                 # Shared agents (research + audit)
 ├── .claude-plugin/
-│   └── marketplace.json    # Plugin registry
+│   └── marketplace.json        # Plugin registry
 ├── plugins/
-│   └── claudit/            # Configuration audit & optimization
+│   └── claudit/                # Configuration audit & optimization
 ├── scripts/
-│   ├── check-plugin-versions.sh  # Version validation script
-│   ├── install-hooks.sh          # Git hooks installer
+│   ├── check-plugin-versions.sh
+│   ├── install-hooks.sh
 │   └── git-hooks/
-│       └── pre-push              # Runs version check before push
+│       └── pre-push
 ├── CLAUDE.md
 └── README.md
 ```
@@ -55,6 +60,19 @@ Plugin cache is keyed by version number. If you modify plugin files without bump
 ```bash
 ./scripts/install-hooks.sh
 ```
+
+## Dev Tools
+
+Repo-level skills in `.claude/` for plugin authors:
+
+- **`/smith <plugin-name>`** — Scaffold a new plugin with correct structure, frontmatter, and marketplace registration
+- **`/hone <plugin-name>`** — Audit an existing plugin's quality against the Claude Code plugin spec (8-category scoring)
+
+Shared infrastructure:
+- `.claude/agents/research-plugin-spec.md` — fetches plugin/skill/agent docs (haiku, cached)
+- `.claude/agents/research-hooks-mcp.md` — fetches hooks/MCP docs (haiku, cached)
+- `.claude/skills/smith/references/plugin-spec.md` — canonical plugin structure baseline
+- `.claude/skills/hone/references/scoring-rubric.md` — 8-category scoring framework
 
 ## Commit Conventions
 
