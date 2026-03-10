@@ -1,0 +1,11 @@
+{
+  "name": "commventional",
+  "version": "1.0.0",
+  "description": "Conventional commits, PR conventions, and conventional comments for Claude Code",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": ["conventional-commits", "conventional-comments", "commit", "pr", "review", "git"]
+}

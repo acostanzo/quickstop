@@ -19,6 +19,13 @@
       "description": "Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines",
       "source": "./plugins/bifrost",
       "keywords": ["memory", "context", "sessions", "consolidation", "recall", "agents"]
+    },
+    {
+      "name": "commventional",
+      "version": "1.0.0",
+      "description": "Conventional commits, PR conventions, and conventional comments for Claude Code",
+      "source": "./plugins/commventional",
+      "keywords": ["conventional-commits", "conventional-comments", "commit", "pr", "review", "git"]
     }
   ]
 }

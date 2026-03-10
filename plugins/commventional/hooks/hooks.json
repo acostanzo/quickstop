@@ -1,0 +1,17 @@
+{
+  "description": "Commventional conventional commits and comments hooks",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
