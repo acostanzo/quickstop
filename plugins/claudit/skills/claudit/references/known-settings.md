@@ -232,6 +232,10 @@ A well-structured CLAUDE.md should be concise and include:
 - Tools are actually used (not just configured)
 - No duplicate functionality across servers
 
+## Official Feature-Flag Plugins
+
+Anthropic publishes official plugins under the `claude-plugins-official` namespace (e.g., `typescript-lsp@claude-plugins-official`, `rust-analyzer-lsp@claude-plugins-official`). These are **empty shells** — typically containing only a LICENSE and README — that act as feature flags to activate built-in Claude Code capabilities (such as the LSP client). They intentionally lack `plugin.json`, `skills/`, `agents/`, and other standard plugin structure. Audits should recognize these by their `@claude-plugins-official` suffix and skip structure validation.
+
 ## Plugin Structure (Current Standard)
 
 ```

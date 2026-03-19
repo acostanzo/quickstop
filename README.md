@@ -26,7 +26,7 @@ Enforce conventional commits, conventional comments, and no-AI-credit convention
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
-### Claudit (v2.1.0)
+### Claudit (v2.1.1)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
 
