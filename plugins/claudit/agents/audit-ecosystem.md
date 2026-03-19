@@ -40,6 +40,10 @@ For each configured server:
 ### 2. Plugin Ecosystem
 
 Read `installed_plugins.json` from the map and for each plugin:
+
+**First, check for official feature-flag plugins:** If the plugin's key in the `plugins` object ends with `@claude-plugins-official` (e.g., `typescript-lsp@claude-plugins-official`, `rust-analyzer-lsp@claude-plugins-official`), it is an Anthropic-provided feature flag — an empty shell (just LICENSE + README) that activates a built-in Claude Code capability. **Skip all structure checks** for these plugins. In the Plugin Inventory table, report them with Structure: "feature-flag" and Status: "skip — official". Do not count them toward issue totals or Plugin Health scores.
+
+**For all other plugins, perform standard checks:**
 - **Path verification**: Does the install directory exist?
 - **Structure check**: Does it follow current standards?
   - Has `skills/` (current) or `commands/` (legacy)?
