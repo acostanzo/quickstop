@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# enforce-no-ai-credit.sh
-# PreToolUse hook for Bash — deterministically strips AI attribution
-# from git commits and PR descriptions before execution.
+# enforce-ownership.sh
+# PreToolUse hook for Bash — enforces engineering ownership by removing
+# automated AI co-author trailers and generated-by footers from commits
+# and PR descriptions before execution.
 #
 # Uses substitution (not line deletion) to preserve trailing quote
 # characters when attribution appears inline rather than in a HEREDOC.
@@ -20,7 +21,7 @@ if ! printf '%s\n' "$COMMAND" | grep -qE '(git commit|gh pr create)'; then
   exit 0
 fi
 
-# Strip AI co-author trailers and generated-by footers.
+# Remove automated co-author trailers and generated-by footers.
 # [^"\x27\\]* stops before quotes/backslashes, preserving any
 # trailing structural characters (closing quotes) on the line.
 # .* prefix on Generated patterns consumes emoji prefixes.
@@ -37,7 +38,7 @@ if [ "$COMMAND" = "$CLEANED" ]; then
   exit 0
 fi
 
-# Rewrite the command with attribution stripped
+# Rewrite the command with ownership enforced
 jq -n --arg cmd "$CLEANED" '{
   "hookSpecificOutput": {
     "updatedInput": {
