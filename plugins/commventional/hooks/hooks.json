@@ -12,6 +12,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pr-ownership-check.sh",
+            "timeout": 10,
+            "statusMessage": "Verifying PR ownership..."
+          }
+        ]
+      }
     ]
   }
 }
