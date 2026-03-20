@@ -13,13 +13,17 @@ INPUT=$(cat)
 COMMAND=$(jq -r '.tool_input.command // empty' <<< "$INPUT")
 STDOUT=$(jq -r '.tool_output.stdout // empty' <<< "$INPUT")
 
-# Only process gh pr create commands
-if ! printf '%s\n' "$COMMAND" | grep -qE 'gh pr create'; then
+# Process gh pr create and gh pr edit commands
+if ! printf '%s\n' "$COMMAND" | grep -qE 'gh pr (create|edit)'; then
   exit 0
 fi
 
-# Extract PR URL from stdout (gh pr create prints the URL on success)
+# Extract PR URL from stdout (gh pr create prints it) or from command args (gh pr edit <url>)
 PR_URL=$(printf '%s\n' "$STDOUT" | grep -oE 'https://github\.com/[^/]+/[^/]+/pull/[0-9]+' | head -1)
+
+if [ -z "$PR_URL" ]; then
+  PR_URL=$(printf '%s\n' "$COMMAND" | grep -oE 'https://github\.com/[^/]+/[^/]+/pull/[0-9]+' | head -1)
+fi
 
 if [ -z "$PR_URL" ]; then
   exit 0
@@ -33,13 +37,18 @@ if ! printf '%s\n' "$BODY" | grep -qiE '(Co-Authored-By:|Generated (with|by).*Cl
   exit 0
 fi
 
-# Strip attribution and clean up
+# Strip attribution and clean up.
+# Uses [^\n]* (not [^"\x27\\]*) because we're operating on the raw PR body
+# from the API, not a shell-quoted command string like enforce-ownership.sh.
 CLEANED=$(printf '%s\n' "$BODY" | perl -pe '
   s/[Cc]o-[Aa]uthored-[Bb]y:[^\n]*//g;
   s/.*[Gg]enerated (?:with|by).*[Cc]laude[^\n]*//g;
 ')
 CLEANED=$(printf '%s\n' "$CLEANED" | cat -s)
-# Remove trailing whitespace
 CLEANED=$(printf '%s\n' "$CLEANED" | sed -e 's/[[:space:]]*$//')
 
-gh pr edit "$PR_URL" --body "$CLEANED" >/dev/null 2>&1 || true
+# Use --body-file to safely handle bodies with shell-special characters
+TMPFILE=$(mktemp)
+trap 'rm -f "$TMPFILE"' EXIT
+printf '%s' "$CLEANED" > "$TMPFILE"
+gh pr edit "$PR_URL" --body-file "$TMPFILE" >/dev/null 2>&1 || true
