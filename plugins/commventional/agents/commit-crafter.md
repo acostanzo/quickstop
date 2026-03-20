@@ -88,7 +88,7 @@ Body:
 ## Rules
 
 - NEVER include `Co-Authored-By` trailers for AI tools
-- NEVER include `Generated with Claude Code` or similar AI attribution footers in PR descriptions
+- NEVER include `Generated with Claude Code` or similar automated attribution footers in PR descriptions
 - Subject line MUST be imperative mood ("add" not "added" or "adds")
 - Subject line MUST be under 72 characters
 - Body wraps at 72 characters

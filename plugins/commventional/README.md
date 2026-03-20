@@ -1,6 +1,6 @@
 # Commventional
 
-Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews.
+Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews.
 
 ## What It Does
 
@@ -10,18 +10,18 @@ Commventional is a passive plugin — it activates automatically when you create
 
 1. **Conventional Commits** — commit messages and PR titles follow the [conventional commits](https://www.conventionalcommits.org/) spec
 2. **Conventional Comments** — code review feedback uses [conventional comments](https://conventionalcomments.org/) labels and format
-3. **No AI Credit** — engineers own their code; no `Co-Authored-By` trailers for AI tooling
+3. **Engineering Ownership** — engineers own their code; no automated `Co-Authored-By` trailers for AI tooling
 
 ## How It Works
 
 Two layers of enforcement:
 
-1. **Hook (deterministic)** — a `PreToolUse` hook intercepts every `git commit` and `gh pr create` Bash call, stripping `Co-Authored-By` AI trailers and "Generated with Claude Code" footers before the command executes. This fires on every matching call regardless of skill activation.
+1. **Hook (deterministic)** — a `PreToolUse` hook intercepts every `git commit` and `gh pr create` Bash call, removing automated `Co-Authored-By` trailers and "Generated with Claude Code" footers to enforce engineering ownership. Fires on every matching call regardless of skill activation.
 2. **Skill (advisory)** — when Claude recognizes a commit/PR/review scenario, it dispatches specialized agents to craft properly formatted messages.
 
 | Scenario | What Happens |
 |----------|-------------|
-| Any `git commit` or `gh pr create` | Hook strips AI attribution from the command before execution |
+| Any `git commit` or `gh pr create` | Hook enforces engineering ownership by removing automated attribution |
 | You ask to commit | Dispatches `commit-crafter` agent to analyze staged diffs, determine commit type, and craft a conventional message |
 | You ask to create a PR | Dispatches `commit-crafter` with the full branch diff to produce a conventional PR title and structured body |
 | You review code | Dispatches `review-formatter` to format feedback using conventional comment labels |

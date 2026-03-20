@@ -23,7 +23,7 @@
     {
       "name": "commventional",
       "version": "1.1.0",
-      "description": "Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews",
+      "description": "Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews",
       "source": "./plugins/commventional",
       "keywords": ["commits", "conventions", "reviews", "comments", "pull-requests"]
     }
