@@ -14,8 +14,14 @@ Commventional is a passive plugin — it activates automatically when you create
 
 ## How It Works
 
+Two layers of enforcement:
+
+1. **Hook (deterministic)** — a `PreToolUse` hook intercepts every `git commit` and `gh pr create` Bash call, stripping `Co-Authored-By` AI trailers and "Generated with Claude Code" footers before the command executes. This fires on every matching call regardless of skill activation.
+2. **Skill (advisory)** — when Claude recognizes a commit/PR/review scenario, it dispatches specialized agents to craft properly formatted messages.
+
 | Scenario | What Happens |
 |----------|-------------|
+| Any `git commit` or `gh pr create` | Hook strips AI attribution from the command before execution |
 | You ask to commit | Dispatches `commit-crafter` agent to analyze staged diffs, determine commit type, and craft a conventional message |
 | You ask to create a PR | Dispatches `commit-crafter` with the full branch diff to produce a conventional PR title and structured body |
 | You review code | Dispatches `review-formatter` to format feedback using conventional comment labels |
@@ -72,3 +78,4 @@ claude --plugin-dir /path/to/quickstop/plugins/commventional
 ## Requirements
 
 - Claude Code CLI
+- `jq` (for hook JSON parsing)
