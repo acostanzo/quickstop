@@ -35,8 +35,6 @@ PluginName vX.Y.Z: Brief description
 
 - Change 1
 - Change 2
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Testing

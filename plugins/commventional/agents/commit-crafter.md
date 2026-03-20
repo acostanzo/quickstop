@@ -3,7 +3,6 @@ name: commit-crafter
 description: "Analyzes staged diffs to craft conventional commit messages and PR titles/descriptions. Dispatched by commventional skill."
 tools:
   - Read
-  - Grep
   - Bash
 model: inherit
 ---

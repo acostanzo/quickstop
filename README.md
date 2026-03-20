@@ -15,7 +15,7 @@ Memory system for AI agents — capture, consolidate, and recall knowledge acros
 
 **Commands:** `/setup`, `/status`, `/heimdall`, `/odin <topic>`
 
-### Commventional (v1.0.1)
+### Commventional (v1.1.0)
 
 Enforce conventional commits, conventional comments, and no-AI-credit conventions for commits, PRs, and code reviews.
 
