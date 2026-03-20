@@ -1,7 +1,6 @@
 ---
 name: commventional
 description: "Enforces conventional commits, conventional comments, and no-AI-credit conventions. Auto-invokes when creating commits, pull requests, or reviewing code."
-disable-model-invocation: false
 user-invocable: false
 allowed-tools: Task, Read, Grep, Bash
 ---
