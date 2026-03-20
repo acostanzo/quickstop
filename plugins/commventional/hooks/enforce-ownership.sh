@@ -22,11 +22,10 @@ if ! printf '%s\n' "$COMMAND" | grep -qE '(git commit|gh pr create)'; then
 fi
 
 # Remove automated co-author trailers and generated-by footers.
-# [^"\x27\\]* stops before quotes/backslashes, preserving any
-# trailing structural characters (closing quotes) on the line.
-# .* prefix on Generated patterns consumes emoji prefixes.
+# Every Bash call this hook sees is from Claude, so any Co-Authored-By
+# trailer is automated. [^"\x27\\]* preserves trailing quote characters.
 CLEANED=$(printf '%s\n' "$COMMAND" | perl -pe '
-  s/[Cc]o-[Aa]uthored-[Bb]y:.*(?:[Cc]laude|noreply\@anthropic|[Cc]opilot)[^"\x27\\]*//g;
+  s/[Cc]o-[Aa]uthored-[Bb]y:[^"\x27\\]*//g;
   s/.*[Gg]enerated (?:with|by).*[Cc]laude[^"\x27\\]*//g;
 ')
 
