@@ -9,7 +9,13 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 0
 fi
 
+# Cheap pre-filter: skip JSON parsing entirely for non-PR Bash calls.
+# This avoids jq overhead on every Bash invocation (the common case).
 INPUT=$(cat)
+if ! printf '%s\n' "$INPUT" | grep -q 'gh pr'; then
+  exit 0
+fi
+
 COMMAND=$(jq -r '.tool_input.command // empty' <<< "$INPUT")
 STDOUT=$(jq -r '.tool_output.stdout // empty' <<< "$INPUT")
 
@@ -18,11 +24,16 @@ if ! printf '%s\n' "$COMMAND" | grep -qE 'gh pr (create|edit)'; then
   exit 0
 fi
 
-# Extract PR URL from stdout (gh pr create prints it) or from command args (gh pr edit <url>)
+# Extract PR URL: try stdout first (gh pr create), then command args (gh pr edit <url>),
+# then fall back to current branch context (gh pr edit without explicit URL).
 PR_URL=$(printf '%s\n' "$STDOUT" | grep -oE 'https://github\.com/[^/]+/[^/]+/pull/[0-9]+' | head -1)
 
 if [ -z "$PR_URL" ]; then
   PR_URL=$(printf '%s\n' "$COMMAND" | grep -oE 'https://github\.com/[^/]+/[^/]+/pull/[0-9]+' | head -1)
+fi
+
+if [ -z "$PR_URL" ]; then
+  PR_URL=$(gh pr view --json url --jq '.url' 2>/dev/null) || true
 fi
 
 if [ -z "$PR_URL" ]; then
