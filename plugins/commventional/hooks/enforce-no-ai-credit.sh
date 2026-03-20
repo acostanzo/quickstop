@@ -8,11 +8,15 @@
 
 set -euo pipefail
 
+if ! command -v jq >/dev/null 2>&1; then
+  exit 0
+fi
+
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
+COMMAND=$(jq -r '.tool_input.command // empty' <<< "$INPUT")
 
 # Only process git commit and gh pr create commands
-if ! echo "$COMMAND" | grep -qE '(git commit|gh pr create)'; then
+if ! printf '%s\n' "$COMMAND" | grep -qE '(git commit|gh pr create)'; then
   exit 0
 fi
 
@@ -20,13 +24,13 @@ fi
 # [^"\x27\\]* stops before quotes/backslashes, preserving any
 # trailing structural characters (closing quotes) on the line.
 # .* prefix on Generated patterns consumes emoji prefixes.
-CLEANED=$(echo "$COMMAND" | perl -pe '
+CLEANED=$(printf '%s\n' "$COMMAND" | perl -pe '
   s/[Cc]o-[Aa]uthored-[Bb]y:.*(?:[Cc]laude|noreply\@anthropic|[Cc]opilot)[^"\x27\\]*//g;
   s/.*[Gg]enerated (?:with|by).*[Cc]laude[^"\x27\\]*//g;
 ')
 
 # Collapse consecutive blank lines
-CLEANED=$(echo "$CLEANED" | cat -s)
+CLEANED=$(printf '%s\n' "$CLEANED" | cat -s)
 
 # If nothing changed, pass through silently
 if [ "$COMMAND" = "$CLEANED" ]; then
