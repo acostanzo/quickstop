@@ -1,0 +1,10 @@
+{
+  "name": "skillet",
+  "version": "0.1.0",
+  "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT"
+}

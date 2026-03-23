@@ -26,6 +26,13 @@
       "description": "Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews",
       "source": "./plugins/commventional",
       "keywords": ["commits", "conventions", "reviews", "comments", "pull-requests"]
+    },
+    {
+      "name": "skillet",
+      "version": "0.1.0",
+      "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
+      "source": "./plugins/skillet",
+      "keywords": ["skills", "scaffolding", "audit", "quality", "authoring", "templates"]
     }
   ]
 }
