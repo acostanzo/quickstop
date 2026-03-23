@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "claudit",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
       "source": "./plugins/claudit",
       "keywords": ["audit", "configuration", "optimization", "health-check", "best-practices"]
@@ -29,7 +29,7 @@
     },
     {
       "name": "skillet",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
       "source": "./plugins/skillet",
       "keywords": ["skills", "scaffolding", "audit", "quality", "authoring", "templates"]

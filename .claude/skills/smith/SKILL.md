@@ -33,9 +33,30 @@ Phase 1: Building expert context from official plugin documentation...
 
 ## Phase 1: Build Expert Context
 
-Dispatch **2 research subagents in parallel** using the Task tool. Both must be foreground.
+### Step 1: Check Claudit Knowledge Cache
 
-### Dispatch Both Simultaneously
+Check if claudit's cached ecosystem research is available and fresh:
+
+1. Run via Bash: `claude --version 2>/dev/null` → store as **CURRENT_VERSION**
+2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
+3. If the manifest exists, apply invalidation:
+   a. **Version check**: manifest's `claude_code_version` must match CURRENT_VERSION
+   b. **Time check**: manifest's `cached_at` age must be < `max_ttl_days` (7 days)
+   c. **File check**: `~/.cache/claudit/ecosystem.md` must exist
+4. All three must pass → **FRESH**
+
+**If FRESH:**
+- Read `~/.cache/claudit/ecosystem.md`
+- Use the plugins, skills, sub-agents, hooks, and MCP sections as **Expert Context**
+- Tell the user: `Expert context loaded from claudit cache (fetched {date}). Gathering requirements...`
+- **Skip to Phase 2**
+
+**If STALE or MISSING:**
+- Proceed to Step 2
+
+### Step 2: Dispatch Research Agents (Fallback)
+
+Dispatch **2 research subagents in parallel** using the Task tool. Both must be foreground.
 
 In a single message, dispatch both Task tool calls:
 

@@ -26,22 +26,24 @@ Enforce conventional commits, conventional comments, and engineering ownership f
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
-### Claudit (v2.2.0)
+### Claudit (v2.3.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
 
 - Research-first architecture: subagents fetch official Anthropic docs before analysis
+- **Knowledge cache**: research results cached at `~/.cache/claudit/` with version-based + 7-day TTL invalidation
 - Over-engineering detection as highest-weighted scoring category
 - 6-category health scoring with interactive fix selection
-- Persistent memory on research agents for faster subsequent runs
+- Cross-tool synergy: cached knowledge speeds up skillet, smith, and hone
 
-**Command:** `/claudit` — run a comprehensive configuration audit
+**Commands:** `/claudit` — run audit, `/claudit:refresh` — refresh cache, `/claudit:status` — show cache state
 
-### Skillet (v0.1.1)
+### Skillet (v0.2.0)
 
 Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure.
 
 - Research-first: fetches latest Anthropic skill/agent docs before every action
+- **Claudit cache integration**: uses claudit's cached ecosystem knowledge when available, falls back to own research
 - Three workflows: build from scratch, audit existing, improve from findings
 - Opinionated directory template enforcement for consistent skill structure
 - 6-category scoring rubric specific to skill quality
