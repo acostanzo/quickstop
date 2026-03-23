@@ -6,6 +6,5 @@
     "name": "quickstop",
     "url": "https://github.com/acostanzo/quickstop"
   },
-  "license": "MIT",
-  "keywords": ["skills", "scaffolding", "audit", "quality", "authoring", "templates"]
+  "license": "MIT"
 }
