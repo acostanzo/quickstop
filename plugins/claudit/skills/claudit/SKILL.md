@@ -24,7 +24,7 @@ Extract the focus area from `$ARGUMENTS`.
 - If `$ARGUMENTS` is empty or missing → set **FOCUS_MODE = false**. Proceed with a full audit (default behavior).
 - If `$ARGUMENTS` is provided → set **FOCUS_MODE = true**. Set **FOCUS_AREA** to the user's input.
 
-Interpret the user's intent using this mapping (fuzzy — use judgment for synonyms and variations):
+Match `$ARGUMENTS` as a whole string against this mapping (fuzzy — use judgment for synonyms and variations):
 
 | User Input (examples) | Focus Area | Primary Scoring Categories |
 |----------------------|------------|---------------------------|
@@ -34,10 +34,12 @@ Interpret the user's intent using this mapping (fuzzy — use judgment for synon
 | hooks, hook config, hook sprawl | Hooks | Over-Engineering, Security Posture |
 | plugins, plugin health | Plugins | Plugin Health |
 | security, permissions, secrets | Security | Security Posture |
+| over-engineering, verbosity, redundancy | Over-Engineering | Over-Engineering |
+| context, tokens, context efficiency | Context Efficiency | Context Efficiency |
 | `<text matching an installed plugin name>` | Specific Plugin | Plugin Health |
 | `<any other text>` | Free-form (use as-is) | all categories (best effort) |
 
-To check for plugin name matches: if the `installed_plugins.json` path was found in the config map, read it and check whether `$ARGUMENTS` matches a plugin name. If so, treat the focus as "Specific Plugin: {name}".
+**Plugin name matching** is deferred to Step 3.5 (after the config map is built), since it requires reading `installed_plugins.json`. At this step, only apply keyword matching from the table above. If no keyword matches, tentatively mark as free-form — Step 3.5 may reclassify it as a specific plugin.
 
 Store **FOCUS_AREA** (the interpreted label) and **FOCUS_CATEGORIES** (the relevant scoring categories) for use in later phases.
 
@@ -82,6 +84,10 @@ For the Instructions glob, exclude common vendor directories. Use Glob with patt
 | Managed policy (Linux) | `/etc/claude-code/CLAUDE.md` | Linux/WSL managed policy |
 
 For each file found, get its line count via `wc -l` (batch multiple files in a single Bash call for efficiency). Quote paths containing spaces (e.g., `/Library/Application Support/...`) in any Bash commands.
+
+### Step 3.5: Resolve Plugin Name Focus
+
+If **FOCUS_MODE is true** and **FOCUS_AREA** is still "Free-form": check whether `$ARGUMENTS` matches an installed plugin name. Read `installed_plugins.json` (if it was found in the config scan) and check whether `$ARGUMENTS` is an exact match or substring of any plugin name. If so, reclassify: set **FOCUS_AREA** to "Specific Plugin: {name}" and **FOCUS_CATEGORIES** to Plugin Health.
 
 ### Step 4: Build and Present the Configuration Map
 
@@ -328,7 +334,7 @@ If **FOCUS_MODE is true**, apply these adjustments to the report:
 
 4. **Findings order**: Present focus-area findings and recommendations first, then other findings.
 
-### After the score card, present:
+After the score card, present:
 
 1. **Focus Deep Dive** (focus mode only) — consolidated focus-area findings from all agents
 2. **Critical Issues** — anything scoring below 50 in a category

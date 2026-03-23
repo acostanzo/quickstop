@@ -35,7 +35,7 @@ Or focus on a specific area for a deeper dive:
 /claudit CLAUDE.md
 /claudit hooks
 /claudit security
-/claudit commventional
+/claudit my-plugin
 ```
 
 When a focus area is provided, audit agents still perform their full scope but go deeper on the focus area — more edge cases, line-level detail, and specific fix suggestions. The health report highlights focus-relevant scoring categories with a `◆` marker and presents a consolidated Focus Deep Dive section.
