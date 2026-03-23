@@ -37,6 +37,17 @@ Audit and optimize Claude Code configurations with dynamic best-practice researc
 
 **Command:** `/claudit` — run a comprehensive configuration audit
 
+### Skillet (v0.1.0)
+
+Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure.
+
+- Research-first: fetches latest Anthropic skill/agent docs before every action
+- Three workflows: build from scratch, audit existing, improve from findings
+- Opinionated directory template enforcement for consistent skill structure
+- 6-category scoring rubric specific to skill quality
+
+**Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
+
 ## Dev Tools
 
 Repo-level skills for plugin authors (not distributable plugins — these live in `.claude/`):
