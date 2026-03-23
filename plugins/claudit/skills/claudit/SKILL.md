@@ -2,12 +2,13 @@
 name: claudit
 description: Audit and optimize Claude Code configuration with dynamic best-practice research
 disable-model-invocation: true
+argument-hint: "[focus-area]"
 allowed-tools: Task, Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---
 
 # Claudit: Claude Code Configuration Audit
 
-You are the Claudit orchestrator. When the user runs `/claudit`, execute this 5-phase audit workflow. Follow each phase in order. Do not skip phases.
+You are the Claudit orchestrator. When the user runs `/claudit` or `/claudit <focus-area>`, execute this 5-phase audit workflow. Follow each phase in order. Do not skip phases.
 
 ## Phase 0: Environment Detection & Configuration Map
 
@@ -15,6 +16,32 @@ You are the Claudit orchestrator. When the user runs `/claudit`, execute this 5-
 
 1. **PROJECT_ROOT**: Run `git rev-parse --show-toplevel 2>/dev/null` via Bash. If this fails (not in a git repo), set PROJECT_ROOT to empty.
 2. **HOME_DIR**: Run `echo $HOME` via Bash.
+
+### Step 1.5: Parse Focus Argument
+
+Extract the focus area from `$ARGUMENTS`.
+
+- If `$ARGUMENTS` is empty or missing → set **FOCUS_MODE = false**. Proceed with a full audit (default behavior).
+- If `$ARGUMENTS` is provided → set **FOCUS_MODE = true**. Set **FOCUS_AREA** to the user's input.
+
+Match `$ARGUMENTS` as a whole string against this mapping (fuzzy — use judgment for synonyms and variations):
+
+| User Input (examples) | Focus Area | Primary Scoring Categories |
+|----------------------|------------|---------------------------|
+| skills, agents, skill quality | Skills & Agents | CLAUDE.md Quality, Over-Engineering |
+| CLAUDE.md, instructions, rules, instruction files | Instruction Files | CLAUDE.md Quality, Over-Engineering, Context Efficiency |
+| MCP, servers, mcp servers, mcp config | MCP Configuration | MCP Configuration, Context Efficiency |
+| hooks, hook config, hook sprawl | Hooks | Over-Engineering, Security Posture |
+| plugins, plugin health | Plugins | Plugin Health |
+| security, permissions, secrets | Security | Security Posture |
+| over-engineering, verbosity, redundancy | Over-Engineering | Over-Engineering |
+| context, tokens, context efficiency | Context Efficiency | Context Efficiency |
+| `<text matching an installed plugin name>` | Specific Plugin | Plugin Health |
+| `<any other text>` | Free-form (use as-is) | all categories (best effort) |
+
+**Plugin name matching** is deferred to Step 3.5 (after the config map is built), since it requires reading `installed_plugins.json`. At this step, only apply keyword matching from the table above. If no keyword matches, tentatively mark as free-form — Step 3.5 may reclassify it as a specific plugin.
+
+Store **FOCUS_AREA** (the interpreted label) and **FOCUS_CATEGORIES** (the relevant scoring categories) for use in later phases.
 
 ### Step 2: Scope Detection
 
@@ -58,6 +85,10 @@ For the Instructions glob, exclude common vendor directories. Use Glob with patt
 
 For each file found, get its line count via `wc -l` (batch multiple files in a single Bash call for efficiency). Quote paths containing spaces (e.g., `/Library/Application Support/...`) in any Bash commands.
 
+### Step 3.5: Resolve Plugin Name Focus
+
+If **FOCUS_MODE is true** and **FOCUS_AREA** is still "Free-form": check whether `$ARGUMENTS` matches an installed plugin name. Read `installed_plugins.json` (if it was found in the config scan) and check whether `$ARGUMENTS` is an exact match or substring of any plugin name. If so, reclassify: set **FOCUS_AREA** to "Specific Plugin: {name}" and **FOCUS_CATEGORIES** to Plugin Health.
+
 ### Step 4: Build and Present the Configuration Map
 
 Build a structured manifest grouping files by category with line counts. Present it to the user:
@@ -94,7 +125,15 @@ MANAGED POLICY: [found (N lines) / not found]
 
 Estimate tokens for instruction files as `(total_lines * 40) / 4` (rough estimate: ~10 words per line, ~4 chars per word, divided by 4 chars per token). This line-based estimate is for the config map display only. Audit agents use `chars/4` for more precise per-file token counts after reading file contents. Show the aggregate token estimate for instruction files.
 
-After presenting the map, tell the user:
+After presenting the map, if **FOCUS_MODE is true**, display:
+
+```
+Focus: {FOCUS_AREA}
+  Primary categories: {FOCUS_CATEGORIES}
+  Audit agents will go deeper on this area while still performing a full audit.
+```
+
+Then tell the user:
 
 ```
 Phase 1: Building expert context from official Anthropic documentation...
@@ -171,6 +210,25 @@ Dispatch audit subagents using the Task tool. Each agent receives the **Expert C
 **For `audit-ecosystem`**, include:
 - Full Expert Context
 - Ecosystem slice: all MCP config paths (global + project as applicable), plugins path, plugin hooks paths, paths to all settings files (agent reads them to check for hooks)
+
+### Focus Directive Injection
+
+If **FOCUS_MODE is true**, prepend the following block to **each** audit agent's dispatch prompt (before the Expert Context):
+
+```
+=== FOCUS DIRECTIVE ===
+The user has requested a focused audit on: {FOCUS_AREA}
+
+Instructions:
+1. Still perform your full audit scope (all checks in your playbook)
+2. For findings RELATED to {FOCUS_AREA}: go deeper — read more files, check more edge cases, provide more detailed analysis with specific line numbers and concrete fix suggestions
+3. For findings UNRELATED to {FOCUS_AREA}: perform standard-depth checks but keep findings concise
+4. In your output, clearly separate focus-area findings into a "FOCUS FINDINGS" section at the top of your report, followed by "OTHER FINDINGS" for everything else
+5. For focus findings, include specific file paths, line numbers, quoted content, and actionable recommendations
+=== END FOCUS DIRECTIVE ===
+```
+
+The dispatch logic (which agents to send based on scope) does NOT change — always dispatch the same agents as the non-focused path. The Focus Directive is additive context, not a routing change.
 
 ### Dispatch Based on Scope
 
@@ -256,11 +314,32 @@ Context Efficiency   ███████████████████�
 
 For the visual bars, use `█` for filled and `░` for empty. Scale to 25 characters total. Append the numeric score and letter grade.
 
+### Focus Mode Report Adjustments
+
+If **FOCUS_MODE is true**, apply these adjustments to the report:
+
+1. **Report header**: Add a `Focus:` line inside the header box:
+   ```
+   ║  Focus: {FOCUS_AREA}                                    ║
+   ```
+
+2. **Score bars**: Mark focus-relevant categories (from FOCUS_CATEGORIES) with a `◆` indicator:
+   ```
+   Over-Engineering  ◆  ████████████████████░░░░░  XX/100  X
+   CLAUDE.md Quality ◆  ████████████████████░░░░░  XX/100  X
+   Security Posture     ████████████████████░░░░░  XX/100  X
+   ```
+
+3. **Focus Deep Dive**: After the score card and before recommendations, add a **Focus Deep Dive** section that consolidates all focus-related findings from all audit agents into a single narrative with specific file references, line numbers, and actionable detail.
+
+4. **Findings order**: Present focus-area findings and recommendations first, then other findings.
+
 After the score card, present:
 
-1. **Critical Issues** — anything scoring below 50 in a category
-2. **Top Recommendations** — ranked list with estimated point impact
-3. **New Features to Adopt** — capabilities from Expert Context not currently used
+1. **Focus Deep Dive** (focus mode only) — consolidated focus-area findings from all agents
+2. **Critical Issues** — anything scoring below 50 in a category
+3. **Top Recommendations** — ranked list with estimated point impact (focus-relevant recommendations first when in focus mode)
+4. **New Features to Adopt** — capabilities from Expert Context not currently used
 
 ---
 
