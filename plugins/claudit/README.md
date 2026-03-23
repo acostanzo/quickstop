@@ -28,6 +28,20 @@ Claudit performs a comprehensive, research-backed audit of your Claude Code setu
 /claudit
 ```
 
+Or focus on a specific area for a deeper dive:
+
+```
+/claudit MCP
+/claudit CLAUDE.md
+/claudit hooks
+/claudit security
+/claudit commventional
+```
+
+When a focus area is provided, audit agents still perform their full scope but go deeper on the focus area — more edge cases, line-level detail, and specific fix suggestions. The health report highlights focus-relevant scoring categories with a `◆` marker and presents a consolidated Focus Deep Dive section.
+
+With no arguments, claudit runs a full audit as usual.
+
 The audit runs through 6 phases:
 
 0. **Configuration Map** — Discovers all Claude-related files (instructions, rules, settings, skills, agents, memory, MCP) and presents a structured map
