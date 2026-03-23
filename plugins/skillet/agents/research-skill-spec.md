@@ -9,6 +9,7 @@ tools:
   - Grep
 model: haiku
 memory: user
+maxTurns: 15
 ---
 
 # Research Agent: Skill Specification
