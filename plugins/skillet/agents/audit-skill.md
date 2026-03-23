@@ -5,6 +5,7 @@ tools:
   - Read
   - Glob
   - Grep
+model: inherit
 maxTurns: 30
 ---
 

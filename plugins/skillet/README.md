@@ -9,7 +9,7 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 - **Opinionated directory template**: enforces consistent skill structure
 - **6-category scoring rubric**: specific to skill quality assessment
 
-## Commands
+## Skills
 
 ### `/skillet:build <name>`
 

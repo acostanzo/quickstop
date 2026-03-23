@@ -29,7 +29,7 @@
     },
     {
       "name": "skillet",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
       "source": "./plugins/skillet",
       "keywords": ["skills", "scaffolding", "audit", "quality", "authoring", "templates"]

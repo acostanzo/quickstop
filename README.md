@@ -26,7 +26,7 @@ Enforce conventional commits, conventional comments, and engineering ownership f
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
-### Claudit (v2.1.1)
+### Claudit (v2.2.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
 
@@ -37,7 +37,7 @@ Audit and optimize Claude Code configurations with dynamic best-practice researc
 
 **Command:** `/claudit` — run a comprehensive configuration audit
 
-### Skillet (v0.1.0)
+### Skillet (v0.1.1)
 
 Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure.
 
