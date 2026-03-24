@@ -26,7 +26,7 @@ Enforce conventional commits, conventional comments, and engineering ownership f
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
-### Claudit (v2.4.0)
+### Claudit (v2.5.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
 
