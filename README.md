@@ -26,12 +26,13 @@ Enforce conventional commits, conventional comments, and engineering ownership f
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
-### Claudit (v2.3.0)
+### Claudit (v2.4.0)
 
 Audit and optimize Claude Code configurations with dynamic best-practice research.
 
 - Research-first architecture: subagents fetch official Anthropic docs before analysis
 - **Knowledge cache**: research results cached at `~/.cache/claudit/` with version-based + 7-day TTL invalidation
+- **Decision memory**: stores audit decisions so future runs annotate recommendations with past context (team-shared, committable)
 - Over-engineering detection as highest-weighted scoring category
 - 6-category health scoring with interactive fix selection
 - Persistent memory on research agents for faster subsequent runs

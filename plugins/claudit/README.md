@@ -117,6 +117,25 @@ When fixes are applied, Claudit can open a PR with educational inline comments:
 | D | 40-59 | Needs Work |
 | F | 0-39 | Critical |
 
+## Decision Memory
+
+Claudit remembers what you decided about its recommendations. When you accept, reject, or defer a recommendation, that decision is stored in `.claude/claudit-decisions.json` (project scope) or `~/.cache/claudit/decisions.json` (global scope).
+
+On future runs, claudit annotates recommendations with past decisions:
+
+```
+[2] Trim CLAUDE.md redundancy  (+15 pts Over-Engineering)
+    Previously rejected (2026-02-15, acostanzo): "Team onboarding — keeping for junior devs"
+    ⚠ Config changed since decision — recommend re-evaluating
+```
+
+**Key principles:**
+
+- **Context, not constraints** — past decisions annotate recommendations but never suppress them
+- **Staleness detection** — decisions are flagged for re-evaluation when config changes, Claude Code updates, score impact shifts, or 90 days pass
+- **Team-shared** — project decisions are committable so teammates see why deviations from best practice were intentional
+- **Fingerprint matching** — recommendations are matched to past decisions via a composite key (category, issue type, file, content hash)
+
 ## Persistent Memory
 
 Research agents use `memory: user` to persist findings across runs. The first audit fetches all documentation from scratch. Subsequent runs consult cached knowledge and only update what may have changed — making them faster and more accurate over time.

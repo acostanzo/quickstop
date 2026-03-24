@@ -22,11 +22,13 @@ If PR delivery is selected and prerequisites pass:
 
 1. **Record the current branch**: `CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)` — this is the branch the user was on before claudit creates its own branch. The PR will target this branch so the diff only shows claudit changes.
 2. **Create branch**: `git checkout -b claudit/improvements-YYYY-MM-DD-HHMM` (use today's date and current time to avoid same-day collisions)
-3. **Stage changed project files**: Only stage project-scoped files that were modified in Phase 4. Never stage:
+3. **Stage changed project files**: Stage project-scoped files modified in Phase 4, plus the decisions file if it was created/updated. Never stage:
    - `CLAUDE.local.md` (gitignored/personal)
    - `.claude/settings.local.json` (personal local settings)
    - Any file under `~/.claude/` (personal config)
    - Any file outside the project root
+
+   **Always stage if present**: `{PROJECT_ROOT}/.claude/claudit-decisions.json` — decision history is team-shared context documenting intentional deviations.
 4. **Commit** with a clear message including the score delta:
    ```
    claudit: improve Claude Code configuration (score XX → YY)
