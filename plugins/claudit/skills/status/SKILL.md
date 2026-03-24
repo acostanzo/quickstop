@@ -88,5 +88,5 @@ To refresh now: /claudit:refresh
 If FRESH, add:
 
 ```
-Consumers: /claudit, /skillet:*, /smith, /hone
+Access via: /claudit:knowledge | Consumers: /claudit, /skillet:*, /smith, /hone
 ```
