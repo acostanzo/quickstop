@@ -15,6 +15,7 @@ Claudit performs a comprehensive, research-backed audit of your Claude Code setu
 - **Cross-scope analysis**: Detects redundancy between personal and project config, with nuanced cleanup recommendations
 - **PR-based delivery**: Optionally commits changes to a branch and opens a PR with educational inline comments that teach your team Claude Code features
 - **Persistent memory**: Research agents remember findings across audit runs, getting faster and more accurate over time
+- **Optimized model routing**: Research agents run on haiku (fast/cheap for doc fetching), audit agents run on sonnet (consistent quality for config analysis), regardless of your session model
 
 ## Video Walkthrough
 

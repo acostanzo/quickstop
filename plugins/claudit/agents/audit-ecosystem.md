@@ -6,7 +6,7 @@ tools:
   - Grep
   - Bash
 maxTurns: 30
-model: inherit
+model: sonnet
 ---
 
 # Audit Agent: Ecosystem

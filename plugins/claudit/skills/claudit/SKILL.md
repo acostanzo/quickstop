@@ -130,7 +130,7 @@ After presenting the map, if **FOCUS_MODE is true**, display:
 ```
 Focus: {FOCUS_AREA}
   Primary categories: {FOCUS_CATEGORIES}
-  Audit agents will go deeper on this area while still performing a full audit.
+  Auditing all categories; {FOCUS_AREA}-related findings will include deeper analysis.
 ```
 
 ### Step 5: Load Decision Memory
@@ -445,6 +445,7 @@ After the score card, present:
 4. **New Features to Adopt** — capabilities from Expert Context not currently used
 5. **See Also** — cross-tool suggestions based on findings:
    - If audit-project or audit-ecosystem found skill/agent structural issues (e.g., legacy commands/ directory, missing or malformed frontmatter, skills without proper structure): suggest `For detailed skill-level analysis, try /skillet:audit <skill-path>`
+   - If the focus area is plugin-related (Plugins, Specific Plugin) or audit-ecosystem found plugin authoring issues: suggest `For plugin authoring quality audits, try /hone <plugin-name>`
    - If the knowledge cache was stale or missing (Phase 1 Step 1 fell through to Step 2): suggest `Run /claudit:refresh periodically to speed up future audits`
 
 ---
