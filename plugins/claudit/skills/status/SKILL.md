@@ -88,6 +88,5 @@ To refresh now: /claudit:refresh
 If FRESH, add:
 
 ```
-Consumers use /claudit:knowledge to access this cache.
-Direct consumers: /claudit, /skillet:*, /smith, /hone
+Access via: /claudit:knowledge | Consumers: /claudit, /skillet:*, /smith, /hone
 ```

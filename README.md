@@ -96,6 +96,16 @@ Invoke `/claudit:knowledge ecosystem` to retrieve ecosystem knowledge.
 
 The knowledge skill checks cache freshness and auto-refreshes stale domains transparently. Your plugin doesn't need to understand the cache protocol — just invoke and use the output.
 
+Output is wrapped in delimiters for easy identification:
+
+```
+=== CLAUDIT KNOWLEDGE: ecosystem ===
+[cached research content]
+=== END CLAUDIT KNOWLEDGE ===
+
+Knowledge source: cache (fresh, fetched 2026-03-22) | Domains: ecosystem
+```
+
 ### Refreshing the Cache
 
 Users can manually refresh with `/claudit:refresh [domain|all]` or check status with `/claudit:status`. The cache auto-refreshes on any `/claudit` or `/claudit:knowledge` invocation when stale.

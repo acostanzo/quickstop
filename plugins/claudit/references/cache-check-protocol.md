@@ -52,7 +52,7 @@ If claudit is not installed, consumers should fall back to their own research ag
 
 | Consumer | Domains Needed | Access Method |
 |----------|---------------|--------------|
-| `/claudit` | core-config, ecosystem, optimization | Inline protocol (owns the cache) |
+| `/claudit` | core-config, ecosystem, optimization | `/claudit:knowledge all` |
 | `/skillet:*` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
 | `/smith` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
 | `/hone` | ecosystem | `/claudit:knowledge ecosystem` with fallback |

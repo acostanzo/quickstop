@@ -37,13 +37,13 @@ Phase 1: Building expert context from official plugin documentation...
 
 Invoke `/claudit:knowledge ecosystem` to retrieve ecosystem knowledge.
 
-**If claudit is installed** (the skill runs and outputs knowledge):
+**If the skill runs successfully** (outputs `=== CLAUDIT KNOWLEDGE: ecosystem ===` block):
 - Use its output as the ecosystem portion of Expert Context
 - Also read `.claude/skills/smith/references/plugin-spec.md` for plugin-authoring-specific detail (plugin.json schema, directory conventions) that the ecosystem cache may not cover at full depth
 - Combine both as **Expert Context**
 - **Skip to Phase 2**
 
-**If claudit is not installed** (skill not recognized or unavailable):
+**If the skill is not available** (claudit not installed — the invocation produces an error, is not recognized as a command, or produces no knowledge output):
 - Proceed to Step 2
 
 ### Step 2: Dispatch Research Agents (Fallback)
