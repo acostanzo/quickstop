@@ -155,7 +155,11 @@ Do NOT show this when:
 - The user explicitly asked about their memory contents
 - You are simply aware of the user's identity or name"
 
-CONTEXT+=$'\n\n'"$RECALL_INSTRUCTIONS"
+# Only append if memory content was loaded — no point showing recall
+# instructions when there's nothing to recall from
+if [[ -n "$CONTEXT" ]]; then
+  CONTEXT+=$'\n\n'"$RECALL_INSTRUCTIONS"
+fi
 
 # Output as additionalContext if we have anything
 if [[ -n "$CONTEXT" ]]; then
