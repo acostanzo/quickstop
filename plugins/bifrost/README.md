@@ -20,24 +20,27 @@ There are several Claude Code memory systems available. Here's what makes Bifros
 
 **Budget-aware context loading.** At session start, Bifrost loads memory using a priority system (core memory first, then procedures, then recent journal) within a configurable character budget. Files that don't fit entirely are skipped rather than truncated — preventing hallucination from partial content.
 
-## How It Compares
+## Comparison
 
-| System | Storage | Cross-machine | Consolidation | Infrastructure | Search |
-|--------|---------|---------------|---------------|----------------|--------|
-| **Bifrost** | Git + Markdown | Yes (git sync) | Explicit (`/heimdall`) | None | Grep → agent escalation |
-| [Native auto-memory](https://docs.anthropic.com/en/docs/claude-code/memory) | Local files | No | Automatic | None | Context injection only |
-| [claude-mem](https://github.com/thedotmack/claude-mem) | SQLite + Chroma | No | Automatic | Worker service (Bun) | Semantic + keyword |
-| [memsearch](https://github.com/zilliztech/memsearch) | Markdown + index | Manual (copy folder) | Automatic | Background watcher | Semantic |
-| [episodic-memory](https://github.com/obra/episodic-memory) | SQLite | No | Automatic | None | Semantic (MCP) |
-| [Recall](https://github.com/joseairosa/recall) | Redis / Cloud | Yes (cloud) | Automatic | Redis or cloud account | Semantic (MCP) |
-| [Total Recall](https://github.com/davegoldblatt/total-recall) | Markdown | No | Manual (write gates) | None | Index only |
+| System | Type | Storage | Cross-machine | Consolidation | Infrastructure | Search |
+|--------|------|---------|---------------|---------------|----------------|--------|
+| **Bifrost** | Plugin | Git + Markdown | Yes (git sync) | Explicit (`/heimdall`) | None | Grep → agent escalation |
+| [Native auto-memory](https://code.claude.com/docs/en/memory) | Built-in | Local files | No | Automatic | None | Context injection only |
+| [claude-mem](https://github.com/thedotmack/claude-mem) | Hooks | SQLite + Chroma | No | Automatic | Worker service (Bun) | Semantic + keyword |
+| [memsearch](https://github.com/zilliztech/memsearch) | Plugin | Markdown + index | Manual (copy folder) | Automatic | Background watcher | Semantic |
+| [episodic-memory](https://github.com/obra/episodic-memory) | MCP | SQLite | No | Automatic | None | Semantic |
+| [Recall](https://github.com/joseairosa/recall) | MCP | Redis / Cloud | Yes (cloud) | Automatic | Redis or cloud account | Semantic |
+| [Total Recall](https://github.com/davegoldblatt/total-recall) | Plugin | Markdown | No | Manual (write gates) | None | Index only |
+| [claude-memory](https://github.com/codenamev/claude_memory) | Hooks + MCP | SQLite-vec | No | Automatic | None | KNN vectors |
+
+*Last reviewed: March 2026. These projects evolve — check their repos for current capabilities.*
 
 ## When to Use Something Else
 
 Bifrost optimizes for transparency, control, and zero infrastructure. That's not always what you need:
 
 - **You want zero setup** — Claude's native auto-memory works out of the box with no configuration
-- **You want semantic search** — claude-mem and memsearch use vector embeddings for similarity-based recall; Bifrost uses grep and agent-based search
+- **You want semantic search** — claude-mem, memsearch, and claude-memory use vector embeddings for similarity-based recall; Bifrost uses grep and agent-based search
 - **You want fully automatic consolidation** — claude-mem captures and consolidates without manual steps
 - **You want cloud-managed memory** — Recall offers a hosted option with automatic clustering
 
