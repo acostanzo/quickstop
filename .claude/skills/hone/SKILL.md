@@ -72,7 +72,7 @@ Phase 1: Building expert context from official plugin documentation...
 
 ### Step 1: Check Claudit Knowledge Cache
 
-Check if claudit's cached ecosystem research is available and fresh:
+Check if claudit's cached ecosystem research is available and fresh (see `plugins/claudit/references/cache-check-protocol.md` for the full contract):
 
 1. Run via Bash: `claude --version 2>/dev/null` → store as **CURRENT_VERSION**
 2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
@@ -84,7 +84,8 @@ Check if claudit's cached ecosystem research is available and fresh:
 
 **If FRESH:**
 - Read `~/.cache/claudit/ecosystem.md`
-- Use the plugins, skills, sub-agents, hooks, and MCP sections as **Expert Context**
+- Also read `.claude/skills/smith/references/plugin-spec.md` for plugin-authoring-specific detail (plugin.json schema, directory conventions) that the ecosystem cache may not cover at full depth
+- Use both as **Expert Context**
 - Tell the user: `Expert context loaded from claudit cache (fetched {date}). Dispatching audit agents...`
 - **Skip to Phase 2**
 

@@ -66,7 +66,7 @@ If the user chooses to run an audit first, dispatch `/skillet:audit` on the skil
 
 ### Step 1: Check Claudit Knowledge Cache
 
-Check if claudit's cached ecosystem research is available and fresh:
+Check if claudit's cached ecosystem research is available and fresh (see `plugins/claudit/references/cache-check-protocol.md` for the full contract):
 
 1. Run via Bash: `claude --version 2>/dev/null` → store as **CURRENT_VERSION**
 2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
