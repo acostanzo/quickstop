@@ -43,6 +43,8 @@ Before extraction, strip noise lines from each inbox file. Only `user`, `assista
 For each inbox file, run via Bash:
 
 ```bash
+FILTER_DIR=$(mktemp -d /tmp/bifrost-filter-XXXXXX)
+
 python3 -c "
 import sys, json
 for line in open(sys.argv[1]):
@@ -51,9 +53,9 @@ for line in open(sys.argv[1]):
         t = obj.get('type', obj.get('_type', ''))
         if t in ('user', 'assistant', 'bifrost_meta'):
             print(line, end='')
-    except:
+    except (json.JSONDecodeError, ValueError):
         pass
-" <inbox-file> > /tmp/bifrost-filtered-$(basename <inbox-file>)
+" <inbox-file> > "$FILTER_DIR/$(basename <inbox-file>)"
 ```
 
 Use the filtered file paths for extraction in Step 5. If the filter fails for any file, fall back to the original unfiltered file.
@@ -76,6 +78,8 @@ Agent:
 **Parallel extraction is allowed.** Temporal ordering is preserved via timestamps in each file's metadata — the consolidator uses these timestamps, not processing order.
 
 Collect all observations from all extractors into a single merged list, sorted by timestamp (oldest first).
+
+After all extractors complete, clean up: `rm -rf "$FILTER_DIR"`
 
 ### Step 6: Read Current Memory State
 
