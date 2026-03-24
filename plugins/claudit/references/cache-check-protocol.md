@@ -42,11 +42,17 @@ To determine if the cache (or a specific domain) is fresh:
 
 **Important**: Always check per-domain `cached_at` timestamps (not the top-level `cached_at`), because partial refreshes may update some domains but not others.
 
+## Preferred Interface: `/claudit:knowledge`
+
+The `/claudit:knowledge [domain ...]` skill is the preferred way to access the cache. It handles freshness checks, auto-refreshes stale domains, and outputs content in a standard format. Consumers should invoke this skill rather than inlining the protocol below.
+
+If claudit is not installed, consumers should fall back to their own research agents.
+
 ## Consumer Quick Reference
 
-| Consumer | Domains Needed | Cache Files to Read |
-|----------|---------------|-------------------|
-| `/claudit` | core-config, ecosystem, optimization | All three .md files |
-| `/skillet:*` | ecosystem | `ecosystem.md` only |
-| `/smith` | ecosystem | `ecosystem.md` only |
-| `/hone` | ecosystem | `ecosystem.md` only |
+| Consumer | Domains Needed | Access Method |
+|----------|---------------|--------------|
+| `/claudit` | core-config, ecosystem, optimization | Inline protocol (owns the cache) |
+| `/skillet:*` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
+| `/smith` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
+| `/hone` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
