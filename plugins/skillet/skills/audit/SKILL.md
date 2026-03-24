@@ -79,9 +79,29 @@ Phase 1: Building expert context from official Anthropic documentation...
 
 ## Phase 1: Research
 
-Dispatch the research agent to get the latest skill authoring spec.
+### Step 1: Check Claudit Knowledge Cache
 
-### Dispatch Research Agent
+Check if claudit's cached ecosystem research is available and fresh (see `plugins/claudit/references/cache-check-protocol.md` for the full contract):
+
+1. Run via Bash: `claude --version 2>/dev/null` → store as **CURRENT_VERSION**
+2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
+3. If the manifest exists, apply invalidation:
+   a. **Version check**: manifest's `claude_code_version` must match CURRENT_VERSION
+   b. **Per-domain time check**: check `domains.ecosystem.cached_at` age — must be < `max_ttl_days` (7 days)
+   c. **File check**: `~/.cache/claudit/ecosystem.md` must exist
+4. All three must pass → **FRESH**
+
+**If FRESH:**
+- Read `~/.cache/claudit/ecosystem.md`
+- Also read `${CLAUDE_PLUGIN_ROOT}/references/skill-spec-baseline.md` for skill-authoring-specific detail (frontmatter field semantics, variable substitution rules) that the ecosystem cache may not cover at full depth
+- Use both as **Expert Context**
+- Tell the user: `Expert context loaded from claudit cache (fetched {date}). Dispatching audit agent...`
+- **Skip to Phase 2**
+
+**If STALE or MISSING:**
+- Proceed to Step 2
+
+### Step 2: Dispatch Research Agent (Fallback)
 
 Use the Task tool:
 - `description`: "Research skill spec docs"
@@ -187,6 +207,9 @@ After the score card, present:
 1. **Critical Issues** — anything scoring below 50 in a category
 2. **Top Recommendations** — ranked list with estimated point impact
 3. **Patterns to Adopt** — best practices from Expert Context not currently used
+4. **See Also** — cross-tool suggestions based on findings:
+   - If the audit found configuration issues beyond skill scope (e.g., settings anti-patterns, permission problems, MCP issues referenced in the skill): suggest `For a full configuration audit, try /claudit`
+   - If Expert Context came from the fallback research agent (not claudit cache): suggest `Install claudit for cached research that speeds up skillet runs`
 
 ---
 

@@ -143,9 +143,36 @@ Phase 1: Building expert context from official Anthropic documentation...
 
 ## Phase 1: Build Expert Context
 
-Dispatch **3 research subagents in parallel** using the Task tool. All must be foreground (do NOT use `run_in_background`).
+### Step 1: Check Knowledge Cache
 
-### Dispatch All Three Simultaneously
+Check if cached research exists and is fresh before dispatching research agents. Follow the protocol in `${CLAUDE_PLUGIN_ROOT}/references/cache-check-protocol.md`.
+
+1. Run via Bash: `claude --version 2>/dev/null` → store as **CURRENT_VERSION**
+2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
+3. If the manifest file exists, apply **three-check invalidation**:
+   a. **Version check**: Compare the manifest's `claude_code_version` to CURRENT_VERSION. If different → **STALE** (Claude Code was updated since last research).
+   b. **Per-domain time check**: For each of the 3 domains (core-config, ecosystem, optimization), check that domain's `domains.<name>.cached_at`. Compute age vs current date. If any domain's age >= `max_ttl_days` (7 days) → **STALE**.
+   c. **File check**: Verify all 3 cache files exist: `~/.cache/claudit/core-config.md`, `~/.cache/claudit/ecosystem.md`, `~/.cache/claudit/optimization.md`. If any is missing → **STALE**.
+4. Cache is **FRESH** only if all three checks pass.
+
+**If FRESH:**
+- Read `~/.cache/claudit/core-config.md`, `~/.cache/claudit/ecosystem.md`, and `~/.cache/claudit/optimization.md`
+- Assemble Expert Context from these files (same format as Step 3 below)
+- Tell the user:
+  ```
+  Expert context loaded from cache (v{CURRENT_VERSION}, fetched {cached_at date}). Use /claudit:refresh to force-update.
+
+  Phase 2: Analyzing your configuration against expert knowledge...
+  ```
+- **Skip to Phase 2**
+
+**If STALE or MISSING:**
+- If STALE due to version change, tell user: `Claude Code updated ({old_version} → {CURRENT_VERSION}), refreshing knowledge cache...`
+- Proceed to Step 2
+
+### Step 2: Dispatch Research Agents
+
+Dispatch **3 research subagents in parallel** using the Task tool. All must be foreground (do NOT use `run_in_background`).
 
 In a single message, dispatch all 3 Task tool calls:
 
@@ -164,7 +191,7 @@ In a single message, dispatch all 3 Task tool calls:
 - `subagent_type`: "claudit:research-optimization"
 - `prompt`: "Build expert knowledge on Claude Code performance and over-engineering patterns. Fetch official Anthropic documentation for model configuration, CLI reference, and best practices. Search for context optimization and over-engineering anti-patterns. Return structured expert knowledge."
 
-### Assemble Expert Context
+### Step 3: Assemble Expert Context + Write Cache
 
 Once all 3 return, combine their results into a single **Expert Context** block:
 
@@ -183,9 +210,30 @@ Once all 3 return, combine their results into a single **Expert Context** block:
 === END EXPERT CONTEXT ===
 ```
 
+**Write results to the knowledge cache** so future runs (and other tools like skillet, smith, hone) can reuse them:
+
+1. Run via Bash: `mkdir -p ~/.cache/claudit`
+2. Run via Bash: `claude --version 2>/dev/null` → store as CURRENT_VERSION (if not already stored)
+3. Write the research-core results to `~/.cache/claudit/core-config.md` using the Write tool
+4. Write the research-ecosystem results to `~/.cache/claudit/ecosystem.md` using the Write tool
+5. Write the research-optimization results to `~/.cache/claudit/optimization.md` using the Write tool
+6. Write `~/.cache/claudit/manifest.json` with the following structure:
+   ```json
+   {
+     "claude_code_version": "{CURRENT_VERSION}",
+     "cached_at": "{current ISO 8601 timestamp}",
+     "max_ttl_days": 7,
+     "domains": {
+       "core-config": { "cached_at": "{current ISO 8601 timestamp}" },
+       "ecosystem": { "cached_at": "{current ISO 8601 timestamp}" },
+       "optimization": { "cached_at": "{current ISO 8601 timestamp}" }
+     }
+   }
+   ```
+
 Tell the user:
 ```
-Expert context assembled. Proceeding to configuration analysis...
+Expert context assembled and cached. Proceeding to configuration analysis...
 
 Phase 2: Analyzing your configuration against expert knowledge...
 ```
@@ -340,6 +388,9 @@ After the score card, present:
 2. **Critical Issues** — anything scoring below 50 in a category
 3. **Top Recommendations** — ranked list with estimated point impact (focus-relevant recommendations first when in focus mode)
 4. **New Features to Adopt** — capabilities from Expert Context not currently used
+5. **See Also** — cross-tool suggestions based on findings:
+   - If audit-project or audit-ecosystem found skill/agent structural issues (e.g., legacy commands/ directory, missing or malformed frontmatter, skills without proper structure): suggest `For detailed skill-level analysis, try /skillet:audit <skill-path>`
+   - If the knowledge cache was stale or missing (Phase 1 Step 1 fell through to Step 2): suggest `Run /claudit:refresh periodically to speed up future audits`
 
 ---
 
