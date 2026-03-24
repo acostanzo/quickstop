@@ -85,12 +85,12 @@ In your skill's research phase, invoke the knowledge skill and fall back to your
 
 Invoke `/claudit:knowledge ecosystem` to retrieve ecosystem knowledge.
 
-**If claudit is installed** (skill runs and outputs knowledge):
+**If the skill runs successfully** (outputs `=== CLAUDIT KNOWLEDGE: ecosystem ===` block):
 - Use its output as Expert Context
 - Also read your own domain-specific supplement for depth
 - Skip research phase
 
-**If claudit is not installed** (skill not recognized):
+**If the skill is not available** (claudit not installed — the invocation produces an error, is not recognized as a command, or produces no knowledge output):
 - Fall back to your own research agents
 ```
 
