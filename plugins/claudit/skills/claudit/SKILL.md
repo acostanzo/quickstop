@@ -133,6 +133,20 @@ Focus: {FOCUS_AREA}
   Audit agents will go deeper on this area while still performing a full audit.
 ```
 
+### Step 5: Load Decision Memory
+
+Load past audit decisions so they can be injected into audit agents and annotated in the report. Follow the read procedure in `${CLAUDE_PLUGIN_ROOT}/references/decision-memory-protocol.md`.
+
+1. Determine the decisions file path:
+   - **Comprehensive scope**: `{PROJECT_ROOT}/.claude/claudit-decisions.json`
+   - **Global only**: `~/.cache/claudit/decisions.json`
+2. Read the file via Bash: `cat {path} 2>/dev/null`
+3. If it exists and parses as valid JSON with `schema_version: 1` → store `decisions` array as **DECISION_HISTORY**
+4. If it doesn't exist → set **DECISION_HISTORY** to empty array (first run)
+5. Add to the config map display: `Decision Memory: N past decisions` (or `Decision Memory: none (first run)`)
+
+Also run `git config user.name 2>/dev/null` and store as **GIT_USER** for use in Phase 4.
+
 Then tell the user:
 
 ```
@@ -259,6 +273,27 @@ Dispatch audit subagents using the Task tool. Each agent receives the **Expert C
 - Full Expert Context
 - Ecosystem slice: all MCP config paths (global + project as applicable), plugins path, plugin hooks paths, paths to all settings files (agent reads them to check for hooks)
 
+### Decision History Injection
+
+If **DECISION_HISTORY** is non-empty, append a `=== DECISION HISTORY ===` block to each audit agent's dispatch prompt (after the Expert Context, before any Focus Directive). Route decisions to agents by **category slug** (not file_stem, which is ambiguous across scopes):
+
+- **audit-global**: decisions where `category_slug` is `security` or `context-efficiency`
+- **audit-project**: decisions where `category_slug` is `over-engineering`, `claudemd-quality`, `security`, or `context-efficiency`
+- **audit-ecosystem**: decisions where `category_slug` is `mcp-config`, `plugin-health`, or `over-engineering` (for hook/MCP sprawl)
+
+Note: `security` and `context-efficiency` route to multiple agents because both global and project agents contribute to those categories. `over-engineering` routes to both project (CLAUDE.md analysis) and ecosystem (hook/MCP sprawl). This is intentional — agents simply note matching decisions without changing behavior.
+
+Format each decision concisely:
+
+```
+=== DECISION HISTORY ===
+- [rejected] over-engineering:restated-builtin:CLAUDE.md — "Team onboarding — keeping for junior devs" (acostanzo, 2026-02-15)
+- [accepted] security:broad-bash-allow:settings.json — applied fix (acostanzo, 2026-02-15)
+=== END DECISION HISTORY ===
+```
+
+Agents are instructed to note matching decisions in their findings but never suppress issues.
+
 ### Focus Directive Injection
 
 If **FOCUS_MODE is true**, prepend the following block to **each** audit agent's dispatch prompt (before the Expert Context):
@@ -340,6 +375,25 @@ Include both:
 - **Issues to fix** — problems found in current config
 - **Features to adopt** — capabilities from Expert Context the user isn't using
 
+### Annotate with Decision Memory
+
+If **DECISION_HISTORY** is non-empty, annotate each recommendation with past decision context. Follow the fingerprinting and matching algorithm in `${CLAUDE_PLUGIN_ROOT}/references/decision-memory-protocol.md`.
+
+For each recommendation:
+
+1. **Compute fingerprint**: `{category_slug}:{issue_type}:{file_stem}:{content_hash_8}` using the Issue Type Slugs table in the scoring rubric
+2. **Match against DECISION_HISTORY**: exact match → high confidence; structural match (same prefix, different hash) → content changed; no match → new
+3. **Check staleness** for matched decisions (any of: content hash changed, score impact delta >= 5, Claude Code version changed, age > 90 days, deferred > 30 days)
+4. **Annotate** with status and any staleness reason (see Decision Annotation Format in scoring rubric)
+
+**Ordering adjustment**: Present recommendations in this order:
+1. New recommendations (no past decision)
+2. Stale decisions (past decision exists but flagged for re-evaluation)
+3. Previously accepted that recurred (regressions — most urgent, something was fixed but came back)
+4. Previously rejected (with annotation showing reason and who decided)
+
+**Never suppress recommendations** based on past decisions. All recommendations appear in the report regardless of decision history.
+
 ### Present the Health Report
 
 Display the report header showing detected scope and file count:
@@ -349,6 +403,7 @@ Display the report header showing detected scope and file count:
 ║                  CLAUDIT HEALTH REPORT                  ║
 ╠══════════════════════════════════════════════════════════╣
 ║  Scope: Comprehensive | Files: N project + N global     ║
+║  Decision Memory: N past decisions (M stale, K new)     ║
 ║  Overall Score: XX/100  Grade: X  (Label)               ║
 ╚══════════════════════════════════════════════════════════╝
 
@@ -431,6 +486,38 @@ Common fix types:
 - `CLAUDE.local.md`: edit directly, never include in PR (it's gitignored/personal)
 - `.claude/settings.local.json`: edit directly, never include in PR (it's personal/local)
 - `~/.claude/` files: edit directly, never include in PR (they're personal)
+
+### Capture Decisions
+
+After implementing selected fixes (or if user selected "Skip — no changes"), record decisions to memory. Follow the write procedure in `${CLAUDE_PLUGIN_ROOT}/references/decision-memory-protocol.md`.
+
+**If the user selected specific recommendations (not "Skip"):**
+
+1. Record each **selected** recommendation as `action: "accepted"` with its computed fingerprint
+2. For **unselected** recommendations (items the user did not select), present a single follow-up AskUserQuestion:
+
+   ```
+   Some recommendations were not selected. How should claudit treat them in future audits?
+   ```
+
+   Use `multiSelect: true` with options for each unselected recommendation:
+   - `"<recommendation>" — Rejected (intentional / false positive)`
+   - `"<recommendation>" — Deferred (will address later)`
+
+   Include a `"Don't record — treat as new next time"` option.
+
+   - If 3 or fewer items are marked as rejected, ask a follow-up for optional reasons (single AskUserQuestion with text per item)
+   - Record rejected/deferred items with their respective actions
+
+3. For each decision, populate:
+   - `fingerprint`: computed in the annotation step
+   - `decided_by`: **GIT_USER** from Phase 0
+   - `timestamp`: current ISO 8601 timestamp
+   - `context`: current claudit version, Claude Code version, score impact
+
+4. Merge new decisions with existing DECISION_HISTORY (upsert by fingerprint) and write to the decisions file path determined in Phase 0
+
+**If the user selected "Skip — no changes":** Still offer the follow-up AskUserQuestion for categorizing recommendations — the user may want to record rejections ("I don't want to see these again") even without applying any fixes. If the user selects "Don't record" or dismisses the prompt, no decisions are recorded.
 
 ### Re-Score and Show Delta
 
