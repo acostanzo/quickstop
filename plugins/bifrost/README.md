@@ -2,6 +2,45 @@
 
 Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines.
 
+## Why Bifrost?
+
+There are several Claude Code memory systems available. Here's what makes Bifrost different:
+
+**No infrastructure.** No databases, no running services, no vector stores. Bifrost is just git and markdown files. Other systems require SQLite + Chroma + a background worker ([claude-mem](https://github.com/thedotmack/claude-mem)), Redis or a cloud account ([Recall](https://github.com/joseairosa/recall)), or SQLite with vector extensions ([claude-memory](https://github.com/codenamev/claude_memory)). Bifrost needs git and a text editor.
+
+**Multi-machine by default.** Memory lives in a git repo. Push from your laptop, pull from your desktop — memory follows you. Most alternatives are machine-local (Claude's native auto-memory, [Total Recall](https://github.com/davegoldblatt/total-recall)) or require cloud infrastructure to sync (Recall).
+
+**Explicit consolidation.** Transcript capture is passive and automatic. But consolidation — the act of turning raw transcripts into structured memory — is deliberate. You run `/heimdall` when you're ready. This means you control when and how memory evolves, unlike systems that consolidate automatically and may promote noise.
+
+**Human-auditable.** Every piece of memory is a markdown file you can read, edit, diff, and version control. Core memory is `MEMORY.md`. Daily events are in `journal/`. Learned workflows are in `procedures/`. There are no opaque databases to query.
+
+**Read-only during sessions.** Memory files are loaded at session start but never written during a session. All writes happen through the consolidation pipeline. This prevents corruption from crashes, race conditions, or concurrent sessions on different machines.
+
+**Structured extraction pipeline.** Consolidation uses two separated agents: a read-only Extractor that analyzes transcripts and outputs observations, and a read-write Consolidator that merges those observations into memory. Observations carry confidence levels — low-confidence observations go to the journal for context but don't touch core memory.
+
+**Budget-aware context loading.** At session start, Bifrost loads memory using a priority system (core memory first, then procedures, then recent journal) within a configurable character budget. Files that don't fit entirely are skipped rather than truncated — preventing hallucination from partial content.
+
+## How It Compares
+
+| System | Storage | Cross-machine | Consolidation | Infrastructure | Search |
+|--------|---------|---------------|---------------|----------------|--------|
+| **Bifrost** | Git + Markdown | Yes (git sync) | Explicit (`/heimdall`) | None | Grep → agent escalation |
+| [Native auto-memory](https://docs.anthropic.com/en/docs/claude-code/memory) | Local files | No | Automatic | None | Context injection only |
+| [claude-mem](https://github.com/thedotmack/claude-mem) | SQLite + Chroma | No | Automatic | Worker service (Bun) | Semantic + keyword |
+| [memsearch](https://github.com/zilliztech/memsearch) | Markdown + index | Manual (copy folder) | Automatic | Background watcher | Semantic |
+| [episodic-memory](https://github.com/obra/episodic-memory) | SQLite | No | Automatic | None | Semantic (MCP) |
+| [Recall](https://github.com/joseairosa/recall) | Redis / Cloud | Yes (cloud) | Automatic | Redis or cloud account | Semantic (MCP) |
+| [Total Recall](https://github.com/davegoldblatt/total-recall) | Markdown | No | Manual (write gates) | None | Index only |
+
+## When to Use Something Else
+
+Bifrost optimizes for transparency, control, and zero infrastructure. That's not always what you need:
+
+- **You want zero setup** — Claude's native auto-memory works out of the box with no configuration
+- **You want semantic search** — claude-mem and memsearch use vector embeddings for similarity-based recall; Bifrost uses grep and agent-based search
+- **You want fully automatic consolidation** — claude-mem captures and consolidates without manual steps
+- **You want cloud-managed memory** — Recall offers a hosted option with automatic clustering
+
 ## The Memory Loop
 
 ```
