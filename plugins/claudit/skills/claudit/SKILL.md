@@ -389,8 +389,8 @@ For each recommendation:
 **Ordering adjustment**: Present recommendations in this order:
 1. New recommendations (no past decision)
 2. Stale decisions (past decision exists but flagged for re-evaluation)
-3. Previously rejected (with annotation showing reason and who decided)
-4. Previously accepted that recurred (regressions)
+3. Previously accepted that recurred (regressions — most urgent, something was fixed but came back)
+4. Previously rejected (with annotation showing reason and who decided)
 
 **Never suppress recommendations** based on past decisions. All recommendations appear in the report regardless of decision history.
 
@@ -513,7 +513,7 @@ After implementing selected fixes (or if user selected "Skip — no changes"), r
    - `fingerprint`: computed in the annotation step
    - `decided_by`: **GIT_USER** from Phase 0
    - `timestamp`: current ISO 8601 timestamp
-   - `context`: current claudit version, Claude Code version, config hash, score impact
+   - `context`: current claudit version, Claude Code version, score impact
 
 4. Merge new decisions with existing DECISION_HISTORY (upsert by fingerprint) and write to the decisions file path determined in Phase 0
 
