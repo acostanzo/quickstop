@@ -137,6 +137,30 @@ if [[ -n "$PULL_FAILED" ]]; then
   CONTEXT="[Bifrost: git pull failed — memory may be stale]"$'\n\n'"$CONTEXT"
 fi
 
+# Recall indicator instructions (fixed cost, outside budget)
+RECALL_INSTRUCTIONS="## Memory Indicator
+
+When you actively leverage specific information from bifrost memory that materially changes your response, show a visual indicator:
+
+\`ᚱ Recall ──────────────────────────────────────\`
+[1-2 lines: what was recalled and how it influences this response]
+\`───────────────────────────────────────────────\`
+
+Show this when:
+- A specific preference, fact, or prior decision from memory changes your approach
+- You performed an active recall (searched journal/procedures) and found relevant context
+
+Do NOT show this when:
+- Memory passively informs your behavior without changing the outcome
+- The user explicitly asked about their memory contents
+- You are simply aware of the user's identity or name"
+
+# Only append if memory content was loaded — no point showing recall
+# instructions when there's nothing to recall from
+if [[ -n "$CONTEXT" ]]; then
+  CONTEXT+=$'\n\n'"$RECALL_INSTRUCTIONS"
+fi
+
 # Output as additionalContext if we have anything
 if [[ -n "$CONTEXT" ]]; then
   ESCAPED=$(printf '%s' "$CONTEXT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
