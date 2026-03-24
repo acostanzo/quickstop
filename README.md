@@ -4,7 +4,7 @@ A Claude Code plugin marketplace.
 
 ## Plugins
 
-### Bifrost (v1.1.0)
+### Bifrost (v1.2.0)
 
 Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines.
 
