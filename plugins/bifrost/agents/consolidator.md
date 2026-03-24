@@ -7,7 +7,7 @@ tools:
   - Write
   - Glob
   - Grep
-model: inherit
+model: sonnet
 ---
 
 # Consolidator Agent

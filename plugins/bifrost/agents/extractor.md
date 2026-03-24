@@ -3,7 +3,7 @@ name: bifrost-extractor
 description: "Read-only agent that extracts structured observations from a session transcript. Dispatched by /heimdall."
 tools:
   - Read
-model: inherit
+model: haiku
 ---
 
 # Extractor Agent
