@@ -275,11 +275,13 @@ Dispatch audit subagents using the Task tool. Each agent receives the **Expert C
 
 ### Decision History Injection
 
-If **DECISION_HISTORY** is non-empty, append a `=== DECISION HISTORY ===` block to each audit agent's dispatch prompt (after the Expert Context, before any Focus Directive). Include only decisions relevant to that agent's scope:
+If **DECISION_HISTORY** is non-empty, append a `=== DECISION HISTORY ===` block to each audit agent's dispatch prompt (after the Expert Context, before any Focus Directive). Route decisions to agents by **category slug** (not file_stem, which is ambiguous across scopes):
 
-- **audit-global**: decisions where `file_stem` is a global-scope file (e.g., `settings.json` from `~/.claude/`, `CLAUDE.md` from `~/.claude/`)
-- **audit-project**: decisions where `file_stem` is a project-scope file (e.g., `CLAUDE.md` from project, `settings.json` from `.claude/`)
-- **audit-ecosystem**: decisions where `category` is `mcp-config`, `plugin-health`, or `issue_type` contains `hook`
+- **audit-global**: decisions where `category_slug` is `security` or `context-efficiency`
+- **audit-project**: decisions where `category_slug` is `over-engineering`, `claudemd-quality`, `security`, or `context-efficiency`
+- **audit-ecosystem**: decisions where `category_slug` is `mcp-config`, `plugin-health`, or `over-engineering` (for hook/MCP sprawl)
+
+Note: `security` and `context-efficiency` route to multiple agents because both global and project agents contribute to those categories. `over-engineering` routes to both project (CLAUDE.md analysis) and ecosystem (hook/MCP sprawl). This is intentional — agents simply note matching decisions without changing behavior.
 
 Format each decision concisely:
 
@@ -515,7 +517,7 @@ After implementing selected fixes (or if user selected "Skip — no changes"), r
 
 4. Merge new decisions with existing DECISION_HISTORY (upsert by fingerprint) and write to the decisions file path determined in Phase 0
 
-**If the user selected "Skip — no changes":** Do not prompt for decision categorization. No decisions are recorded.
+**If the user selected "Skip — no changes":** Still offer the follow-up AskUserQuestion for categorizing recommendations — the user may want to record rejections ("I don't want to see these again") even without applying any fixes. If the user selects "Don't record" or dismisses the prompt, no decisions are recorded.
 
 ### Re-Score and Show Delta
 

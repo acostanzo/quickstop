@@ -28,7 +28,6 @@ Project decision files are committable — team members benefit from shared cont
       "context": {
         "claudit_version": "2.4.0",
         "claude_code_version": "2.1.81",
-        "config_hash": "a3f8c1d2",
         "score_impact": 10
       }
     }
@@ -49,7 +48,6 @@ Project decision files are committable — team members benefit from shared cont
 | `timestamp` | string | ISO 8601 timestamp |
 | `context.claudit_version` | string | Plugin version at decision time |
 | `context.claude_code_version` | string | Claude Code version at decision time |
-| `context.config_hash` | string | First 8 chars of SHA-256 of the flagged content |
 | `context.score_impact` | number | Point impact at decision time |
 
 ### Action Types
@@ -68,7 +66,20 @@ Project decision files are committable — team members benefit from shared cont
 - **category_slug**: Slugified scoring category (see Issue Type Slugs table in scoring-rubric.md)
 - **issue_type**: Normalized from rubric deductions (e.g., `restated-builtin`, `missing-binary`)
 - **file_stem**: Target file basename (e.g., `CLAUDE.md`, `settings.json`) or `_global` for cross-file issues
-- **content_hash_8**: First 8 chars of SHA-256 of the specific flagged content
+- **content_hash_8**: First 8 chars of SHA-256 of the specific flagged content (see Hashing Guidance below)
+
+### Hashing Guidance
+
+The `content_hash_8` must be computed from a stable, deterministic input. Hash the **exact text of the configuration value or instruction being flagged**, trimmed of leading/trailing whitespace. Examples:
+
+- **Restated built-in**: hash the quoted instruction text (e.g., `"Always read files before editing"`)
+- **Hook sprawl**: hash the hook's `command` field value
+- **Missing binary**: hash the MCP server's `command` field value
+- **Verbose CLAUDE.md**: hash the file path being flagged (e.g., `CLAUDE.md`) since the issue is file-level, not line-level
+- **Cross-file duplication**: hash the duplicated instruction text
+- **Feature adoption**: hash the feature name (e.g., `"@import"`, `"rules directory"`)
+
+If the flagged content is ambiguous or spans multiple lines, hash the first meaningful line. Consistency across runs matters more than perfect specificity — the structural match (same `category:issue_type:file_stem`) catches content-changed cases.
 
 ### Matching Algorithm
 
@@ -89,6 +100,8 @@ A past decision is flagged for re-evaluation when ANY condition is met:
 | Claude Code version changed | Best practices may have evolved | Compare `context.claude_code_version` to current |
 | Decision age > 90 days | Periodic re-evaluation | Compare `timestamp` to current date |
 | Deferred age > 30 days | Deferred items expire sooner | Action is `deferred` and age > 30 days |
+
+**Precedence:** The 30-day deferred expiry takes precedence over the 90-day general threshold for `deferred` items — report the 30-day reason, not both.
 
 Stale decisions are annotated in the report with the specific staleness reason, prompting the user to re-evaluate.
 
