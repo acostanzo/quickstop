@@ -63,19 +63,21 @@ For each domain that was refreshed:
 
 2. Read the existing `~/.cache/claudit/manifest.json` (if it exists) to preserve timestamps for domains that were NOT refreshed.
 
-3. Write `~/.cache/claudit/manifest.json`:
+3. Write `~/.cache/claudit/manifest.json`. For partial refreshes, only update the refreshed domains' `cached_at` and preserve the rest. Only update the top-level `claude_code_version` and `cached_at` when ALL domains are refreshed (either explicitly via `all` or because all three were specified):
    ```json
    {
-     "claude_code_version": "{CURRENT_VERSION}",
-     "cached_at": "{current ISO 8601 timestamp}",
+     "claude_code_version": "{CURRENT_VERSION if all domains refreshed, otherwise preserve existing}",
+     "cached_at": "{current timestamp if all domains refreshed, otherwise preserve existing}",
      "max_ttl_days": 7,
      "domains": {
-       "core-config": { "cached_at": "{timestamp — current if refreshed, preserved if not}" },
-       "ecosystem": { "cached_at": "{timestamp — current if refreshed, preserved if not}" },
-       "optimization": { "cached_at": "{timestamp — current if refreshed, preserved if not}" }
+       "core-config": { "cached_at": "{current if refreshed, preserved if not}" },
+       "ecosystem": { "cached_at": "{current if refreshed, preserved if not}" },
+       "optimization": { "cached_at": "{current if refreshed, preserved if not}" }
      }
    }
    ```
+
+**Why**: Consumers check per-domain `cached_at` for TTL and the top-level `claude_code_version` for version invalidation. Updating these on partial refreshes would incorrectly mark non-refreshed domains as fresh. See `${CLAUDE_PLUGIN_ROOT}/references/cache-check-protocol.md` for the full cache contract.
 
 ## Step 6: Report
 

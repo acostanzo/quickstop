@@ -145,14 +145,14 @@ Phase 1: Building expert context from official Anthropic documentation...
 
 ### Step 1: Check Knowledge Cache
 
-Check if cached research exists and is fresh before dispatching research agents.
+Check if cached research exists and is fresh before dispatching research agents. Follow the protocol in `${CLAUDE_PLUGIN_ROOT}/references/cache-check-protocol.md`.
 
 1. Run via Bash: `claude --version 2>/dev/null` → store as **CURRENT_VERSION**
 2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
 3. If the manifest file exists, apply **three-check invalidation**:
    a. **Version check**: Compare the manifest's `claude_code_version` to CURRENT_VERSION. If different → **STALE** (Claude Code was updated since last research).
-   b. **Time check**: Compute age of the manifest's `cached_at` vs the current date. If age >= `max_ttl_days` (7 days) → **STALE**.
-   c. **Domain check**: Verify all 3 cache files exist: `~/.cache/claudit/core-config.md`, `~/.cache/claudit/ecosystem.md`, `~/.cache/claudit/optimization.md`. If any is missing → **STALE**.
+   b. **Per-domain time check**: For each of the 3 domains (core-config, ecosystem, optimization), check that domain's `domains.<name>.cached_at`. Compute age vs current date. If any domain's age >= `max_ttl_days` (7 days) → **STALE**.
+   c. **File check**: Verify all 3 cache files exist: `~/.cache/claudit/core-config.md`, `~/.cache/claudit/ecosystem.md`, `~/.cache/claudit/optimization.md`. If any is missing → **STALE**.
 4. Cache is **FRESH** only if all three checks pass.
 
 **If FRESH:**

@@ -41,7 +41,7 @@ Check if claudit's cached ecosystem research is available and fresh:
 2. Run via Bash: `cat ~/.cache/claudit/manifest.json 2>/dev/null`
 3. If the manifest exists, apply invalidation:
    a. **Version check**: manifest's `claude_code_version` must match CURRENT_VERSION
-   b. **Time check**: manifest's `cached_at` age must be < `max_ttl_days` (7 days)
+   b. **Per-domain time check**: check `domains.ecosystem.cached_at` age — must be < `max_ttl_days` (7 days)
    c. **File check**: `~/.cache/claudit/ecosystem.md` must exist
 4. All three must pass → **FRESH**
 

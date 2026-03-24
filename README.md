@@ -34,6 +34,7 @@ Audit and optimize Claude Code configurations with dynamic best-practice researc
 - **Knowledge cache**: research results cached at `~/.cache/claudit/` with version-based + 7-day TTL invalidation
 - Over-engineering detection as highest-weighted scoring category
 - 6-category health scoring with interactive fix selection
+- Persistent memory on research agents for faster subsequent runs
 - Cross-tool synergy: cached knowledge speeds up skillet, smith, and hone
 
 **Commands:** `/claudit` — run audit, `/claudit:refresh` — refresh cache, `/claudit:status` — show cache state
