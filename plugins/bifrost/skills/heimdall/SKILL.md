@@ -40,11 +40,15 @@ If no files found: "Inbox is empty — nothing to process."
 
 Before extraction, strip noise lines from each inbox file. Only `user`, `assistant`, and `bifrost_meta` lines carry extractable content — `progress`, `system`, and `file-history-snapshot` lines are ~75% of a typical transcript and contain no observations.
 
-For each inbox file, run via Bash:
+First, create a temp directory for filtered output:
 
 ```bash
 FILTER_DIR=$(mktemp -d /tmp/bifrost-filter-XXXXXX)
+```
 
+Then for each inbox file, run via Bash:
+
+```bash
 python3 -c "
 import sys, json
 for line in open(sys.argv[1]):
