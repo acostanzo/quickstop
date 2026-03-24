@@ -5,7 +5,7 @@ tools:
   - Read
   - Grep
   - Glob
-model: inherit
+model: haiku
 ---
 
 # Munin — Deep Recall Agent

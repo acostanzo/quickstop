@@ -36,9 +36,31 @@ If no files found: "Inbox is empty — nothing to process."
 
 **Idempotency check:** Before processing, extract the session ID fragment from each inbox filename (the 8 characters after the last `-` and before the extension — e.g., `a1b2c3d4` from `20260306-143000-personal-laptop-a1b2c3d4.jsonl`). Check if any file in `inbox/processed/` contains the same fragment. If so, skip that inbox file to avoid double-processing.
 
-### Step 4: Extract Observations
+### Step 4: Pre-Filter Transcripts
 
-For each inbox file, spawn an **extractor** agent:
+Before extraction, strip noise lines from each inbox file. Only `user`, `assistant`, and `bifrost_meta` lines carry extractable content — `progress`, `system`, and `file-history-snapshot` lines are ~75% of a typical transcript and contain no observations.
+
+For each inbox file, run via Bash:
+
+```bash
+python3 -c "
+import sys, json
+for line in open(sys.argv[1]):
+    try:
+        obj = json.loads(line)
+        t = obj.get('type', obj.get('_type', ''))
+        if t in ('user', 'assistant', 'bifrost_meta'):
+            print(line, end='')
+    except:
+        pass
+" <inbox-file> > /tmp/bifrost-filtered-$(basename <inbox-file>)
+```
+
+Use the filtered file paths for extraction in Step 5. If the filter fails for any file, fall back to the original unfiltered file.
+
+### Step 5: Extract Observations
+
+For each pre-filtered inbox file, spawn an **extractor** agent:
 
 ```
 Agent:
@@ -46,7 +68,7 @@ Agent:
   subagent_type: "bifrost-extractor"
   prompt: |
     Read and extract observations from this transcript:
-    Path: <full path to inbox file>
+    Path: <full path to filtered file>
 
     Read the extraction guide at <resolved path to extraction-guide.md> first.
 ```
@@ -55,7 +77,7 @@ Agent:
 
 Collect all observations from all extractors into a single merged list, sorted by timestamp (oldest first).
 
-### Step 5: Read Current Memory State
+### Step 6: Read Current Memory State
 
 Read these files from the memory repo (skip any that don't exist):
 - `MEMORY.md`
@@ -63,7 +85,7 @@ Read these files from the memory repo (skip any that don't exist):
 - `procedures/procedures.md`
 - `context-trees/projects.md`
 
-### Step 6: Consolidate
+### Step 7: Consolidate
 
 Spawn a **consolidator** agent with all observations and current state:
 
@@ -79,7 +101,7 @@ Agent:
     Extraction guide path: <resolved path to extraction-guide.md>
 
     ## Extracted Observations
-    <all observations from Step 4, sorted by timestamp>
+    <all observations from Step 5, sorted by timestamp>
 
     ## Current MEMORY.md
     <content or "File not found — create from scratch">
@@ -94,7 +116,7 @@ Agent:
     <content or "File not found — create if needed">
 ```
 
-### Step 7: Archive Old Journals
+### Step 8: Archive Old Journals
 
 After consolidation, check for journals older than 7 days:
 
@@ -103,7 +125,7 @@ After consolidation, check for journals older than 7 days:
    - Create `journal/archive/YYYY-MM/` if needed
    - Move the file: `git mv journal/<date>.md journal/archive/YYYY-MM/<date>.md`
 
-### Step 8: Git Commit and Push
+### Step 9: Git Commit and Push
 
 Commit the consolidation results (memory updates, journal entries, archived journals):
 
@@ -115,7 +137,7 @@ git push
 
 If push fails (no remote), warn but don't error. If the commit fails, **stop here** — do not move inbox files to processed, so the next run can retry.
 
-### Step 9: Move Processed Inbox Files
+### Step 10: Move Processed Inbox Files
 
 Only after a successful commit, move the inbox files:
 
@@ -128,7 +150,7 @@ git commit -m "memory: archive <N> processed inbox files"
 git push
 ```
 
-### Step 10: Report Summary
+### Step 11: Report Summary
 
 Show the consolidation summary from the consolidator agent, plus:
 - Number of transcripts processed
