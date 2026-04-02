@@ -53,7 +53,7 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 
 **Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
 
-### Inkwell (v0.2.0)
+### Inkwell (v0.2.1)
 
 Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.
 

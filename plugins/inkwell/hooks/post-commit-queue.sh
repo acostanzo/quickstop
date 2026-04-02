@@ -94,7 +94,7 @@ ROUTE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^(src/routes/|src/api/|a
 if [ -z "$ROUTE_FILES" ]; then
   # Check file contents for route patterns (app.get, app.post, router., @Get, @Post, etc.)
   ROUTE_FILES=$(for f in $CHANGED_FILES; do
-    if [ -f "$f" ] && grep -qlE 'app\.(get|post|put|patch|delete)\(|router\.|@(Get|Post|Put|Patch|Delete)' "$f" 2>/dev/null; then
+    if [ -f "$f" ] && grep -qlE 'app\.(get|post|put|patch|delete)\(|router\.(get|post|put|patch|delete|use|all|route)\(|@(Get|Post|Put|Patch|Delete)' "$f" 2>/dev/null; then
       printf '%s\n' "$f"
     fi
   done)
@@ -111,11 +111,12 @@ fi
 # Check for environment/config file changes → env-config task
 ENV_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '(^\.env|^config/|^src/config/)' || true)
 if [ -z "$ENV_FILES" ]; then
-  # Check git diff content for new env variable references
-  DIFF_CONTENT=$(git diff HEAD~1 -U0 2>/dev/null) || DIFF_CONTENT=""
-  if printf '%s\n' "$DIFF_CONTENT" | grep -qE '^\+.*(process\.env\.|os\.environ|Deno\.env)'; then
-    ENV_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '\.(ts|js|tsx|jsx|py|go|rs)$' || true)
-  fi
+  # Check each changed source file individually for env variable references
+  ENV_FILES=$(for f in $(printf '%s\n' "$CHANGED_FILES" | grep -E '\.(ts|js|tsx|jsx|py|go|rs)$'); do
+    if [ -f "$f" ] && grep -qlE 'process\.env\.|os\.environ|Deno\.env' "$f" 2>/dev/null; then
+      printf '%s\n' "$f"
+    fi
+  done)
 fi
 if [ -n "$ENV_FILES" ]; then
   ENV_JSON=$(printf '%s\n' "$ENV_FILES" | jq -R . | jq -s .)
