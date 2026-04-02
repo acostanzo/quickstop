@@ -68,6 +68,62 @@ Major structural changes detected (new modules, directories, significant refacto
 3. If it doesn't exist, create it with a basic project structure overview
 4. Describe what the new component does, why it exists, and how it connects to the rest of the system
 
+### api-contract
+
+Route or API handler files were changed.
+
+1. Read each changed route file listed in `files`
+2. Extract endpoint definitions: HTTP method, path, request parameters/body shape, response shape
+3. Write or update `docs/reference/api.md` with a table of all endpoints
+4. Use this table format:
+
+```markdown
+| Method | Path | Description | Request | Response |
+|--------|------|-------------|---------|----------|
+| GET | /users/:id | Fetch user by ID | `id` (path param) | `{ id, name, email }` |
+```
+
+5. If `docs/reference/api.md` already exists, merge new/changed endpoints into the existing table — preserve rows for endpoints not in the current changeset
+
+### env-config
+
+Environment or configuration files were changed, or code references new environment variables.
+
+1. Read each changed file listed in `files`
+2. Extract environment variable names, default values (if any), and whether they appear required or optional
+3. Write or update `docs/reference/configuration.md` with a table of all variables
+4. Use this table format:
+
+```markdown
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| DATABASE_URL | PostgreSQL connection string | — | Yes |
+```
+
+5. If `docs/reference/configuration.md` already exists, merge new variables into the existing table — preserve rows for variables not in the current changeset
+
+### domain-scaffold
+
+New model, entity, or type files were added.
+
+1. Read each new file listed in `files`
+2. Extract field names, types, and any validation or constraint annotations
+3. Create or update `docs/reference/domain.md` with a skeleton entry for each new model
+4. Include a heading per model with a fields table and TODO placeholders for business rules:
+
+```markdown
+## UserProfile
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Primary identifier |
+| email | string | User email address |
+
+> **TODO**: Document business rules for UserProfile (validation, invariants, lifecycle). Only a human familiar with the domain can fill this in.
+```
+
+5. If `docs/reference/domain.md` already exists, append new models — never remove existing entries
+
 ### index
 
 Documentation files were added or removed. Dispatch the `index-builder` agent to handle this:
@@ -94,11 +150,14 @@ Read `.inkwell-queue.json` from the project root.
 Multiple commits may generate overlapping tasks. Deduplicate:
 - Multiple `changelog` tasks → process all, but write once
 - Multiple `api-reference` tasks for the same file → process the latest commit's version
+- Multiple `api-contract` tasks for the same file → process the latest commit's version
+- Multiple `env-config` tasks for the same file → process the latest commit's version
+- Multiple `domain-scaffold` tasks for the same file → process once (new files only)
 - Multiple `index` tasks → process once at the end
 
 ### Step 3: Process Tasks
 
-Process tasks in this order: api-reference, architecture, changelog, index (index last since earlier tasks may create new doc files).
+Process tasks in this order: api-reference, api-contract, env-config, domain-scaffold, architecture, changelog, index (index last since earlier tasks may create new doc files).
 
 For each task, read the relevant source files and write documentation. Follow the rules for each task type above.
 

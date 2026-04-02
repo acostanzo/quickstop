@@ -89,6 +89,54 @@ if [ -n "$DOC_FILES" ]; then
     '. + [{type: "index", commit: $commit, message: $msg, files: $files, timestamp: $ts}]')
 fi
 
+# Check for route/API file changes → api-contract task
+ROUTE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^(src/routes/|src/api/|app/controllers/|routes/|api/)' || true)
+if [ -z "$ROUTE_FILES" ]; then
+  # Check file contents for route patterns (app.get, app.post, router., @Get, @Post, etc.)
+  ROUTE_FILES=$(for f in $CHANGED_FILES; do
+    if [ -f "$f" ] && grep -qlE 'app\.(get|post|put|patch|delete)\(|router\.|@(Get|Post|Put|Patch|Delete)' "$f" 2>/dev/null; then
+      printf '%s\n' "$f"
+    fi
+  done)
+fi
+if [ -n "$ROUTE_FILES" ]; then
+  ROUTE_JSON=$(printf '%s\n' "$ROUTE_FILES" | jq -R . | jq -s .)
+  TASKS=$(printf '%s' "$TASKS" | jq --arg commit "$COMMIT_HASH" \
+    --arg msg "$COMMIT_MSG" \
+    --arg ts "$TIMESTAMP" \
+    --argjson files "$ROUTE_JSON" \
+    '. + [{type: "api-contract", commit: $commit, message: $msg, files: $files, timestamp: $ts}]')
+fi
+
+# Check for environment/config file changes → env-config task
+ENV_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '(^\.env|^config/|^src/config/)' || true)
+if [ -z "$ENV_FILES" ]; then
+  # Check git diff content for new env variable references
+  DIFF_CONTENT=$(git diff HEAD~1 -U0 2>/dev/null) || DIFF_CONTENT=""
+  if printf '%s\n' "$DIFF_CONTENT" | grep -qE '^\+.*(process\.env\.|os\.environ|Deno\.env)'; then
+    ENV_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '\.(ts|js|tsx|jsx|py|go|rs)$' || true)
+  fi
+fi
+if [ -n "$ENV_FILES" ]; then
+  ENV_JSON=$(printf '%s\n' "$ENV_FILES" | jq -R . | jq -s .)
+  TASKS=$(printf '%s' "$TASKS" | jq --arg commit "$COMMIT_HASH" \
+    --arg msg "$COMMIT_MSG" \
+    --arg ts "$TIMESTAMP" \
+    --argjson files "$ENV_JSON" \
+    '. + [{type: "env-config", commit: $commit, message: $msg, files: $files, timestamp: $ts}]')
+fi
+
+# Check for new model/entity/type files → domain-scaffold task
+NEW_MODEL_FILES=$(git diff HEAD~1 --diff-filter=A --name-only 2>/dev/null | grep -E '^(src/models/|src/entities/|src/types/|models/|domain/)' || true)
+if [ -n "$NEW_MODEL_FILES" ]; then
+  MODEL_JSON=$(printf '%s\n' "$NEW_MODEL_FILES" | jq -R . | jq -s .)
+  TASKS=$(printf '%s' "$TASKS" | jq --arg commit "$COMMIT_HASH" \
+    --arg msg "$COMMIT_MSG" \
+    --arg ts "$TIMESTAMP" \
+    --argjson files "$MODEL_JSON" \
+    '. + [{type: "domain-scaffold", commit: $commit, message: $msg, files: $files, timestamp: $ts}]')
+fi
+
 # If no tasks were generated, exit
 TASK_COUNT=$(printf '%s' "$TASKS" | jq 'length')
 if [ "$TASK_COUNT" -eq 0 ]; then

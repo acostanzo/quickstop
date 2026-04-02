@@ -1,4 +1,4 @@
-# Inkwell (v0.1.0)
+# Inkwell (v0.2.0)
 
 Automatic documentation-as-code engine for Claude Code projects. Inkwell works automatically via hooks, but also provides commands for manual control.
 
@@ -18,11 +18,14 @@ git commit → PostToolUse hook → .inkwell-queue.json → Stop hook → doc-wr
 
 4. **Write** (doc-writer agent): Reads source changes, writes documentation, commits with `docs:` prefix, and clears the queue.
 
-### Doc Task Types
+### What Gets Documented
 
 | Type | Trigger | Output |
 |------|---------|--------|
 | `api-reference` | Files changed in `src/`, `lib/`, `app/` | `docs/reference/<module>.md` |
+| `api-contract` | Route/API files changed or contain route patterns | `docs/reference/api.md` endpoint table |
+| `env-config` | `.env`/config files changed, or new `process.env`/`os.environ`/`Deno.env` references | `docs/reference/configuration.md` variable table |
+| `domain-scaffold` | New model/entity/type files added | `docs/reference/domain.md` skeleton with TODOs |
 | `changelog` | `feat:`, `fix:`, `refactor:` commits | `CHANGELOG.md` entry |
 | `architecture` | New modules, major restructuring | `docs/ARCHITECTURE.md` section |
 | `index` | Any doc file added or removed | `docs/INDEX.md` rebuild |
@@ -95,6 +98,16 @@ Claude: [writes code, commits with 'feat(auth): add OAuth2 support']
 → Fresh: docs/decisions/0001-use-postgresql.md
 → Summary: 5 docs checked, 1 very stale, 4 fresh
 ```
+
+## Bundled Rules
+
+Inkwell ships rules that apply automatically to matching files when the plugin is installed.
+
+| Rule | Globs | Purpose |
+|------|-------|---------|
+| `code-comments` | `*.ts`, `*.js`, `*.py`, `*.go`, `*.rs`, `*.java`, `*.rb` | Enforces meaningful comments — no narration, no commented-out code, TODOs must be actionable |
+
+Rules are in `rules/` and follow the Claude Code [bundled rules](https://docs.anthropic.com/en/docs/claude-code/plugins) format.
 
 ## Requirements
 
