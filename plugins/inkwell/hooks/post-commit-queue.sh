@@ -26,12 +26,6 @@ if ! printf '%s\n' "$COMMAND" | grep -qE 'git commit'; then
   exit 0
 fi
 
-# Skip if this was a docs commit (avoid feedback loops)
-STDOUT=$(jq -r '.tool_output.stdout // empty' <<< "$INPUT")
-if printf '%s\n' "$STDOUT" | grep -qE '^\s*docs(\(.+\))?:'; then
-  exit 0
-fi
-
 # Get the commit message from the most recent commit
 COMMIT_MSG=$(git log -1 --format="%s" 2>/dev/null) || exit 0
 COMMIT_HASH=$(git log -1 --format="%H" 2>/dev/null) || exit 0
@@ -74,7 +68,7 @@ if printf '%s\n' "$COMMIT_MSG" | grep -qE '^(feat|fix|refactor|perf|security|rev
 fi
 
 # Check for new top-level directories or major restructuring → architecture task
-NEW_DIRS=$(printf '%s\n' "$CHANGED_FILES" | grep -cE '^[^/]+/[^/]+' | head -1 || echo "0")
+NEW_DIRS=$(git diff HEAD~1 --diff-filter=A --name-only 2>/dev/null | cut -d/ -f1 | sort -u | wc -l)
 if [ "$NEW_DIRS" -gt 5 ]; then
   ALL_FILES_JSON=$(printf '%s\n' "$CHANGED_FILES" | jq -R . | jq -s .)
   TASKS=$(printf '%s' "$TASKS" | jq --arg commit "$COMMIT_HASH" \

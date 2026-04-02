@@ -1,6 +1,6 @@
 # Inkwell (v0.1.0)
 
-Automatic documentation-as-code engine for Claude Code projects. Maintains project documentation as a side effect of development — no manual invocation needed.
+Automatic documentation-as-code engine for Claude Code projects. Inkwell works automatically via hooks, but also provides commands for manual control.
 
 ## How It Works
 
@@ -124,6 +124,12 @@ claude --plugin-dir /path/to/quickstop/plugins/inkwell
 - The Stop hook only suggests processing — Claude decides whether to act
 - Queue file (`.inkwell-queue.json`) is plain JSON, human-readable, and safe to delete at any time
 - Skills are `disable-model-invocation: true` — they only run when explicitly invoked
+
+**Gitignore:** Inkwell creates runtime files in your project root that should not be committed:
+
+```bash
+echo -e '.inkwell-queue.json\n.inkwell-last-capture' >> .gitignore
+```
 
 ## License
 

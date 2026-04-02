@@ -1,7 +1,7 @@
 {
   "name": "inkwell",
   "version": "0.1.0",
-  "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.",
+  "description": "Automatic documentation-as-code engine. Works automatically via hooks, with commands for manual control.",
   "author": {
     "name": "quickstop",
     "url": "https://github.com/acostanzo/quickstop"
