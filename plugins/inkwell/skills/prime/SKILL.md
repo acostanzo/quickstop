@@ -24,15 +24,37 @@ Inspect the project root for stack indicators:
 
 If multiple indicators exist, prefer the first match in the order above. If none match, use "generic" defaults.
 
-### Phase 2: Load Existing Config
+### Phase 2: Scan for Existing Documentation
+
+Before configuring defaults, scan the project for existing documentation files that Inkwell doc types would overlap with:
+
+| Doc Type | Scan Locations |
+|----------|---------------|
+| `architecture` | `ARCHITECTURE.md`, `docs/architecture.md`, `docs/reference/architecture.md`, `docs/ARCHITECTURE.md` |
+| `changelog` | `CHANGELOG.md`, `CHANGES.md`, `changelog.md` |
+| `index` | `docs/INDEX.md`, `docs/index.md` |
+| ADR directories | `docs/decisions/`, `docs/adr/`, `docs/adrs/` |
+| General docs | `docs/` (note any existing structure) |
+
+Store discovered paths for use in Phase 4. If a `docs/` directory exists, note its layout so that output paths can be suggested consistently with the existing structure.
+
+### Phase 3: Load Existing Config
 
 If `.inkwell.json` already exists, read it. Present a summary of the current configuration and ask the user whether to update it or start fresh.
 
-### Phase 3: Configure Doc Types
+### Phase 4: Configure Doc Types
 
 For each doc type below, present the stack-appropriate defaults and ask the user whether to enable it. Accept `y`/`n` (default `y` for all except `domain-scaffold` which defaults to `n`).
 
-For enabled types, show the default output path and path/pattern globs. Let the user accept defaults or override.
+**Use discovered files from Phase 2:** If an existing file was found that matches a doc type, suggest that path instead of the generic default. For example:
+
+- Found `docs/reference/architecture.md` → suggest it for `architecture` output instead of `docs/ARCHITECTURE.md`
+- Found `CHANGES.md` → suggest it for `changelog` output instead of `CHANGELOG.md`
+- Found `docs/decisions/` → mention it when configuring ADR paths in the confirm step
+
+Present the suggestion clearly: *"I found an existing architecture doc at `docs/reference/architecture.md` — should I use that path? [Y/n]"*
+
+For enabled types, show the output path (discovered or default) and path/pattern globs. Let the user accept or override.
 
 #### Stack Defaults
 
@@ -88,7 +110,7 @@ For enabled types, show the default output path and path/pattern globs. Let the 
 
 Use the TypeScript/Node defaults but omit framework-specific patterns from `api-contract` and `env-config`.
 
-### Phase 4: Write .inkwell.json
+### Phase 5: Write .inkwell.json
 
 Write the config file to the project root. Use the schema defined in `references/config-schema.md`.
 
@@ -138,7 +160,7 @@ Example output for a TypeScript project with all types enabled:
 }
 ```
 
-### Phase 5: Recommend .gitignore Additions
+### Phase 6: Recommend .gitignore Additions
 
 Check if `.gitignore` exists and whether it already contains inkwell runtime entries. If missing, suggest:
 
@@ -149,7 +171,7 @@ Check if `.gitignore` exists and whether it already contains inkwell runtime ent
 
 Ask the user whether to append them automatically.
 
-### Phase 6: Confirm
+### Phase 7: Confirm
 
 Output a summary:
 

@@ -1,4 +1,4 @@
-# Inkwell (v0.3.0)
+# Inkwell (v0.3.2)
 
 Automatic documentation-as-code engine for Claude Code projects. Inkwell works automatically via hooks, but also provides commands for manual control.
 
@@ -196,21 +196,31 @@ Rules are in `rules/` and follow the Claude Code [bundled rules](https://docs.an
 
 ## Installation
 
-### From Marketplace
+### From Quickstop Marketplace
+
+Install directly from the marketplace registry. This is the easiest method for most users.
 
 ```bash
-/plugin marketplace add acostanzo/quickstop
-/plugin install inkwell@quickstop
+claude plugin install inkwell@quickstop
 ```
 
-### From Source
+### From Local Source (Development)
+
+If you have the quickstop repo cloned locally, install the plugin from disk. Use `--scope project` to scope it to the current project or `--scope user` for all projects.
 
 ```bash
-git clone https://github.com/acostanzo/quickstop.git
-claude --plugin-dir /path/to/quickstop/plugins/inkwell
+claude plugin install --source /path/to/quickstop/plugins/inkwell --scope project
 ```
 
-After installing, run `/inkwell:prime` to configure for your project.
+### Manual Copy
+
+Copy the plugin directory into your project's plugin folder. Useful when you want full control or are working offline.
+
+```bash
+cp -r /path/to/quickstop/plugins/inkwell .claude/plugins/inkwell
+```
+
+After installing with any method, run `/inkwell:prime` to configure for your project.
 
 ## Safety
 
