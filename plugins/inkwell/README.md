@@ -1,6 +1,75 @@
-# Inkwell (v0.2.0)
+# Inkwell (v0.3.0)
 
 Automatic documentation-as-code engine for Claude Code projects. Inkwell works automatically via hooks, but also provides commands for manual control.
+
+## Getting Started
+
+Run `/inkwell:prime` to create `.inkwell.json` — the configuration file that drives all detection and output paths. The setup wizard detects your project stack and suggests sensible defaults.
+
+```
+/inkwell:prime
+→ Detected: TypeScript / Node
+→ Enabled: changelog, api-reference, api-contract, env-config, architecture, index
+→ Config written to .inkwell.json
+```
+
+Without `.inkwell.json`, the hook falls back to changelog-only detection (no config needed for commit-message-based triggers).
+
+## Configuration
+
+Inkwell is driven by `.inkwell.json` in the project root. Each doc type can be independently enabled/disabled with custom output paths and detection patterns.
+
+```json
+{
+  "version": 1,
+  "stack": "typescript",
+  "docs": {
+    "changelog": {
+      "enabled": true,
+      "file": "CHANGELOG.md"
+    },
+    "api-reference": {
+      "enabled": true,
+      "directory": "docs/reference/",
+      "paths": ["src/**", "lib/**", "app/**"]
+    },
+    "api-contract": {
+      "enabled": true,
+      "file": "docs/reference/api.md",
+      "paths": ["src/routes/**", "src/api/**"],
+      "patterns": ["router\\.(get|post|put|patch|delete)\\("]
+    },
+    "env-config": {
+      "enabled": true,
+      "file": "docs/reference/configuration.md",
+      "paths": [".env*", "config/**"],
+      "patterns": ["process\\.env\\."]
+    },
+    "domain-scaffold": {
+      "enabled": false,
+      "file": "docs/reference/domain.md",
+      "paths": ["src/models/**", "src/entities/**"]
+    },
+    "architecture": {
+      "enabled": true,
+      "file": "docs/ARCHITECTURE.md"
+    },
+    "index": {
+      "enabled": true,
+      "file": "docs/INDEX.md",
+      "paths": ["docs/**/*.md"]
+    }
+  }
+}
+```
+
+Each doc type supports:
+- `enabled` — whether the type is active
+- `file` or `directory` — output path (exactly one)
+- `paths` — glob patterns for matching changed files by path
+- `patterns` — regex patterns for matching changed file contents (fallback when paths don't match)
+
+See the full schema at `skills/prime/references/config-schema.md`.
 
 ## How It Works
 
@@ -10,25 +79,25 @@ Inkwell uses a **queue-based architecture** to separate detection from generatio
 git commit → PostToolUse hook → .inkwell-queue.json → Stop hook → doc-writer agent → docs/ committed
 ```
 
-1. **Detect** (PostToolUse hook on `Bash`): After any `git commit`, a lightweight hook analyzes what changed and appends doc tasks to `.inkwell-queue.json`. This runs in <2s and never blocks your workflow.
+1. **Detect** (PostToolUse hook on `Bash`): After any `git commit`, a lightweight hook reads `.inkwell.json` and matches changed files against configured `paths` and `patterns`. Matching doc tasks are appended to `.inkwell-queue.json`. This runs in <2s and never blocks your workflow.
 
 2. **Queue** (`.inkwell-queue.json`): Tasks accumulate during a session. Each task records the commit hash, message, changed files, and what type of documentation is needed.
 
 3. **Process** (Stop hook): When Claude's turn ends, the Stop hook checks the queue. If tasks are pending, it instructs Claude to dispatch the doc-writer agent to process them.
 
-4. **Write** (doc-writer agent): Reads source changes, writes documentation, commits with `docs:` prefix, and clears the queue.
+4. **Write** (doc-writer agent): Reads `.inkwell.json` for output paths, processes source changes, writes documentation, commits with `docs:` prefix, and clears the queue.
 
 ### What Gets Documented
 
 | Type | Trigger | Output |
 |------|---------|--------|
-| `api-reference` | Files changed in `src/`, `lib/`, `app/` | `docs/reference/<module>.md` |
-| `api-contract` | Route/API files changed or contain route patterns | `docs/reference/api.md` endpoint table |
-| `env-config` | `.env`/config files changed, or new `process.env`/`os.environ`/`Deno.env` references | `docs/reference/configuration.md` variable table |
-| `domain-scaffold` | New model/entity/type files added | `docs/reference/domain.md` skeleton with TODOs |
-| `changelog` | `feat:`, `fix:`, `refactor:` commits | `CHANGELOG.md` entry |
-| `architecture` | New modules, major restructuring | `docs/ARCHITECTURE.md` section |
-| `index` | Any doc file added or removed | `docs/INDEX.md` rebuild |
+| `api-reference` | Changed files match configured `paths` | Configured `directory` (default `docs/reference/`) |
+| `api-contract` | Files match `paths` or contents match `patterns` | Configured `file` (default `docs/reference/api.md`) |
+| `env-config` | Files match `paths` or contents match `patterns` | Configured `file` (default `docs/reference/configuration.md`) |
+| `domain-scaffold` | Newly added files match configured `paths` | Configured `file` (default `docs/reference/domain.md`) |
+| `changelog` | `feat:`, `fix:`, `refactor:` commits | Configured `file` (default `CHANGELOG.md`) |
+| `architecture` | New modules, major restructuring | Configured `file` (default `docs/ARCHITECTURE.md`) |
+| `index` | Doc files added or removed matching `paths` | Configured `file` (default `docs/INDEX.md`) |
 
 ### Queue Format
 
@@ -48,10 +117,11 @@ git commit → PostToolUse hook → .inkwell-queue.json → Stop hook → doc-wr
 
 | Command | Description |
 |---------|-------------|
+| `/inkwell:prime` | Guided setup wizard — creates `.inkwell.json` for your project |
 | `/inkwell:capture` | Scan recent commits and generate missing documentation |
 | `/inkwell:adr <title>` | Create a numbered Architecture Decision Record |
-| `/inkwell:changelog` | Generate or update CHANGELOG.md from conventional commits |
-| `/inkwell:index` | Rebuild docs/INDEX.md to match files on disk |
+| `/inkwell:changelog` | Generate or update changelog from conventional commits |
+| `/inkwell:index` | Rebuild documentation index to match files on disk |
 | `/inkwell:stale` | Find docs that are out of date relative to code changes |
 
 ## Agents
@@ -59,16 +129,26 @@ git commit → PostToolUse hook → .inkwell-queue.json → Stop hook → doc-wr
 | Agent | Role | Dispatched By |
 |-------|------|---------------|
 | `doc-writer` | Reads source changes, writes documentation, commits | Stop hook, `/inkwell:capture` |
-| `index-builder` | Scans doc directories, rebuilds INDEX.md | `/inkwell:index` |
+| `index-builder` | Scans doc directories, rebuilds index | `/inkwell:index` |
 
 ## Examples
+
+### First-time setup
+
+```
+/inkwell:prime
+→ Detected: TypeScript / Node
+→ Configure doc types? [y/n for each]
+→ Config written to .inkwell.json
+→ Recommended: add .inkwell-queue.json and .inkwell-last-capture to .gitignore
+```
 
 ### Automatic documentation (no commands needed)
 
 ```
 You: "Add OAuth2 support to the auth module"
 Claude: [writes code, commits with 'feat(auth): add OAuth2 support']
-         ↓ PostToolUse hook fires
+         ↓ PostToolUse hook fires, reads .inkwell.json
          ↓ Queue: [{type: "changelog", ...}, {type: "api-reference", ...}]
          ↓ Stop hook fires → doc-writer processes queue
          ↓ CHANGELOG.md updated, docs/reference/auth.md updated
@@ -111,7 +191,7 @@ Rules are in `rules/` and follow the Claude Code [bundled rules](https://docs.an
 
 ## Requirements
 
-- `jq` — JSON processing in hook scripts
+- `jq` — JSON processing in hook scripts (optional: falls back to changelog-only without it)
 - `git` — commit analysis and doc commits
 
 ## Installation
@@ -130,9 +210,12 @@ git clone https://github.com/acostanzo/quickstop.git
 claude --plugin-dir /path/to/quickstop/plugins/inkwell
 ```
 
+After installing, run `/inkwell:prime` to configure for your project.
+
 ## Safety
 
 - Hook scripts exit cleanly on missing dependencies (jq, git) — never block
+- Without `.inkwell.json`, the hook falls back to changelog-only detection
 - `docs:` commits from inkwell are detected and skipped to prevent feedback loops
 - The Stop hook only suggests processing — Claude decides whether to act
 - Queue file (`.inkwell-queue.json`) is plain JSON, human-readable, and safe to delete at any time

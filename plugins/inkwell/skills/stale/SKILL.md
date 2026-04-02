@@ -11,13 +11,22 @@ Find documentation files that may be out of date relative to the source code the
 
 ## `/inkwell:stale`
 
-### Phase 1: Discover Documentation
+### Phase 1: Read Configuration
 
-Glob `docs/**/*.md` to find all documentation files. Also check for `CHANGELOG.md` and `ARCHITECTURE.md` in the project root.
+If `.inkwell.json` exists in the project root, read it to determine documentation paths. Use the configured output paths to locate doc files and the `paths` globs to identify which source files are related to which doc types.
+
+If `.inkwell.json` does not exist, use defaults:
+- Docs root: `docs/`
+- Changelog: `CHANGELOG.md`
+- Architecture: `docs/ARCHITECTURE.md`
+
+### Phase 2: Discover Documentation
+
+Glob all markdown files in the docs root (from config or default `docs/`). Also check for the changelog file and architecture file at their configured paths.
 
 If no documentation files are found, report: "No documentation files found. Nothing to check for staleness."
 
-### Phase 2: Analyze Each Document
+### Phase 3: Analyze Each Document
 
 For each documentation file:
 
@@ -27,7 +36,7 @@ For each documentation file:
    - Explicit file references (paths like `src/auth.ts`, `lib/utils.py`)
    - Code blocks with language identifiers that suggest source files
    - Import statements or module names mentioned in prose
-   - For reference docs in `docs/reference/<name>.md`, infer `src/<name>.*` or `lib/<name>.*` as the source
+   - For reference docs, use the configured `paths` globs from `.inkwell.json` to identify related source directories. For example, if a doc is at `docs/reference/auth.md`, look for source files matching the `api-reference.paths` globs that contain "auth" in their name.
 
 3. **Get source modification dates**: For each referenced source file that exists, run `git log -1 --format="%ci" -- <source-path>`.
 
@@ -37,7 +46,7 @@ For each documentation file:
    - **Stale** (2): Source changed 7-30 days after doc
    - **Very stale** (3): Source changed more than 30 days after doc
 
-### Phase 3: Generate Report
+### Phase 4: Generate Report
 
 Output the report sorted by staleness score (most stale first):
 
@@ -68,5 +77,5 @@ Summary: 5 docs checked, 1 very stale, 1 stale, 0 mild, 3 fresh
 
 - This skill is **read-only** — it reports staleness but does not modify any files
 - If a doc file references no identifiable source files, mark it as "No source references found — manual review recommended"
-- ADRs (files in `docs/decisions/`) are exempt from staleness by default since they are point-in-time records. Include them in the report as "ADR — staleness N/A" unless the Status field says "Accepted" or "Active"
-- CHANGELOG.md staleness is determined by comparing its last update against the most recent non-docs commit
+- ADRs (files in the decisions directory) are exempt from staleness by default since they are point-in-time records. Include them in the report as "ADR — staleness N/A" unless the Status field says "Accepted" or "Active"
+- Changelog staleness is determined by comparing its last update against the most recent non-docs commit

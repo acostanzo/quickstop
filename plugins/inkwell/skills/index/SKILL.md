@@ -7,40 +7,46 @@ allowed-tools: Read, Glob, Write, Edit
 
 # Index
 
-Rebuild `docs/INDEX.md` to match the actual documentation files on disk. Adds missing entries, removes dead links, and organizes by category.
+Rebuild the documentation index to match the actual documentation files on disk. Adds missing entries, removes dead links, and organizes by category.
 
 ## `/inkwell:index`
 
-### Phase 1: Discover Files
+### Phase 1: Read Configuration
 
-Glob all markdown files in `docs/`:
-- `docs/**/*.md` — all markdown files recursively
-- Exclude `docs/INDEX.md` itself from the list
+If `.inkwell.json` exists in the project root, read the index output path from `docs.index.file`. Default: `docs/INDEX.md`.
 
-If `docs/` doesn't exist or contains no markdown files, report: "No documentation files found in `docs/`. Nothing to index."
+Derive the documentation root directory from the index path (e.g., `docs/INDEX.md` means the docs root is `docs/`).
 
-### Phase 2: Categorize Files
+### Phase 2: Discover Files
+
+Glob all markdown files in the docs root:
+- `<docs-root>/**/*.md` — all markdown files recursively
+- Exclude the index file itself from the list
+
+If the docs root doesn't exist or contains no markdown files, report: "No documentation files found in `<docs-root>/`. Nothing to index."
+
+### Phase 3: Categorize Files
 
 Sort discovered files into categories based on their path:
 
 | Path Pattern | Category |
 |---|---|
-| `docs/decisions/*.md` | Decisions |
-| `docs/reference/*.md` | Reference |
-| `docs/guides/*.md` | Guides |
-| `docs/*.md` (top-level) | Overview |
+| `<docs-root>/decisions/*.md` | Decisions |
+| `<docs-root>/reference/*.md` | Reference |
+| `<docs-root>/guides/*.md` | Guides |
+| `<docs-root>/*.md` (top-level) | Overview |
 | All other paths | Other |
 
 Within each category, sort files alphabetically.
 
-### Phase 3: Read Existing Index
+### Phase 4: Read Existing Index
 
-If `docs/INDEX.md` exists, read it. Parse existing entries to identify:
+If the index file exists, read it. Parse existing entries to identify:
 - **Missing entries**: files on disk not in the index
 - **Dead links**: entries in the index pointing to files that no longer exist
 - **Existing entries**: files that are in both — preserve any custom descriptions
 
-### Phase 4: Build Index
+### Phase 5: Build Index
 
 Generate the index file:
 
@@ -68,20 +74,20 @@ Generate the index file:
 ```
 
 Rules:
-- Links are relative to `docs/`
+- Links are relative to the docs root
 - For files that had descriptions in the old index, preserve them
 - For new files, extract a description from the first heading or first paragraph of the file (read each file's first 5 lines)
 - If no description can be extracted, use the filename without extension as the description
 - Omit empty categories
 
-### Phase 5: Write and Report
+### Phase 6: Write and Report
 
-Write `docs/INDEX.md`.
+Write the index file to the configured path.
 
 Output a summary:
 
 ```
-Rebuilt docs/INDEX.md:
+Rebuilt <index-path>:
   Total entries: N
   Added: N new entries
   Removed: N dead links

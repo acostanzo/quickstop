@@ -11,7 +11,17 @@ Scan recent git changes and extract durable knowledge into project documentation
 
 ## `/inkwell:capture $ARGUMENTS`
 
-### Phase 1: Determine Scope
+### Phase 1: Read Configuration
+
+If `.inkwell.json` exists in the project root, read it to determine output paths and detection rules. Use the configured `paths` globs to categorize changed files and the configured output paths for writing docs.
+
+If `.inkwell.json` does not exist, use defaults:
+- `api-reference` → `docs/reference/` (triggered by files in `src/**`, `lib/**`, `app/**`)
+- `changelog` → `CHANGELOG.md` (triggered by `feat:`, `fix:` commits)
+- `architecture` → `docs/ARCHITECTURE.md` (triggered by major restructuring)
+- `index` → `docs/INDEX.md` (triggered by doc file changes in `docs/`)
+
+### Phase 2: Determine Scope
 
 If `$ARGUMENTS` is provided, parse it as a commit range or count:
 - A number (e.g., `5`) — scan the last N commits
@@ -20,13 +30,13 @@ If `$ARGUMENTS` is provided, parse it as a commit range or count:
 
 To detect "since last capture," check for a `.inkwell-last-capture` file in the project root. If it exists, read the stored commit hash and use `<hash>..HEAD`. If it doesn't exist, default to scanning the last 5 commits.
 
-### Phase 2: Analyze Changes
+### Phase 3: Analyze Changes
 
 Run `git log --oneline <range>` to list commits in scope.
 
 For each commit, run `git diff <commit>~1..<commit> --name-only` to see what files changed.
 
-Categorize each change:
+Categorize each change using the configured `paths` globs from `.inkwell.json`. If no config exists, use these defaults:
 
 | File Pattern | Doc Type | Target |
 |---|---|---|
@@ -35,19 +45,27 @@ Categorize each change:
 | Any `feat:` or `fix:` commit | changelog | `CHANGELOG.md` |
 | Any file in `docs/` added or removed | index | `docs/INDEX.md` |
 
-### Phase 3: Generate Documentation
+When `.inkwell.json` is present, also check for `api-contract`, `env-config`, and `domain-scaffold` types using their configured `paths` and `patterns`.
 
-For each category with changes:
+### Phase 4: Generate Documentation
 
-**api-reference**: Read the changed source files. Identify public exports, route definitions, or API endpoints. Create or update a corresponding doc file in `docs/reference/`. Use the module or file name as the doc filename (e.g., `src/auth.ts` maps to `docs/reference/auth.md`).
+For each category with changes, write to the configured output path:
 
-**changelog**: Parse the conventional commit messages in range. Group by type (Added for `feat:`, Fixed for `fix:`, Changed for `refactor:`). Append a new version section to `CHANGELOG.md` following Keep a Changelog format. If `CHANGELOG.md` doesn't exist, create it with the standard header.
+**api-reference**: Read the changed source files. Identify public exports, route definitions, or API endpoints. Create or update a corresponding doc file in the configured directory. Use the module or file name as the doc filename (e.g., `src/auth.ts` maps to `<directory>/auth.md`).
 
-**architecture**: For new modules or major restructuring, append a section to `docs/ARCHITECTURE.md` describing the new component, its purpose, and how it fits into the system. If the file doesn't exist, create it with a basic template.
+**api-contract**: Read the changed route files. Extract endpoint definitions and write to the configured file.
 
-**index**: Run the same logic as `/inkwell:index` — glob all markdown files in `docs/` and rebuild `docs/INDEX.md`.
+**env-config**: Read the changed config files. Extract environment variables and write to the configured file.
 
-### Phase 4: Commit and Record
+**domain-scaffold**: Read new model files. Extract fields and write skeleton entries to the configured file.
+
+**changelog**: Parse the conventional commit messages in range. Group by type (Added for `feat:`, Fixed for `fix:`, Changed for `refactor:`). Append a new version section to the configured changelog file following Keep a Changelog format. If the file doesn't exist, create it with the standard header.
+
+**architecture**: For new modules or major restructuring, append a section to the configured architecture file describing the new component, its purpose, and how it fits into the system. If the file doesn't exist, create it with a basic template.
+
+**index**: Run the same logic as `/inkwell:index` — glob all markdown files in the docs root and rebuild the index file at its configured path.
+
+### Phase 5: Commit and Record
 
 If any documentation was created or updated:
 
@@ -58,5 +76,5 @@ If any documentation was created or updated:
 ### Error Handling
 
 - If the git range is invalid, report the error and suggest a valid range
-- If `docs/` directory doesn't exist, create it
+- If the docs directory doesn't exist, create it
 - Never modify source code — only documentation files
