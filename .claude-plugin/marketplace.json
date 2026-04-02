@@ -33,6 +33,13 @@
       "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
       "source": "./plugins/skillet",
       "keywords": ["skills", "scaffolding", "audit", "quality", "authoring", "templates"]
+    },
+    {
+      "name": "inkwell",
+      "version": "0.1.0",
+      "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.",
+      "source": "./plugins/inkwell",
+      "keywords": ["documentation", "docs", "auto-docs", "changelog", "adr", "architecture-decisions", "agent-ready"]
     }
   ]
 }

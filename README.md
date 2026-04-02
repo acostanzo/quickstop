@@ -53,6 +53,17 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 
 **Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
 
+### Inkwell (v0.1.0)
+
+Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.
+
+- Queue-based architecture: PostToolUse hook detects commits, queues doc tasks, Stop hook processes them
+- Automatic changelog, API reference, and architecture doc generation from git commits
+- Architecture Decision Records (ADRs) with auto-numbering and index updates
+- Staleness detection — finds docs that are out of date relative to source code changes
+
+**Commands:** `/inkwell:capture`, `/inkwell:adr <title>`, `/inkwell:changelog`, `/inkwell:index`, `/inkwell:stale`
+
 ## Dev Tools
 
 Repo-level skills for plugin authors (not distributable plugins — these live in `.claude/`):

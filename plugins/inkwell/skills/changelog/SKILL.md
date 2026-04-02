@@ -1,0 +1,105 @@
+---
+name: changelog
+description: Generate or update CHANGELOG.md from conventional commits
+disable-model-invocation: true
+allowed-tools: Read, Bash, Write, Edit
+---
+
+# Changelog
+
+Generate or update `CHANGELOG.md` from conventional commits. Follows the [Keep a Changelog](https://keepachangelog.com/) format.
+
+## `/inkwell:changelog $ARGUMENTS`
+
+### Phase 1: Determine Range
+
+If `$ARGUMENTS` is provided, use it as the git range or tag (e.g., `v1.0.0..HEAD`, `--since="2 weeks ago"`).
+
+If empty, detect the range automatically:
+1. Check if `CHANGELOG.md` exists and find the most recent version header (e.g., `## [1.2.0]`)
+2. Search for a git tag matching that version: `git tag -l "v<version>"` or `git tag -l "<version>"`
+3. If a matching tag is found, use `<tag>..HEAD` as the range
+4. If no tag or no changelog exists, use the last 50 commits: `git log -50 --oneline`
+
+### Phase 2: Parse Commits
+
+Run `git log --format="%H %s" <range>` to get commit hashes and subjects.
+
+Parse each subject line for conventional commit format: `<type>[scope]: <description>`.
+
+Group commits by type into Keep a Changelog categories:
+
+| Commit Type | Changelog Category |
+|---|---|
+| `feat` | Added |
+| `fix` | Fixed |
+| `refactor`, `perf` | Changed |
+| `docs` | Documentation |
+| `deprecate` | Deprecated |
+| `revert` | Removed |
+| `security` | Security |
+
+Skip commits that don't follow conventional format (merge commits, `chore:`, `ci:`, `test:`, `style:`).
+
+If no qualifying commits are found, report: "No conventional commits found in range — nothing to add to changelog."
+
+### Phase 3: Generate Entry
+
+Format the new changelog section:
+
+```markdown
+## [Unreleased] - YYYY-MM-DD
+
+### Added
+
+- Description from feat commit
+- Description from another feat commit
+
+### Fixed
+
+- Description from fix commit
+
+### Changed
+
+- Description from refactor commit
+```
+
+Use today's date. Use `[Unreleased]` as the version — the user can replace it with a version number when they release.
+
+Only include categories that have entries. Order categories: Added, Changed, Deprecated, Removed, Fixed, Security, Documentation.
+
+### Phase 4: Write Changelog
+
+If `CHANGELOG.md` exists:
+1. Read its contents
+2. Find the insertion point — after the file header and before the first version entry
+3. Insert the new section
+
+If `CHANGELOG.md` doesn't exist, create it:
+
+```markdown
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [Unreleased] - YYYY-MM-DD
+
+### Added
+
+- ...
+```
+
+### Phase 5: Report
+
+Output a summary of what was added:
+
+```
+Updated CHANGELOG.md:
+  Added: N entries
+  Fixed: N entries
+  Changed: N entries
+  Range: <start>..<end>
+```
