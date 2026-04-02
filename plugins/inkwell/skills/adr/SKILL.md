@@ -3,7 +3,7 @@ name: adr
 description: Create architecture decision records from conversation context
 disable-model-invocation: true
 argument-hint: "<title>"
-allowed-tools: Read, Bash, Glob, Write, Edit
+allowed-tools: Read, Glob, Write, Edit
 ---
 
 # ADR

@@ -24,14 +24,7 @@ If `.inkwell.json` exists, use the configured output paths:
 - For types with a `file` field, write to that path
 - For types with a `directory` field, write files into that directory
 
-If `.inkwell.json` does not exist, use these defaults:
-- `changelog` → `CHANGELOG.md`
-- `api-reference` → `docs/reference/`
-- `api-contract` → `docs/reference/api.md`
-- `env-config` → `docs/reference/configuration.md`
-- `domain-scaffold` → `docs/reference/domain.md`
-- `architecture` → `docs/ARCHITECTURE.md`
-- `index` → `docs/INDEX.md`
+If `.inkwell.json` does not exist, use defaults: changelog → `CHANGELOG.md`, api-reference → `docs/reference/`, api-contract → `docs/reference/api.md`, env-config → `docs/reference/configuration.md`, domain-scaffold → `docs/reference/domain.md`, architecture → `docs/ARCHITECTURE.md`, index → `docs/INDEX.md`.
 
 ## Input
 
@@ -126,37 +119,12 @@ New model, entity, or type files were added.
 1. Read each new file listed in `files`
 2. Extract field names, types, and any validation or constraint annotations
 3. Create or update the domain file (from config `docs.domain-scaffold.file`, default `docs/reference/domain.md`) with a skeleton entry for each new model
-4. Include a heading per model with a fields table and TODO placeholders for business rules:
-
-```markdown
-## UserProfile
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | Primary identifier |
-| email | string | User email address |
-
-> **TODO**: Document business rules for UserProfile (validation, invariants, lifecycle). Only a human familiar with the domain can fill this in.
-```
-
+4. Include a heading per model with a fields table (Field, Type, Description) and a `> **TODO**: Document business rules` placeholder
 5. If the file already exists, append new models — never remove existing entries
 
 ### index
 
-Documentation files were added or removed. Dispatch the `index-builder` agent to handle this:
-
-```
-Agent:
-  description: "Rebuild docs/INDEX.md"
-  subagent_type: "inkwell:index-builder"
-  prompt: |
-    Rebuild the documentation index for the project at <project root path>.
-    Documentation files were added or removed in recent commits.
-    If .inkwell.json exists, read the configured index output path from docs.index.file.
-    Default: docs/INDEX.md
-```
-
-The index-builder agent will glob docs, categorize files, and write the updated index.
+Documentation files were added or removed. Dispatch the `index-builder` agent (`subagent_type: "inkwell:index-builder"`) to rebuild the documentation index. Pass the project root path and tell it to read `.inkwell.json` for the configured index output path (default: `docs/INDEX.md`).
 
 ## Process
 
@@ -204,17 +172,9 @@ If there are no changes to commit (e.g., docs were already up to date), skip the
 
 Write an empty array `[]` to `.inkwell-queue.json` to mark all tasks as processed.
 
-## Budget
+## Budget & Rules
 
-- Process at most **20 tasks** from the queue per invocation. If the queue has more, process the first 20 and leave the rest for the next run.
-- Read at most **10 source files** per task. For api-reference tasks with many changed files, prioritize files with public exports.
-- Limit to **15 Bash calls** total (git operations).
-
-## Rules
-
+- Process at most **20 tasks** per invocation (first 20, rest left for next run). Max **10 source files** per task. Max **15 Bash calls** total.
 - **Never modify source code** — only documentation files
-- **Preserve existing content** — when updating a doc, merge changes rather than overwriting
-- **Use conventional commit prefix** — all commits must use `docs:` prefix
-- **Be concise** — documentation should be clear and scannable, not verbose
-- **Match project style** — if existing docs use a particular format or tone, follow it
-- **Limit scope** — only document what changed. Don't rewrite entire files for a small change.
+- **Preserve existing content** — merge changes, don't overwrite
+- **Use `docs:` commit prefix** — match project style, be concise, limit scope to what changed

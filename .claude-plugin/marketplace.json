@@ -36,7 +36,7 @@
     },
     {
       "name": "inkwell",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.",
       "source": "./plugins/inkwell",
       "keywords": ["documentation", "docs", "auto-docs", "changelog", "adr", "architecture-decisions", "agent-ready"]
