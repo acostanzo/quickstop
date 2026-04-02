@@ -186,10 +186,15 @@ For each task, read the relevant source files and write documentation to the con
 
 ### Step 5: Commit
 
-Stage all documentation changes:
+Stage all documentation changes using the output paths from `.inkwell.json`:
+
+1. Read `.inkwell.json` and collect all configured output paths (`file` and `directory` fields from each enabled doc type under `docs`)
+2. If `.inkwell.json` is not present, fall back to staging `docs/ CHANGELOG.md`
+3. Stage only the resolved paths, e.g.:
 
 ```bash
-git add docs/ CHANGELOG.md
+# Example: config has changelog.file="CHANGES.md", api-reference.directory="api-docs/"
+git add CHANGES.md api-docs/
 git commit -m "docs: update documentation from recent changes"
 ```
 

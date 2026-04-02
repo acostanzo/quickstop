@@ -107,7 +107,7 @@ match_files_by_path() {
       # Use bash pattern matching via case statement for glob support
       # Convert glob ** to regex-friendly form for matching
       local regex_pattern
-      regex_pattern=$(printf '%s' "$glob_pattern" | sed 's/\*\*/DOUBLESTAR/g; s/\*/[^/]*/g; s/DOUBLESTAR/.*/g; s/\./\\./g; s/\?/./g')
+      regex_pattern=$(printf '%s' "$glob_pattern" | sed 's/\./\\./g; s/\*\*/DOUBLESTAR/g; s/\*/[^/]*/g; s/DOUBLESTAR/.*/g; s/\?/./g')
       if printf '%s\n' "$file" | grep -qE "^${regex_pattern}$"; then
         matched="${matched}${file}"$'\n'
       fi
@@ -226,7 +226,7 @@ if is_enabled "domain-scaffold"; then
     while IFS= read -r glob_pattern; do
       [ -z "$glob_pattern" ] && continue
       while IFS= read -r file; do
-        local_regex=$(printf '%s' "$glob_pattern" | sed 's/\*\*/DOUBLESTAR/g; s/\*/[^/]*/g; s/DOUBLESTAR/.*/g; s/\./\\./g; s/\?/./g')
+        local_regex=$(printf '%s' "$glob_pattern" | sed 's/\./\\./g; s/\*\*/DOUBLESTAR/g; s/\*/[^/]*/g; s/DOUBLESTAR/.*/g; s/\?/./g')
         if printf '%s\n' "$file" | grep -qE "^${local_regex}$"; then
           MODEL_FILES="${MODEL_FILES}${file}"$'\n'
         fi
