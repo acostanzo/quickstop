@@ -95,6 +95,26 @@ Rules:
 - Use `—` (em dash) to separate filename from description
 - One entry per line, prefixed with `- `
 
+## Output
+
+After writing the index, report a summary as your final message:
+
+```
+Rebuilt <index-path>:
+  Total entries: N
+  Added: N new entries
+  Removed: N dead links
+  Categories: Decisions (N), Reference (N), Guides (N), Overview (N)
+```
+
+If no documentation files were found, report that instead.
+
+## Budget
+
+- Scan at most **200 files** per invocation
+- Read at most **5 lines** per file for description extraction
+- If the docs root contains more than 200 markdown files, index the first 200 alphabetically and note the truncation in the output
+
 ## Rules
 
 - **Preserve custom descriptions** — if a human edited a description in the index, keep it
