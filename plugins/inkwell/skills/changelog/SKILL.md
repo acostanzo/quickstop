@@ -2,6 +2,7 @@
 name: changelog
 description: Generate or update CHANGELOG.md from conventional commits
 disable-model-invocation: true
+argument-hint: "<range>"
 allowed-tools: Read, Bash, Write, Edit
 ---
 
@@ -107,3 +108,9 @@ Updated <changelog-path>:
   Changed: N entries
   Range: <start>..<end>
 ```
+
+### Error Handling
+
+- If the git range is invalid (e.g., unknown revision or bad ref), report the error and suggest a valid range: "Invalid range `<input>`. Try a tag (`v1.0.0..HEAD`), commit hash, or `--since=\"2 weeks ago\"`."
+- If the changelog file exists but is not writable, report the permission error
+- If no git repository is found, report: "Not a git repository — changelog requires git history."

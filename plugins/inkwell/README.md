@@ -1,4 +1,4 @@
-# Inkwell (v0.3.3)
+# Inkwell (v0.3.4)
 
 Automatic documentation-as-code engine for Claude Code projects. Inkwell works automatically via hooks, but also provides commands for manual control.
 
@@ -221,6 +221,20 @@ cp -r /path/to/quickstop/plugins/inkwell .claude/plugins/inkwell
 ```
 
 After installing with any method, run `/inkwell:prime` to configure for your project.
+
+## Troubleshooting
+
+**Queue not processing after commits**
+The Stop hook only fires when Claude's turn ends. If you commit and immediately ask another question, processing is deferred to the next Stop event. Check `.inkwell-queue.json` — if tasks are queued, they will be processed when the current conversation turn completes.
+
+**No documentation generated for source changes**
+Inkwell needs `.inkwell.json` to detect non-changelog doc types. Without config, only changelog entries (from `feat:`, `fix:`, etc. commits) are detected. Run `/inkwell:prime` to enable full detection.
+
+**"jq: command not found" or changelog-only detection**
+The hook scripts require `jq` for JSON processing. Without it, the hook falls back to changelog-only detection. Install jq: `brew install jq` (macOS), `apt install jq` (Linux).
+
+**Docs commits appearing in changelog**
+Inkwell skips commits with a `docs:` prefix to prevent feedback loops. If you see doc changes being re-documented, check that the doc-writer agent's commit message starts with `docs:`.
 
 ## Safety
 

@@ -10,6 +10,7 @@ tools:
   - Edit
   - Agent
 model: inherit
+memory: project
 ---
 
 # Doc Writer Agent

@@ -2,6 +2,7 @@
 name: capture
 description: Scan recent changes and extract durable knowledge into docs
 disable-model-invocation: true
+argument-hint: "<range|count>"
 allowed-tools: Read, Bash, Glob, Grep, Write, Edit
 ---
 
