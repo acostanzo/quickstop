@@ -5,7 +5,9 @@
 
 set -euo pipefail
 
-QUEUE_FILE=".inkwell-queue.json"
+# Derive project root — CWD may be a subdirectory
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}" || exit 0
+QUEUE_FILE="$PROJECT_ROOT/.inkwell-queue.json"
 
 # No queue file → nothing to do
 if [ ! -f "$QUEUE_FILE" ]; then
@@ -33,11 +35,9 @@ fi
 TASK_SUMMARY=$(printf '%s' "$QUEUE" | jq -r '[.[] | .type] | group_by(.) | map("\(length) \(.[0])") | join(", ")')
 
 # Output a JSON response with systemMessage instructing Claude to process the queue
+# systemMessage must be at top level — nested inside hookSpecificOutput is silently ignored
 cat <<ENDJSON
 {
-  "hookSpecificOutput": {
-    "hookEventName": "Stop",
-    "systemMessage": "Inkwell: There are ${TASK_COUNT} pending documentation tasks (${TASK_SUMMARY}) in .inkwell-queue.json. Use the doc-writer agent (subagent_type: \"inkwell:doc-writer\") to process the queue. Pass the project root path and queue file path in the agent prompt. After processing, the agent will commit doc changes with a 'docs:' prefix and clear the queue."
-  }
+  "systemMessage": "Inkwell: There are ${TASK_COUNT} pending documentation tasks (${TASK_SUMMARY}) in .inkwell-queue.json. Use the doc-writer agent (subagent_type: \"inkwell:doc-writer\") to process the queue. Pass the project root path and queue file path in the agent prompt. After processing, the agent will commit doc changes with a 'docs:' prefix and clear the queue."
 }
 ENDJSON

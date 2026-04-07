@@ -6,6 +6,9 @@
 
 set -euo pipefail
 
+# Derive project root — CWD may be a subdirectory
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}" || exit 0
+
 # Read hook input from stdin
 INPUT=$(cat)
 
@@ -45,7 +48,7 @@ if [ -z "$CHANGED_FILES" ]; then
   exit 0
 fi
 
-CONFIG_FILE=".inkwell.json"
+CONFIG_FILE="$PROJECT_ROOT/.inkwell.json"
 
 # Without jq or without config: fall back to changelog-only detection
 if [ "$HAS_JQ" != true ] || [ ! -f "$CONFIG_FILE" ]; then
@@ -53,7 +56,7 @@ if [ "$HAS_JQ" != true ] || [ ! -f "$CONFIG_FILE" ]; then
   if printf '%s\n' "$COMMIT_MSG" | grep -qE '^(feat|fix|refactor|perf|security|revert)(\(.+\))?(!)?:'; then
     if [ "$HAS_JQ" = true ]; then
       ALL_FILES_JSON=$(printf '%s\n' "$CHANGED_FILES" | jq -R . | jq -s .)
-      QUEUE_FILE=".inkwell-queue.json"
+      QUEUE_FILE="$PROJECT_ROOT/.inkwell-queue.json"
       TASK=$(jq -n --arg commit "$COMMIT_HASH" \
         --arg msg "$COMMIT_MSG" \
         --arg ts "$TIMESTAMP" \
@@ -107,7 +110,7 @@ match_files_by_path() {
       # Use bash pattern matching via case statement for glob support
       # Convert glob ** to regex-friendly form for matching
       local regex_pattern
-      regex_pattern=$(printf '%s' "$glob_pattern" | sed 's/\./\\./g; s/\*\*/DOUBLESTAR/g; s/\*/[^/]*/g; s/DOUBLESTAR/.*/g; s/\?/./g')
+      regex_pattern=$(printf '%s' "$glob_pattern" | sed -e 's#\.#\\.#g' -e 's#?#.#g' -e 's#\*\*/#DBLSTARSLASH#g' -e 's#\*\*#.*#g' -e 's#\*#[^/]*#g' -e 's#DBLSTARSLASH#(.*/)?#g')
       if printf '%s\n' "$file" | grep -qE "^${regex_pattern}$"; then
         matched="${matched}${file}"$'\n'
       fi
@@ -123,7 +126,7 @@ match_files_by_content() {
   while IFS= read -r pattern; do
     [ -z "$pattern" ] && continue
     while IFS= read -r file; do
-      if [ -f "$file" ] && grep -qlE "$pattern" "$file" 2>/dev/null; then
+      if [ -f "$PROJECT_ROOT/$file" ] && grep -qlE "$pattern" "$PROJECT_ROOT/$file" 2>/dev/null; then
         matched="${matched}${file}"$'\n'
       fi
     done <<< "$CHANGED_FILES"
@@ -226,7 +229,7 @@ if is_enabled "domain-scaffold"; then
     while IFS= read -r glob_pattern; do
       [ -z "$glob_pattern" ] && continue
       while IFS= read -r file; do
-        local_regex=$(printf '%s' "$glob_pattern" | sed 's/\./\\./g; s/\*\*/DOUBLESTAR/g; s/\*/[^/]*/g; s/DOUBLESTAR/.*/g; s/\?/./g')
+        local_regex=$(printf '%s' "$glob_pattern" | sed -e 's#\.#\\.#g' -e 's#?#.#g' -e 's#\*\*/#DBLSTARSLASH#g' -e 's#\*\*#.*#g' -e 's#\*#[^/]*#g' -e 's#DBLSTARSLASH#(.*/)?#g')
         if printf '%s\n' "$file" | grep -qE "^${local_regex}$"; then
           MODEL_FILES="${MODEL_FILES}${file}"$'\n'
         fi
@@ -251,7 +254,7 @@ if [ "$TASK_COUNT" -eq 0 ]; then
 fi
 
 # Append to existing queue (or create new one)
-QUEUE_FILE=".inkwell-queue.json"
+QUEUE_FILE="$PROJECT_ROOT/.inkwell-queue.json"
 if [ -f "$QUEUE_FILE" ]; then
   EXISTING=$(cat "$QUEUE_FILE" 2>/dev/null) || EXISTING="[]"
   if ! printf '%s' "$EXISTING" | jq 'type == "array"' >/dev/null 2>&1; then
