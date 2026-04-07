@@ -38,6 +38,6 @@ TASK_SUMMARY=$(printf '%s' "$QUEUE" | jq -r '[.[] | .type] | group_by(.) | map("
 # systemMessage must be at top level — nested inside hookSpecificOutput is silently ignored
 cat <<ENDJSON
 {
-  "systemMessage": "Inkwell: There are ${TASK_COUNT} pending documentation tasks (${TASK_SUMMARY}) in .inkwell-queue.json. Use the doc-writer agent (subagent_type: \"inkwell:doc-writer\") to process the queue. Pass the project root path and queue file path in the agent prompt. After processing, the agent will commit doc changes with a 'docs:' prefix and clear the queue."
+  "systemMessage": "Inkwell: ${TASK_COUNT} pending documentation tasks (${TASK_SUMMARY}) in .inkwell-queue.json. Dispatch the doc-writer agent (subagent_type: \"inkwell:doc-writer\") now. In the agent prompt, explicitly instruct it to: (1) process all tasks in the queue, (2) write docs to the paths configured in .inkwell.json, (3) clear the queue to [], and (4) create a single 'docs:' prefixed commit staging the generated docs and cleared queue. All four steps are required — do not let the agent return until the commit exists."
 }
 ENDJSON
