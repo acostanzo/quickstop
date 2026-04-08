@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-commit-queue.sh",
-            "timeout": 5000,
+            "timeout": 10,
             "statusMessage": "Inkwell: checking for doc tasks..."
           }
         ]
@@ -19,7 +19,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-process-queue.sh",
-            "timeout": 5000,
+            "timeout": 10,
             "statusMessage": "Inkwell: checking doc queue..."
           }
         ]
