@@ -137,7 +137,12 @@ dispatch_file() {
   #
   # The stalled-path guard (fifo masquerading as file, stuck NFS, full disk)
   # is still enforced by with_timeout wrapping the bash invocation itself.
-  with_timeout bash -c 'printf "%s\n" "$2" >> "$1"' _ "$path" "$ENVELOPE"
+  #
+  # stderr is suppressed so write failures (EACCES on a read-only target,
+  # ENOSPC on a full disk, etc.) don't leak "_: line 1: /path: Permission
+  # denied" onto Claude's hook stderr — the contract in README is silent
+  # failure with fallback persistence. Non-zero exit still trips fallback().
+  with_timeout bash -c 'printf "%s\n" "$2" >> "$1"' _ "$path" "$ENVELOPE" 2>/dev/null
 }
 
 dispatch_fifo() {
@@ -145,7 +150,9 @@ dispatch_fifo() {
   path="$(expand_path "${1#fifo:}")"
   [ -p "$path" ] || return 1
   # Blocking open on a fifo with no reader would hang; timeout bounds it.
-  printf '%s\n' "$ENVELOPE" | with_timeout tee "$path" >/dev/null
+  # Suppress stderr for the same reason as dispatch_file — "tee: ...: Broken
+  # pipe" or EPIPE diagnostics must not leak into Claude's hook stream.
+  printf '%s\n' "$ENVELOPE" | with_timeout tee "$path" >/dev/null 2>&1
 }
 
 dispatch_http() {
