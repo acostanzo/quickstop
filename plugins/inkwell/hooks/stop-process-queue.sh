@@ -32,12 +32,7 @@ fi
 # Build a summary of pending tasks for the system message
 TASK_SUMMARY=$(printf '%s' "$QUEUE" | jq -r '[.[] | .type] | group_by(.) | map("\(length) \(.[0])") | join(", ")')
 
-# Output a JSON response with systemMessage instructing Claude to process the queue
-cat <<ENDJSON
-{
-  "hookSpecificOutput": {
-    "hookEventName": "Stop",
-    "systemMessage": "Inkwell: There are ${TASK_COUNT} pending documentation tasks (${TASK_SUMMARY}) in .inkwell-queue.json. Use the doc-writer agent (subagent_type: \"inkwell:doc-writer\") to process the queue. Pass the project root path and queue file path in the agent prompt. After processing, the agent will commit doc changes with a 'docs:' prefix and clear the queue."
-  }
-}
-ENDJSON
+# Emit systemMessage at the top level. Stop events reject hookSpecificOutput per the
+# Claude Code hook schema — nesting it triggers "Hook JSON output validation failed".
+jq -n --arg msg "Inkwell: There are ${TASK_COUNT} pending documentation tasks (${TASK_SUMMARY}) in .inkwell-queue.json. Use the doc-writer agent (subagent_type: \"inkwell:doc-writer\") to process the queue. Pass the project root path and queue file path in the agent prompt. After processing, the agent will commit doc changes with a 'docs:' prefix and clear the queue." \
+  '{systemMessage: $msg}'
