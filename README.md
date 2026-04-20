@@ -43,6 +43,19 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 
 **Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
 
+### Towncrier (v0.1.0)
+
+Emit a structured JSON event for every Claude Code hook to a configurable transport.
+
+- Registers all 26 documented hook events; each one is wrapped in a uniform envelope (`id`, `ts`, `type`, `host`, `session_id`, `pid`, `cwd`, `data`)
+- Pluggable transport — `file:` (default), `fifo:`, or `http://` — via `~/.towncrier/config.json` or `TOWNCRIER_TRANSPORT` env var
+- Hard 2s timeout per emit with automatic fallback to the default file — Claude hooks never hang and events are never lost
+- Strictly observational: pass-through `PermissionRequest`, no stdout interference, no behavior changes
+- `skip_events` config filter for muting noisy events without uninstalling
+- Producer only in v0.1.0 — write your own consumer against the documented envelope
+
+**Default output:** `~/.towncrier/events.jsonl` — `tail -F` and `jq` to start
+
 ## Dev Tools
 
 Repo-level skills for plugin authors (not distributable plugins — these live in `.claude/`):
