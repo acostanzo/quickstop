@@ -123,6 +123,25 @@ Filter on `type` (e.g. `hook.PreToolUse`) and dispatch on `data` shape. The enve
 - `curl` (only required for HTTP transport)
 - `uuidgen` (preferred), `/proc/sys/kernel/random/uuid` (fallback), or RNG-based UUID
 
+## Privacy
+
+The `data` field of every event envelope contains the **raw hook payload from Claude**. Depending on the event, this includes:
+
+- **`PreToolUse`** — full Bash command strings, file paths, tool arguments
+- **`UserPromptSubmit`** — verbatim user prompts, exactly as typed
+- **`PostToolUse` / `FileChanged`** — tool outputs and file contents
+
+For the default `file:` transport, data stays local to your machine. This is generally benign.
+
+For `http://` or `https://` transports, **every hook event is POSTed to the configured endpoint in plaintext JSON**, including the above. If you point an HTTP transport at a third-party service — logging aggregator, webhook relay, observability SaaS — that service receives your Bash commands, prompts, and file contents. This happens silently on every Claude action; there is no per-event confirmation.
+
+Before configuring an HTTP transport, verify that:
+1. You trust and control the receiving service.
+2. Your organization's data classification policy permits sending that data externally.
+3. The endpoint is not accidentally public (misconfigured S3 pre-signed URL, unauthenticated webhook, etc.).
+
+The local JSONL default is intentionally conservative. The HTTP transport is powerful but makes data exfiltration trivially easy if misconfigured.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
