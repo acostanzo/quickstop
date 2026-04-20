@@ -124,9 +124,20 @@ dispatch_file() {
   local dir
   dir="$(dirname "$path")"
   mkdir -p "$dir" 2>/dev/null || return 1
-  # Wrap the append in a timeout: a path that resolves to a fifo, a stalled NFS
-  # mount, or a full disk could otherwise block indefinitely.
-  printf '%s\n' "$ENVELOPE" | with_timeout tee -a "$path" >/dev/null
+  # Atomic append. Bash's `>>` opens O_APPEND; the kernel guarantees writes up
+  # to PIPE_BUF (4 KiB on Linux) complete atomically and won't interleave with
+  # concurrent writers. Envelopes run ~200B-2KB, comfortably under.
+  #
+  # The previous `tee -a` variant had an in-flight window: if the 2s timeout
+  # killed tee mid-write, the target could end up with a truncated line and
+  # fallback() would then append a complete retry beneath it — a corrupt-then-
+  # valid sequence. Using bash's built-in redirect eliminates that window:
+  # either the single write() lands fully or the SIGTERM arrives before the
+  # syscall and nothing is written.
+  #
+  # The stalled-path guard (fifo masquerading as file, stuck NFS, full disk)
+  # is still enforced by with_timeout wrapping the bash invocation itself.
+  with_timeout bash -c 'printf "%s\n" "$2" >> "$1"' _ "$path" "$ENVELOPE"
 }
 
 dispatch_fifo() {
