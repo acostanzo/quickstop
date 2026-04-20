@@ -45,21 +45,6 @@
         "authoring",
         "templates"
       ]
-    },
-    {
-      "name": "inkwell",
-      "version": "0.3.6",
-      "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development \u2014 no manual invocation needed.",
-      "source": "./plugins/inkwell",
-      "keywords": [
-        "documentation",
-        "docs",
-        "auto-docs",
-        "changelog",
-        "adr",
-        "architecture-decisions",
-        "agent-ready"
-      ]
     }
   ]
 }
