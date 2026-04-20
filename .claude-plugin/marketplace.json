@@ -11,35 +11,55 @@
       "version": "2.6.0",
       "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
       "source": "./plugins/claudit",
-      "keywords": ["audit", "configuration", "optimization", "health-check", "best-practices"]
-    },
-    {
-      "name": "bifrost",
-      "version": "1.2.0",
-      "description": "Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines",
-      "source": "./plugins/bifrost",
-      "keywords": ["memory", "context", "sessions", "consolidation", "recall", "agents"]
+      "keywords": [
+        "audit",
+        "configuration",
+        "optimization",
+        "health-check",
+        "best-practices"
+      ]
     },
     {
       "name": "commventional",
       "version": "1.1.0",
       "description": "Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews",
       "source": "./plugins/commventional",
-      "keywords": ["commits", "conventions", "reviews", "comments", "pull-requests"]
+      "keywords": [
+        "commits",
+        "conventions",
+        "reviews",
+        "comments",
+        "pull-requests"
+      ]
     },
     {
       "name": "skillet",
       "version": "0.2.1",
       "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
       "source": "./plugins/skillet",
-      "keywords": ["skills", "scaffolding", "audit", "quality", "authoring", "templates"]
+      "keywords": [
+        "skills",
+        "scaffolding",
+        "audit",
+        "quality",
+        "authoring",
+        "templates"
+      ]
     },
     {
       "name": "inkwell",
       "version": "0.3.5",
-      "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.",
+      "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development \u2014 no manual invocation needed.",
       "source": "./plugins/inkwell",
-      "keywords": ["documentation", "docs", "auto-docs", "changelog", "adr", "architecture-decisions", "agent-ready"]
+      "keywords": [
+        "documentation",
+        "docs",
+        "auto-docs",
+        "changelog",
+        "adr",
+        "architecture-decisions",
+        "agent-ready"
+      ]
     }
   ]
 }

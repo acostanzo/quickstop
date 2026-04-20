@@ -1,8 +1,0 @@
-{
-  "name": "bifrost",
-  "version": "1.2.0",
-  "description": "Memory system for AI agents — capture, consolidate, and recall knowledge across sessions and machines",
-  "author": {"name": "quickstop", "url": "https://github.com/acostanzo/quickstop"},
-  "license": "MIT",
-  "keywords": ["memory", "context", "sessions", "consolidation", "recall", "agents"]
-}
