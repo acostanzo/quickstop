@@ -1,4 +1,4 @@
-# Inkwell (v0.3.5)
+# Inkwell (v0.3.6)
 
 Automatic documentation-as-code engine for Claude Code projects. Inkwell works automatically via hooks, but also provides commands for manual control.
 

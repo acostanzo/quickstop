@@ -1,6 +1,6 @@
 {
   "name": "inkwell",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Automatic documentation-as-code engine. Maintains project documentation as a side effect of development — no manual invocation needed.",
   "author": {
     "name": "quickstop",
