@@ -1,0 +1,19 @@
+{
+  "name": "towncrier",
+  "version": "0.1.0",
+  "description": "Emit a structured JSON event for every Claude Code hook to a configurable transport (file, fifo, or HTTP).",
+  "author": {
+    "name": "Anthony Costanzo",
+    "url": "https://github.com/acostanzo"
+  },
+  "license": "MIT",
+  "keywords": [
+    "hooks",
+    "observability",
+    "telemetry",
+    "events",
+    "logging",
+    "eventbus"
+  ],
+  "homepage": "https://github.com/acostanzo/quickstop/tree/main/plugins/towncrier"
+}
