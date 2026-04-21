@@ -103,7 +103,13 @@ Draft weights — refinable. Total = 100.
 | AGENTS.md scaffold | 10 | pronto kernel | Non-empty AGENTS.md present |
 | Pronto vault | 5 | pronto kernel | `pronto/` directory with expected structure |
 
-Dimensions where the sibling plugin doesn't yet exist score purely on pronto-kernel presence check until the sibling lands. When the sibling arrives, its audit replaces the presence check and contributes the depth score.
+### Scoring rules
+
+- **Sibling installed, audit ran:** dimension contributes its actual 0-100 score, weighted by the rubric percentage.
+- **Sibling absent, kernel presence check passes:** dimension score is **capped at 50** — "presence confirmed; depth not measured." Prevents the perverse incentive where an empty-scaffold repo scores higher than one with the auditor installed and honest findings. Installing the sibling can only move the score up toward reality.
+- **Sibling absent, kernel presence check fails:** dimension scores 0.
+- **Cap value (50) is a tuning knob.** Rebalanceable once real audits accumulate; Phase 1 ships at 50.
+- Dimensions where the recommended sibling is Phase 2+ (inkwell, lintguini, autopompa) score under presence-cap rules until the sibling lands. When the sibling arrives, its audit replaces the presence check and contributes the depth score.
 
 ## Tickets
 
@@ -145,7 +151,7 @@ Ships per-sibling parsers at `plugins/pronto/agents/parsers/{claudit,skillet,com
 
 ### T6 — `/pronto:init` skill
 
-Skill: `plugins/pronto/skills/init/`. Copies template content from `${CLAUDE_PLUGIN_ROOT}/templates/` into target repo. Detects existing files and refuses to overwrite without `--force`. Prompts to install recommended sibling plugins (default: yes, per the registry) or skip. Idempotent — safe to re-run.
+Skill: `plugins/pronto/skills/init/`. Copies template content from `${CLAUDE_PLUGIN_ROOT}/templates/` into target repo. Detects existing files and refuses to overwrite without `--force`. For each recommended sibling plugin not already installed, proposes the install command (e.g., `/plugin install claudit@quickstop`) and invokes it in-conversation on user consent — pronto orchestrates the conversation rather than installing programmatically; Claude Code's normal install path runs with the user in the loop. Idempotent — safe to re-run.
 
 **Acceptance:** run in empty dir produces full kernel; run again without `--force` is a no-op with clear output; run with `--force` overlays updates without destroying user edits outside template paths.
 
