@@ -17,7 +17,7 @@ Avanti lives at `acostanzo/quickstop/plugins/avanti/`. It is a plugin, sibling t
 
 Avanti is Phase 1b in the constellation plan established by pronto Phase 1a (see `project/plans/active/phase-1-pronto.md`). The two ship as a pair:
 
-- **Pronto owns presence.** `/pronto:init` scaffolds `project/` skeleton (empty `plans/`, `tickets/`, `adrs/`, placeholder `pulse.md`). Pronto's kernel verifies the directories exist and contain the expected subdir shape.
+- **Pronto owns presence.** `/pronto:init` scaffolds `project/` skeleton (empty `plans/`, `tickets/`, `adrs/`, `pulse/`). Pronto's kernel verifies the directories exist and contain the expected subdir shape.
 - **Avanti owns contents.** Skills for authoring each artifact type, lifecycle transitions between states, and a depth audit that scores SDLC hygiene for pronto to fold into the composite.
 
 Either plugin can land first. Pronto Phase 1a is merged as of b2ee6d2; avanti Phase 1b is this plan.
@@ -34,13 +34,15 @@ Avanti formalizes three lifecycles. Each has a canonical state set, a folder lay
 | Ticket | open → in-progress → closed | `project/tickets/{open,closed}/<id>-<slug>.md` | `closed/` |
 | ADR | proposed → accepted → superseded | `project/adrs/<NNN>-<slug>.md` (flat; status in frontmatter) | N/A — ADRs stay in place |
 
-**Folder-as-primary.** The folder a file lives in is the authoritative state; frontmatter `status:` mirrors for machine-readability. `/avanti:promote` moves files between folders and updates frontmatter atomically. For ADRs, folders are flat because the sequence matters more than the state — `status:` in frontmatter is authoritative, supersession links are explicit (`superseded_by: 007`).
+**Folder-as-primary.** The folder a file lives in is the authoritative state; frontmatter `status:` mirrors for machine-readability. `/avanti:promote` moves files between folders and updates frontmatter atomically. For ADRs, folders are flat because (a) the numeric sequence is the primary index, (b) the ADR ecosystem (MADR, ADR-tools, Log4Brains) is flat, and (c) most ADRs end at `accepted` and stay there — folder-shuffling is churn for a state that rarely changes. `status:` in frontmatter is authoritative; supersession links are explicit (`superseded_by: 007`).
+
+**Every ticket belongs to a plan.** There are no standalone tickets — if work doesn't justify a one-paragraph plan, it doesn't justify a ticket. IDs mint plan-scoped (`t1`/`t2`/... per plan) from the plan's frontmatter `tickets:` array; `/avanti:ticket` requires `--plan <slug>`.
 
 **"Active" = plan of record, not "currently executing."** A plan is `active` the moment it's adopted — execution may or may not have begun. Execution granularity is tracked by ticket states (`open` / `in-progress` / `closed`), not by promoting the plan itself back and forth. A plan only leaves `active` when every ticket it owns is closed and its acceptance bars pass, at which point it moves to `done`.
 
 **The PR is the draft surface.** Plans land in `plans/active/` at merge time; authoring is the PR review. `plans/draft/` is the escape hatch for plans that were merged but aren't ready to execute — rare, but the shelf is there.
 
-**Tool state.** Avanti gets its own hidden directory — `.avanti/` — symmetric to pronto's `.pronto/`. Holds the repo-wide ticket-ID counter and any other tool-owned state. Git-pattern: tool-named, hidden, never user-authored.
+**Tool state.** Phase 1 has no persistent tool state. `.avanti/` is reserved — mirroring pronto's `.pronto/` pattern — for future needs (cached audit results, per-repo config overrides). Git-pattern when it lands: tool-named, hidden, never user-authored.
 
 ### Skill surface
 
@@ -49,10 +51,10 @@ Avanti ships seven skills in Phase 1. User-invocable, slash-command shaped:
 | Command | Purpose |
 |---|---|
 | `/avanti:plan <slug>` | Draft a new plan from template into `project/plans/active/` |
-| `/avanti:ticket <slug>` | Draft a new ticket from template into `project/tickets/open/` |
+| `/avanti:ticket <slug> --plan <plan-slug>` | Draft a new ticket from template into `project/tickets/open/`, scoped to a plan |
 | `/avanti:adr <slug>` | Draft a new ADR from template into `project/adrs/` |
 | `/avanti:promote <artifact>` | Move an artifact forward through its lifecycle |
-| `/avanti:pulse <message>` | Append a timestamped entry to `project/pulse.md` |
+| `/avanti:pulse <message>` | Append a timestamped entry to today's `project/pulse/YYYY-MM-DD.md` |
 | `/avanti:status` | Summarize active plans, open tickets, recent pulse entries, proposed ADRs |
 | `/avanti:audit` | SDLC hygiene audit — emits pronto wire contract JSON |
 
@@ -65,7 +67,7 @@ Avanti ships four templates in `plugins/avanti/templates/`:
 - `plan.md` — frontmatter + pivot paragraph + model + tickets + acceptance bars + out-of-scope + DoD. Mirrors the shape this very plan uses, so the convention is self-dogfooding.
 - `ticket.md` — frontmatter + context + acceptance criteria + links-to-plan.
 - `adr.md` — frontmatter + context + decision + consequences + alternatives. MADR-flavored, not MADR-strict.
-- `pulse.md` — append-only journal header + first-entry example. Consumer-authored from there.
+- `pulse-day.md` — day-file header + first-entry example. `/avanti:pulse` copies it to `project/pulse/YYYY-MM-DD.md` on the first pulse of each day.
 
 Templates are portable — no author-specific strings — and land in consumer repos via `/avanti:plan`, `/avanti:ticket`, `/avanti:adr` (which copy-and-fill) rather than a separate `/avanti:init` (that surface belongs to pronto's kernel).
 
@@ -86,8 +88,8 @@ updated: YYYY-MM-DD
 **Ticket:**
 ```yaml
 ---
-id: t1                # plan-scoped OR repo-wide; author decides
-plan: phase-1-avanti  # slug of containing plan, or null for standalone
+id: t1                # plan-scoped; minted from the containing plan's frontmatter
+plan: phase-1-avanti  # slug of containing plan (required)
 status: open|in-progress|closed
 updated: YYYY-MM-DD
 ---
@@ -103,7 +105,7 @@ updated: YYYY-MM-DD
 ---
 ```
 
-**Pulse entries** have no per-entry frontmatter — the file has one top-level header and dated entries append below.
+**Pulse entries** have no per-entry frontmatter. Each day file (`project/pulse/YYYY-MM-DD.md`) has a one-line date header; entries append below it with `## HH:MM` sub-headers. Per-day files scope merge conflicts to agents pulsing on the same day, scale indefinitely, and match the mind-palace journal pattern in wide use elsewhere.
 
 ### Pronto audit integration (wire contract)
 
@@ -152,9 +154,9 @@ What avanti's depth audit actually measures:
 - **Plan freshness** — Are active plans being worked? Last-commit-touched date per active plan, flagged stale after N days. Stale-plan count + ages.
 - **Ticket hygiene** — Open tickets with plans that have since moved to `done/`. Tickets older than N days with no `status: in-progress` touch. Tickets with no linked plan (orphans).
 - **ADR completeness** — ADRs in `proposed` state with no decision recorded beyond context. ADRs referencing superseded ADRs that don't themselves link via `superseded_by`.
-- **Pulse cadence** — Days since last pulse entry. Empty pulse files (scaffolded but never appended to).
+- **Pulse cadence** — Days since last pulse entry (measured from the most recent day-file in `project/pulse/`). Flags gaps longer than the pulse-cadence threshold. Empty `project/pulse/` directory (scaffolded but never appended to) scores 0.
 
-Thresholds are tuning knobs — Phase 1 ships sensible defaults (stale = 30 days, cadence warning = 14 days) and surfaces them in `plugins/avanti/references/audit-thresholds.md` for consumers to adjust.
+Thresholds are tuning knobs — Phase 1 ships lenient defaults (stale-plan = 60 days, pulse-cadence warning = 30 days) to avoid nagging before real calibration data exists. Surfaced in `plugins/avanti/references/audit-thresholds.md` for consumers to tighten once usage accumulates.
 
 ## Tickets
 
@@ -166,13 +168,13 @@ Run `smith` in quickstop to generate `plugins/avanti/` with correct structure: `
 
 ### T2 — SDLC conventions reference
 
-Write `plugins/avanti/references/sdlc-conventions.md` — the canonical doc consumers read to understand the lifecycle model. Covers: state machines per artifact type, folder-as-primary rule, frontmatter schemas, where each artifact type lives, how `/avanti:promote` handles transitions, how pulse.md is structured.
+Write `plugins/avanti/references/sdlc-conventions.md` — the canonical doc consumers read to understand the lifecycle model. Covers: state machines per artifact type, folder-as-primary rule, frontmatter schemas, where each artifact type lives, how `/avanti:promote` handles transitions, how per-day pulse files are structured.
 
 **Acceptance:** doc exists, linked from README, portable (no author-specific strings), under ~400 lines.
 
 ### T3 — Templates
 
-`plugins/avanti/templates/{plan,ticket,adr,pulse}.md` — the shapes authoring skills copy from. Templates are minimal but complete: all required frontmatter fields present with placeholders, body skeleton that prompts the author toward the right shape.
+`plugins/avanti/templates/{plan,ticket,adr,pulse-day}.md` — the shapes authoring skills copy from. Templates are minimal but complete: all required frontmatter fields present with placeholders, body skeleton that prompts the author toward the right shape.
 
 **Acceptance:** all templates parse as valid YAML frontmatter; body placeholders are obvious (`<fill in>` or `TODO:`-style) not confusable with real content; grep for author-specific strings returns zero matches.
 
@@ -184,9 +186,9 @@ Skill: `plugins/avanti/skills/plan/`. Takes a slug argument, copies `templates/p
 
 ### T5 — `/avanti:ticket` skill
 
-Skill: `plugins/avanti/skills/ticket/`. Takes a slug argument + optional `--plan <slug>` to link, copies `templates/ticket.md` to `project/tickets/open/<id>-<slug>.md`. Mints an ID: if linked to a plan, scoped `t1`/`t2`/... per that plan (plan's frontmatter `tickets:` array is the authoritative source of used IDs); if standalone, repo-wide sequence `T001`/`T002`/... tracked in `.avanti/next-ticket-id` (tool state, gitignored).
+Skill: `plugins/avanti/skills/ticket/`. Takes a slug argument + required `--plan <slug>`. Copies `templates/ticket.md` to `project/tickets/open/<id>-<slug>.md`. Mints a plan-scoped ID (`t1`/`t2`/...) from the plan's frontmatter `tickets:` array. No standalone tickets — every ticket belongs to a plan.
 
-**Acceptance:** linked ticket lands with correct plan reference in frontmatter; standalone ticket lands with monotonic repo-wide ID; IDs never collide; counter persists across invocations.
+**Acceptance:** ticket lands with correct plan reference in frontmatter; IDs mint monotonically within a plan and never collide; invocation without `--plan` errors clearly; invocation naming a non-existent plan errors clearly.
 
 ### T6 — `/avanti:adr` skill
 
@@ -202,21 +204,21 @@ Skill: `plugins/avanti/skills/promote/`. Takes an artifact path (or a shortcut l
 
 ### T8 — `/avanti:pulse` skill
 
-Skill: `plugins/avanti/skills/pulse/`. Appends a timestamped entry to `project/pulse.md`. Entry shape:
+Skill: `plugins/avanti/skills/pulse/`. Appends a timestamped entry to today's `project/pulse/YYYY-MM-DD.md`. Creates the day-file from `templates/pulse-day.md` on first invocation of the day. Entry shape:
 
 ```markdown
-## 2026-04-21 14:32
+## 14:32
 
 <message body>
 ```
 
-Supports piped stdin (`echo "note" | /avanti:pulse`) and positional args. Never edits prior entries — append-only.
+Supports piped stdin (`echo "note" | /avanti:pulse`) and positional args. Never edits prior entries — append-only. Git-merge-friendly: agents pulsing on different days never touch the same file.
 
-**Acceptance:** entries land in chronological order; timestamps are ISO-8601 dates + HH:MM; prior entries are never modified; empty pulse.md is initialized with a one-line header on first invocation.
+**Acceptance:** first invocation of a new day creates the day-file from the template; entries within a day land in chronological order under `## HH:MM` sub-headers; prior entries are never modified; `/avanti:pulse` on an empty `project/pulse/` directory bootstraps cleanly.
 
 ### T9 — `/avanti:status` skill
 
-Skill: `plugins/avanti/skills/status/`. Reports: active plans (count + names + last-touched), open tickets (count + IDs + age), proposed ADRs (count + IDs), last pulse entry timestamp + age. Two-line summary + optional `--verbose` full dump.
+Skill: `plugins/avanti/skills/status/`. Reports: active plans (count + names + last-touched), open tickets (count + IDs + age), proposed ADRs (count + IDs), last pulse entry (scans `project/pulse/` for the most recent day-file, reports its most recent `## HH:MM` entry). Two-line summary + optional `--verbose` full dump.
 
 **Acceptance:** runs against a populated `project/` produces a one-screen report; runs against an empty `project/` reports "no work in flight" without error.
 
@@ -241,7 +243,7 @@ As the plan executes, avanti's own conventions are applied reflexively:
 - Pulse entries append at each major milestone (T1 landing, each subsequent ticket landing, each A-bar passing).
 - `phase-1-pronto.md` frontmatter is normalized from `status: planning` to one of the canonical states (`active` while pronto's T-tickets are in flight; `done` once its A-bars pass). Part of applying avanti's conventions reflexively to the records already in `project/`.
 
-**Acceptance:** by the time A-bars run, `project/` contains 12 closed tickets, 2 accepted ADRs, an active plan (this one), and a populated pulse.md.
+**Acceptance:** by the time A-bars run, `project/` contains 12 closed tickets, 2 accepted ADRs, an active plan (this one), and a populated `project/pulse/` with day-files spanning execution.
 
 ## Acceptance bars
 
@@ -254,7 +256,7 @@ Every A-bar passes on a fresh machine with only quickstop installed and `/pronto
 3. `/avanti:adr choose-foo`
 4. `/avanti:pulse "started feature-x"`
 
-Verify: plan at `project/plans/active/feature-x.md` with valid frontmatter; ticket at `project/tickets/open/t1-first-step.md` linked to the plan; ADR at `project/adrs/<NNN>-choose-foo.md` with `status: proposed`; pulse entry appended under today's date.
+Verify: plan at `project/plans/active/feature-x.md` with valid frontmatter; ticket at `project/tickets/open/t1-first-step.md` linked to the plan; ADR at `project/adrs/<NNN>-choose-foo.md` with `status: proposed`; pulse entry appended to `project/pulse/<today>.md` under a `## HH:MM` sub-header.
 
 **Pass:** every file produced validates against its template's frontmatter schema; no file overwrites occur; interactive prompts are coherent.
 
@@ -281,6 +283,7 @@ Same repo as A2:
 
 ## Out of scope
 
+- Standalone tickets (tickets not linked to a plan). Every ticket belongs to a plan; `/avanti:ticket` requires `--plan <slug>`. If work doesn't justify a one-paragraph plan, it doesn't justify a ticket.
 - Authoring skills for non-SDLC artifacts (meeting notes, release notes — towncrier owns release notes; meeting notes don't belong here)
 - Cross-repo aggregation (consumer-orchestrator concern)
 - Automatic ticket/plan generation from chat transcripts
