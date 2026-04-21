@@ -152,7 +152,7 @@ Avanti is structured to ship the contract natively from day one — `plugin.json
 What avanti's depth audit actually measures:
 
 - **Plan freshness** — Are active plans being worked? Last-commit-touched date per active plan, flagged stale after N days. Stale-plan count + ages.
-- **Ticket hygiene** — Open tickets with plans that have since moved to `done/`. Tickets older than N days with no `status: in-progress` touch. Tickets with no linked plan (orphans).
+- **Ticket hygiene** — Open tickets with plans that have since moved to `done/`. Tickets older than N days with no `status: in-progress` touch. Tickets with no linked plan — convention violation under plan-scoped-only semantics, flagged as an authoring error.
 - **ADR completeness** — ADRs in `proposed` state with no decision recorded beyond context. ADRs referencing superseded ADRs that don't themselves link via `superseded_by`.
 - **Pulse cadence** — Days since last pulse entry (measured from the most recent day-file in `project/pulse/`). Flags gaps longer than the pulse-cadence threshold. Empty `project/pulse/` directory (scaffolded but never appended to) scores 0.
 
@@ -241,7 +241,6 @@ As the plan executes, avanti's own conventions are applied reflexively:
 - Each T-ticket lands a commit that touches `plugins/avanti/` AND an entry in `project/tickets/open/<id>-<slug>.md` on creation, then moves to `closed/` on ticket completion.
 - Two ADRs land — one recording avanti's scope + model, one recording the lifecycle state-machine model (folder-as-primary with frontmatter mirror). Numbers are next-sequential at authoring time; if pronto's 001-meta-orchestrator-model.md has already landed by then, avanti's are 002 and 003.
 - Pulse entries append at each major milestone (T1 landing, each subsequent ticket landing, each A-bar passing).
-- `phase-1-pronto.md` frontmatter is normalized from `status: planning` to one of the canonical states (`active` while pronto's T-tickets are in flight; `done` once its A-bars pass). Part of applying avanti's conventions reflexively to the records already in `project/`.
 
 **Acceptance:** by the time A-bars run, `project/` contains 12 closed tickets, 2 accepted ADRs, an active plan (this one), and a populated `project/pulse/` with day-files spanning execution.
 
