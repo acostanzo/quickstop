@@ -1,0 +1,94 @@
+{
+  "$schema_version": 1,
+  "description": "Maps rubric dimensions to the recommended sibling plugin, the install command, and the roll-your-own reference. Consumed by /pronto:init, /pronto:audit, /pronto:improve.",
+  "recommendations": {
+    "claude-code-config": {
+      "dimension": "claude-code-config",
+      "dimension_label": "Claude Code config health",
+      "recommended_plugin": "claudit",
+      "plugin_status": "shipped",
+      "install_command": "/plugin install claudit@quickstop",
+      "audit_command": "/claudit --json",
+      "parser_agent": "parsers/claudit",
+      "roll_your_own_ref": "roll-your-own/claude-code-config.md",
+      "presence_check": ".claude/ directory exists at repo root"
+    },
+    "skills-quality": {
+      "dimension": "skills-quality",
+      "dimension_label": "Skills quality",
+      "recommended_plugin": "skillet",
+      "plugin_status": "shipped",
+      "install_command": "/plugin install skillet@quickstop",
+      "audit_command": "/skillet:audit --json",
+      "parser_agent": "parsers/skillet",
+      "roll_your_own_ref": "roll-your-own/skills-quality.md",
+      "presence_check": "At least one SKILL.md under .claude/skills/, plugins/*/skills/, or ~/.claude/skills/"
+    },
+    "commit-hygiene": {
+      "dimension": "commit-hygiene",
+      "dimension_label": "Commit + review hygiene",
+      "recommended_plugin": "commventional",
+      "plugin_status": "shipped",
+      "install_command": "/plugin install commventional@quickstop",
+      "audit_command": "/commventional:audit --json",
+      "parser_agent": "parsers/commventional",
+      "roll_your_own_ref": "roll-your-own/commit-hygiene.md",
+      "presence_check": "Last 20 commits are >=80% conventional-commit shaped"
+    },
+    "code-documentation": {
+      "dimension": "code-documentation",
+      "dimension_label": "Code documentation",
+      "recommended_plugin": "inkwell",
+      "plugin_status": "phase-2-plus",
+      "install_command": null,
+      "audit_command": null,
+      "parser_agent": null,
+      "roll_your_own_ref": "roll-your-own/code-documentation.md",
+      "presence_check": "README.md at repo root with >=10 non-blank lines"
+    },
+    "lint-posture": {
+      "dimension": "lint-posture",
+      "dimension_label": "Lint / format / language rules",
+      "recommended_plugin": "lintguini",
+      "plugin_status": "phase-2-plus",
+      "install_command": null,
+      "audit_command": null,
+      "parser_agent": null,
+      "roll_your_own_ref": "roll-your-own/lint-posture.md",
+      "presence_check": "Language-appropriate lint config file exists"
+    },
+    "event-emission": {
+      "dimension": "event-emission",
+      "dimension_label": "Event emission",
+      "recommended_plugin": "autopompa",
+      "plugin_status": "phase-2-plus",
+      "install_command": null,
+      "audit_command": null,
+      "parser_agent": null,
+      "roll_your_own_ref": "roll-your-own/event-emission.md",
+      "presence_check": "Observability instrumentation grep matches"
+    },
+    "agents-md": {
+      "dimension": "agents-md",
+      "dimension_label": "AGENTS.md scaffold",
+      "recommended_plugin": "pronto",
+      "plugin_status": "shipped",
+      "install_command": null,
+      "audit_command": "/pronto:kernel-check --json",
+      "parser_agent": null,
+      "roll_your_own_ref": "roll-your-own/agents-md.md",
+      "presence_check": "AGENTS.md at repo root with >=5 non-blank lines"
+    },
+    "project-record": {
+      "dimension": "project-record",
+      "dimension_label": "Project record",
+      "recommended_plugin": "avanti",
+      "plugin_status": "phase-1b",
+      "install_command": "/plugin install avanti@quickstop",
+      "audit_command": "/avanti:audit --json",
+      "parser_agent": null,
+      "roll_your_own_ref": "roll-your-own/project-record.md",
+      "presence_check": "project/ directory with plans/, tickets/, adrs/, pulse/ subdirs"
+    }
+  }
+}
