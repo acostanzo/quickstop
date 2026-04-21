@@ -2,7 +2,7 @@
 
 The SDLC work layer of the quickstop constellation.
 
-Avanti authors and maintains the records under `project/` — plans, tickets, ADRs, and the pulse journal — and drives each record through its lifecycle (draft → active → done; open → closed; proposed → accepted → superseded). It is to `project/` what pronto is to the rubric: the plugin that owns the contents.
+Avanti authors and maintains the records under `project/` — plans, tickets, ADRs, and the pulse journal — and drives each record through its lifecycle. It is to `project/` what pronto is to the rubric: the plugin that owns the contents.
 
 ## Skills
 
@@ -11,14 +11,15 @@ Avanti authors and maintains the records under `project/` — plans, tickets, AD
 | `/avanti:plan <slug>` | Draft a new plan |
 | `/avanti:ticket <slug> --plan <plan-slug>` | Draft a plan-scoped ticket |
 | `/avanti:adr <slug>` | Draft a new ADR |
-| `/avanti:promote <artifact>` | Move an artifact forward through its lifecycle |
+| `/avanti:promote <artifact>` | Promote an artifact to its next lifecycle state |
 | `/avanti:pulse <message>` | Append a timestamped pulse entry |
-| `/avanti:status` | Summarize active plans, open tickets, proposed ADRs, recent pulse |
-| `/avanti:audit` | SDLC hygiene audit — emits pronto wire contract JSON |
+| `/avanti:status` | Summarize plans, tickets, ADRs, and recent pulse |
+| `/avanti:audit` | SDLC hygiene audit — emits pronto wire contract JSON under `--json` |
 
-## Conventions
+## References
 
-See `references/sdlc-conventions.md` for the full lifecycle model, folder layout, and frontmatter schemas.
+- `references/sdlc-conventions.md` — lifecycle model, folder layout, frontmatter schemas, promotion semantics.
+- `references/audit-thresholds.md` — tunable knobs for `/avanti:audit` with defaults and override mechanism.
 
 ## Installation
 

@@ -37,7 +37,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/audit-thresholds.md`. Parse the threshold
 - **TICKET_AGE_WARN_DAYS** (default `45`)
 - **PULSE_CADENCE_WARN_DAYS** (default `30`)
 
-If a per-repo `.avanti/config.json` override exists under REPO_ROOT, its values take precedence. If not present, use the reference defaults.
+If a per-repo `.avanti/config.json` override exists under REPO_ROOT, its `thresholds:` block takes precedence (keys not present fall back to reference defaults).
+
+### Step 4b: Honor per-artifact overrides
+
+Before any staleness, cadence, or ticket-age deduction runs in Phase 1, check the artifact's frontmatter for `audit_ignore: true`. If set, skip staleness/cadence deductions for that artifact but still include it in presence counts. Surface the override in verbose markdown output so the pattern doesn't become a quiet way to hide rot. See `references/audit-thresholds.md#overrides` for the semantics.
 
 ### Step 5: Resolve today
 
