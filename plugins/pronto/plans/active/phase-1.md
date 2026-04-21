@@ -31,7 +31,7 @@ Before anything lands in quickstop:
 | `claudit` | exists | Claude Code config health | MCP, permissions, CLAUDE.md quality, context efficiency, over-engineering |
 | `skillet` | exists | Skills | Skill quality + structure |
 | `commventional` | exists | Commits + reviews | Commit/review hygiene |
-| `towncrier` | exists | Release notes | Release hygiene (optional dimension) |
+| `towncrier` | exists | Release notes | — (ecosystem-adjacent; not in Phase 1 rubric) |
 | `inkwell` (new) | Phase 2+ | Code documentation | Doc coverage + drift |
 | `lintguini` (new) | Phase 2+ | Linters + formatters + language rules | Lint posture |
 | `autopompa` (new) | Phase 2+ | Event emission / observability | Observability emit |
@@ -48,9 +48,11 @@ Before anything lands in quickstop:
 
 ### Sibling-audit wire contract
 
-Every sibling plugin exposes an audit command that emits structured JSON pronto can aggregate.
+**Current state:** sibling plugins (claudit, skillet, commventional) emit human-readable reports. None ships a `--json` flag or structured output schema today. The wire contract below is the **target state** pronto builds toward.
 
-**Declaration in `plugin.json`:**
+**Phase 1 reality:** pronto ships per-sibling **parsers** at `plugins/pronto/agents/parsers/<sibling>.md` — each parser is a narrow agent that takes the sibling's human-readable output and extracts the shared JSON shape. Glue until the sibling adopts the contract upstream. As siblings retrofit `plugin.json` declarations in their own plugins' work, pronto auto-discovers and bypasses the parser.
+
+**Target declaration in `plugin.json`:**
 ```json
 {
   "name": "claudit",
@@ -67,7 +69,7 @@ Every sibling plugin exposes an audit command that emits structured JSON pronto 
 }
 ```
 
-**Output schema** (stdout JSON from the audit command):
+**Target output schema** (stdout JSON from the audit command, once siblings adopt):
 ```json
 {
   "plugin": "claudit",
@@ -82,9 +84,9 @@ Every sibling plugin exposes an audit command that emits structured JSON pronto 
 }
 ```
 
-**Scoring semantics:** graded 0-100 per category, composite weighted to 0-100, letter grade A+ (95-100) → F (0-39). Same shape as claudit's existing model.
+**Scoring semantics:** graded 0-100 per category, composite weighted to 0-100, letter-grade bands per claudit: A+ (95-100), A (90-94), B (75-89), C (60-74), D (40-59), F (0-39).
 
-**Discovery:** pronto ships with a default registry of known siblings and their audit commands (hardcoded, for pragmatism today). The `plugin.json` declaration is the forward path — as siblings adopt it, pronto auto-discovers. Retrofit of existing siblings (claudit, skillet, commventional, towncrier) to declare the contract is tracked in *their* plugins' work, not pronto Phase 1.
+**Discovery:** pronto ships with a default registry of known siblings, their current audit commands, and their parsers. The `plugin.json` declaration is the forward path — as siblings adopt the contract, pronto auto-discovers and skips the parser. Retrofit of existing siblings (claudit, skillet, commventional) to declare the contract is tracked in *their* plugins' work, not pronto Phase 1.
 
 ### Readiness rubric
 
@@ -109,11 +111,11 @@ Dimensions where the sibling plugin doesn't yet exist score purely on pronto-ker
 
 Run `smith` in quickstop to generate `plugins/pronto/` with correct structure: `.claude-plugin/plugin.json`, `skills/`, `agents/`, `references/`, `README.md`. Version 0.1.0. Plugin.json declares the `pronto` extension block (empty for now — pronto's audits populate in later tickets).
 
-**Acceptance:** `plugins/pronto/` exists, `claude plugin validate` passes, plugin installs cleanly via marketplace.
+**Acceptance:** `plugins/pronto/` exists; loads cleanly under `claude --plugin-dir plugins/pronto`; `/reload-plugins` surfaces no errors; `plugin.json` parses as valid JSON.
 
 ### T2 — Define readiness rubric + document wire contract
 
-Write `plugins/pronto/references/rubric.md` — the canonical dimension list with weights, owners, and presence-check rules. Write `plugins/pronto/references/sibling-audit-contract.md` — the plugin.json declaration schema, stdout JSON schema, letter-grade bands, examples drawn from claudit.
+Write `plugins/pronto/references/rubric.md` — the canonical dimension list with weights, owners, and presence-check rules. Write `plugins/pronto/references/sibling-audit-contract.md` — the plugin.json declaration schema, target stdout JSON schema, letter-grade bands, and the Phase 1 parser pattern for siblings that haven't yet adopted the contract upstream.
 
 **Acceptance:** rubric.md and sibling-audit-contract.md exist, both link from the plugin README, both validate as portable (no hostnames, no author-specific paths).
 
@@ -123,11 +125,13 @@ Skill: `plugins/pronto/skills/kernel-check/`. Implements non-delegable presence 
 
 **Acceptance:** run against three fixtures (bare repo, pronto-init'd repo, fully populated repo) — each produces the expected score per category.
 
-### T4 — `/pronto:audit` orchestrator
+### T4 — `/pronto:audit` orchestrator + per-sibling parsers
 
-Primary skill: `plugins/pronto/skills/audit/`. Reads rubric, walks the sibling registry (default + plugin.json discovered), shells to each sibling's audit command, parses JSON, aggregates into composite score + letter grade, emits markdown scorecard + optional `--json` output. If a sibling is registered but not installed: mark dimension as "not configured — recommended: X."
+Primary skill: `plugins/pronto/skills/audit/`. Reads rubric, walks the sibling registry (default + plugin.json discovered), shells to each sibling's audit command, extracts scores, aggregates into composite score + letter grade, emits markdown scorecard + optional `--json` output. If a sibling is registered but not installed: mark dimension as "not configured — recommended: X."
 
-**Acceptance:** runs end-to-end against a test repo with claudit+skillet+commventional installed, produces a composite scorecard naming each dimension, score, contributing plugin, and findings.
+Ships per-sibling parsers at `plugins/pronto/agents/parsers/{claudit,skillet,commventional}.md` — narrow agents that take each sibling's human-readable output and emit the shared JSON shape. Parsers are glue until siblings adopt the `plugin.json` contract upstream.
+
+**Acceptance:** runs end-to-end against a test repo with claudit+skillet+commventional installed, produces a composite scorecard naming each dimension, score, contributing plugin, and findings. Each parser tested independently against a canonical example of its sibling's output.
 
 ### T5 — Kernel template content
 
@@ -214,7 +218,7 @@ Same test repo as A2 but with zero siblings installed beyond pronto:
 ## Out of scope (Phase 2+)
 
 - Building `inkwell`, `lintguini`, or `autopompa`
-- Retrofitting claudit/skillet/commventional/towncrier with `plugin.json` audit declaration (tracked in those plugins' own work)
+- Retrofitting claudit/skillet/commventional with `plugin.json` audit declaration (tracked in those plugins' own work)
 - Graded heuristics beyond what the siblings already provide
 - Playwright MCP integration in the template
 - `/pronto:worktree`, `/pronto:audit coverage`, `/pronto:learn`
@@ -228,5 +232,5 @@ Same test repo as A2 but with zero siblings installed beyond pronto:
 - All A-bars pass on a fresh machine with only quickstop installed.
 - `plugins/pronto/README.md` explains the model in under 200 words and links to the rubric + contract references.
 - Comprehensive grep for author-specific strings (`anthony`, `batcomputer`, `batdev`, `batvault`, `alfred`, `grapple-gun`, `batctl`, `mind-palace`) returns zero matches in `plugins/pronto/`.
-- `claude plugin validate` passes on the built plugin.
+- Plugin loads cleanly under `claude --plugin-dir plugins/pronto` with no errors on `/reload-plugins`.
 - One ADR lands: `plugins/pronto/adrs/001-meta-orchestrator-model.md` — records the pivot from self-contained template to meta-orchestrator.
