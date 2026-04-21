@@ -13,6 +13,8 @@ Pronto doesn't re-implement what siblings do — `claudit` audits Claude Code co
 
 - [`references/rubric.md`](references/rubric.md) — the canonical dimensions, weights, owners, and presence-check rules.
 - [`references/sibling-audit-contract.md`](references/sibling-audit-contract.md) — the `plugin.json` declaration schema and stdout JSON shape siblings emit against.
+- [`references/report-format.md`](references/report-format.md) — the markdown scorecard template and the JSON composite shape produced by `/pronto:audit`.
+- [`references/recommendations.json`](references/recommendations.json) — dimension-to-sibling recommendation registry.
 
 ## Commands
 
