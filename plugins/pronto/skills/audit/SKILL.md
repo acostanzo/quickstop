@@ -144,23 +144,29 @@ Derive `composite_grade` and `composite_label` per the bands in `rubric.md`:
 
 ### If OUTPUT_MODE == "json"
 
-Write a single JSON object to stdout matching the shape in `references/report-format.md`:
+**Emit ONLY the JSON object to stdout. Nothing else.**
 
-```json
-{
-  "schema_version": 1,
-  "repo": "<REPO_ROOT>",
-  "timestamp": "<TIMESTAMP>",
-  "composite_score": <int>,
-  "composite_grade": "<letter>",
-  "composite_label": "<label>",
-  "dimensions": [ ... ],
-  "kernel": <KERNEL_JSON>,
-  "sibling_integration_notes": [ ... ]
-}
-```
+Hard rules (violating any of these breaks `jq` piping and is a test failure, not a style nit):
 
-No prose, no markdown fences. All progress output goes to stderr.
+- No markdown code fences. Do not wrap the output in ` ```json ` / ` ``` `. The first byte on stdout must be `{` and the last must be `}`.
+- No prose preamble ("Emitting the JSON composite…", "Here is the output:").
+- No trailing narrative ("State persisted to .pronto/state.json", "Composite 57/100…", summary lines, next-step banners).
+- No blank line before or after the JSON object.
+- All progress, state-persistence confirmations, and diagnostics go to **stderr** (`echo "..." >&2`) or are suppressed entirely. Never to stdout.
+
+If you are tempted to explain what you did, either send it to stderr via `echo >&2` or omit it. Machine consumers pipe stdout through `jq` — any prose, any fence, any extra line contaminates the pipe and is a bug.
+
+The object shape is defined in `references/report-format.md`. Top-level required fields:
+
+- `schema_version`: `1`
+- `repo`: absolute REPO_ROOT path
+- `timestamp`: TIMESTAMP (ISO 8601 UTC)
+- `composite_score`: integer 0–100
+- `composite_grade`: letter per the bands above
+- `composite_label`: label per the bands above
+- `dimensions`: array, one entry per rubric dimension (shape in `references/report-format.md`)
+- `kernel`: the full KERNEL_JSON object captured in Phase 3
+- `sibling_integration_notes`: array of strings (empty array `[]` if no notes)
 
 ### If OUTPUT_MODE == "markdown"
 
@@ -203,7 +209,11 @@ Annotations showing `(Phase N)` surface for siblings whose `plugin_status` is `p
 
 ## Phase 7: Persist state
 
-Write the JSON composite to `${REPO_ROOT}/.pronto/state.json`. Create `.pronto/` if missing. Overwrite any prior state. Schema:
+Write the JSON composite to `${REPO_ROOT}/.pronto/state.json`. Create `.pronto/` if missing. Overwrite any prior state.
+
+In **JSON mode**, any confirmation or diagnostic about state persistence (e.g., "State persisted to .pronto/state.json") goes to **stderr** only — never to stdout. Stdout already received its sole payload in Phase 6 (the JSON composite), and adding trailing prose breaks machine consumers piping through `jq`. In markdown mode, the state-persistence confirmation is optional and may appear after the scorecard.
+
+Schema:
 
 ```json
 {
