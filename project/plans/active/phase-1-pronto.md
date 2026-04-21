@@ -123,7 +123,7 @@ Draft weights — refinable. Total = 100.
 | Commit + review hygiene | 15 | commventional | Recent commits follow pattern |
 | Code documentation | 15 | inkwell (Phase 2+) | README exists |
 | Lint / format / language rules | 15 | lintguini (Phase 2+) | Lint config file exists |
-| Event emission | 5 | autopompa (Phase 2+) | Optional — 0 weight until installed |
+| Event emission | 5 | autopompa (Phase 2+) | Observability instrumentation detected (e.g., OpenTelemetry config, event-bus references) |
 | AGENTS.md scaffold | 10 | pronto kernel | Non-empty AGENTS.md present |
 | Project record | 5 | avanti (Phase 1b) | `project/` directory with expected structure |
 
@@ -260,7 +260,7 @@ Same test repo as A2 but with zero siblings installed beyond pronto:
 
 ## Definition of done
 
-- All T-tickets land with their own atomic conventional commits under `plugins/pronto/`.
+- All T-tickets land with their own atomic conventional commits (plugin code under `plugins/pronto/`; project records under `project/`).
 - All A-bars pass on a fresh machine with only quickstop installed.
 - `plugins/pronto/README.md` explains the model in under 200 words and links to the rubric + contract references.
 - Comprehensive grep for author-specific strings (`anthony`, `batcomputer`, `batdev`, `batvault`, `alfred`, `grapple-gun`, `batctl`, `mind-palace`) returns zero matches in `plugins/pronto/`.
