@@ -113,7 +113,7 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
 
 When dispatching a parser agent, use the Task tool with these fields:
 
-- `subagent_type`: `pronto:parse-claudit`, `pronto:parse-skillet`, or `pronto:parse-commventional` (the parser agent names after their files in `agents/parsers/`).
+- `subagent_type`: `pronto:parsers:parse-claudit`, `pronto:parsers:parse-skillet`, or `pronto:parsers:parse-commventional`. Claude Code namespaces agents by plugin **and** subdirectory, so the `agents/parsers/` subdirectory becomes a `parsers:` segment in the registered name. The agent's `name:` frontmatter (`parse-claudit` etc.) is the final segment. Verify against the stream-json init event's `agents` array if in doubt.
 - `description`: `Parse <sibling> audit`.
 - `prompt`: A compact brief telling the parser which repo to audit (absolute path), the dimension slug it's scoring, and the contract shape it must emit. Instruct the parser to return **only** the JSON object — no prose wrapping.
 
