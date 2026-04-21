@@ -11,6 +11,9 @@ Pronto audits a repo against a **rubric of readiness dimensions** (Claude Code c
 
 Pronto doesn't re-implement what siblings do — `claudit` audits Claude Code config, `skillet` audits skills, `commventional` audits commit hygiene. Pronto owns the rubric, the orchestration, a minimal kernel (AGENTS.md scaffolding, `project/` container presence, `.pronto/` tool state), and a recommendation registry.
 
+- [`references/rubric.md`](references/rubric.md) — the canonical dimensions, weights, owners, and presence-check rules.
+- [`references/sibling-audit-contract.md`](references/sibling-audit-contract.md) — the `plugin.json` declaration schema and stdout JSON shape siblings emit against.
+
 ## Commands
 
 | Command | Purpose |
