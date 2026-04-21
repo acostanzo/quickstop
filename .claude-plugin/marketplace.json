@@ -73,6 +73,21 @@
         "kernel",
         "scorecard"
       ]
+    },
+    {
+      "name": "avanti",
+      "version": "0.1.0",
+      "description": "SDLC work layer — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions; audits SDLC hygiene",
+      "source": "./plugins/avanti",
+      "keywords": [
+        "sdlc",
+        "plans",
+        "tickets",
+        "adrs",
+        "pulse",
+        "lifecycle",
+        "audit"
+      ]
     }
   ]
 }

@@ -67,6 +67,18 @@ Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric o
 - Machine-parseable `--json` output alongside the human-readable markdown scorecard
 
 **Commands:** `/pronto:init`, `/pronto:audit`, `/pronto:status`, `/pronto:improve`
+### Avanti (v0.1.0)
+
+The SDLC work layer — authors and maintains the records under `project/` (plans, tickets, ADRs, pulse journal) and drives each record through its lifecycle.
+
+- Three lifecycles: plans (draft → active → done), tickets (open → in-progress → closed), ADRs (proposed → accepted → superseded)
+- Folder-as-primary — the folder a file lives in is the authoritative state; frontmatter `status:` mirrors for machine-readability
+- Plan-scoped tickets — every ticket belongs to a plan; no standalone tickets
+- Per-day pulse files (`project/pulse/YYYY-MM-DD.md`) — append-only, merge-friendly
+- Declares pronto's `project-record` audit dimension natively via `plugin.json` — emits wire-contract JSON under `--json`
+- Templates ship portable; `/avanti:plan`, `/avanti:ticket`, `/avanti:adr` copy and fill into consumer repos
+
+**Commands:** `/avanti:plan`, `/avanti:ticket`, `/avanti:adr`, `/avanti:promote`, `/avanti:pulse`, `/avanti:status`, `/avanti:audit`
 
 ## Dev Tools
 
