@@ -56,6 +56,18 @@ Emit a structured JSON event for every Claude Code hook to a configurable transp
 
 **Default output:** `~/.towncrier/events.jsonl` — `tail -F` and `jq` to start
 
+### Pronto (v0.1.0)
+
+Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins.
+
+- Rubric-driven: scores Claude Code config, skills, commit hygiene, docs, lint posture, observability, AGENTS.md, and project records
+- Delegation over re-implementation: folds `claudit`, `skillet`, `commventional` audit output into a composite scorecard via a shared wire contract
+- Kernel scaffolds the minimum (AGENTS.md, `project/` container, `.pronto/` tool state) and flags sibling-covered dimensions as "not configured" when a recommended plugin is missing
+- Roll-your-own references for every dimension — recommendations are registered, not required
+- Machine-parseable `--json` output alongside the human-readable markdown scorecard
+
+**Commands:** `/pronto:init`, `/pronto:audit`, `/pronto:status`, `/pronto:improve`
+
 ## Dev Tools
 
 Repo-level skills for plugin authors (not distributable plugins — these live in `.claude/`):
