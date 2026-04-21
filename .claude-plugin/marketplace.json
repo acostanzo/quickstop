@@ -59,6 +59,20 @@
         "logging",
         "eventbus"
       ]
+    },
+    {
+      "name": "pronto",
+      "version": "0.1.0",
+      "description": "Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins",
+      "source": "./plugins/pronto",
+      "keywords": [
+        "audit",
+        "meta-orchestrator",
+        "readiness",
+        "rubric",
+        "kernel",
+        "scorecard"
+      ]
     }
   ]
 }

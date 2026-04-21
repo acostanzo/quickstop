@@ -1,0 +1,21 @@
+{
+  "name": "pronto",
+  "version": "0.1.0",
+  "description": "Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": [
+    "audit",
+    "meta-orchestrator",
+    "readiness",
+    "rubric",
+    "kernel",
+    "scorecard"
+  ],
+  "pronto": {
+    "audits": []
+  }
+}
