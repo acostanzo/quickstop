@@ -71,7 +71,7 @@ Store the resolved current state as **CURRENT_STATE**. If `status:` and folder d
 | Type | Current | Next | Notes |
 |---|---|---|---|
 | plan | `draft` | `active` | move `draft/ → active/` |
-| plan | `active` | `done` | move `active/ → done/` |
+| plan | `active` | `done` | move `active/ → done/`; **guard**: all tickets in plan's `tickets:` array must be in `closed` state |
 | plan | `done` | — | terminal; error |
 | ticket | `open` | `in-progress` | frontmatter only; folder stays in `open/` |
 | ticket | `in-progress` | `closed` | move `open/ → closed/` |
@@ -80,6 +80,20 @@ Store the resolved current state as **CURRENT_STATE**. If `status:` and folder d
 | adr | `proposed` | `accepted` | frontmatter only |
 | adr | `accepted` | `superseded` | frontmatter only; requires `--supersedes <id>` |
 | adr | `superseded` | — | terminal; error |
+
+### Step 3a: Guard — plan active → done
+
+If TYPE is `plan` and NEXT_STATE is `done`, scan every ticket ID in the plan's `tickets:` frontmatter array and check that each corresponding file lives in `project/tickets/closed/`. If any ticket is not closed, abort with a clear message:
+
+```
+Cannot promote plan "${<plan-slug>}" to done: N tickets still open.
+  - t3-foo (open)
+  - t5-bar (in-progress)
+
+Close each open ticket first with /avanti:promote ticket:<id-slug>.
+```
+
+This mirrors the convention stated in `references/sdlc-conventions.md`: "A plan only leaves `active` when every ticket it owns is closed."
 
 If the current state has exactly one next legal state, use it. If multiple (ticket `open`), use AskUserQuestion to pick:
 

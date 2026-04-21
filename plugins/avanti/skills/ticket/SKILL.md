@@ -62,7 +62,7 @@ Read PLAN_PATH. Extract the `tickets:` array from the YAML frontmatter block.
 - If `tickets:` is present but empty (`[]`) → starting fresh.
 - If `tickets:` holds `[t1, t2, …]` → use those.
 
-Parse the integer suffix from each entry (e.g., `t3` → `3`). Store the max as **MAX_ID** (default `0` if the array is empty).
+Parse the integer suffix from each entry that matches `^t\d+$` (e.g., `t3` → `3`). **Ignore entries that do not match** — plans commonly carry acceptance-bar IDs (`a1`, `a2`, …) in the same `tickets:` array, and those are not minted by this skill. Store the max of the `t`-prefixed IDs as **MAX_ID** (default `0` if no matching entries exist).
 
 ### Step 2: Mint
 

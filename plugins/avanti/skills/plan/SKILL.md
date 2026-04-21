@@ -78,6 +78,8 @@ Produce **RENDERED** by applying these substitutions to TEMPLATE:
 - `# TODO — <plan title>` → `# ${TITLE}`
 - The "TODO: one paragraph that pivots into the work..." block under `## The role in one paragraph` → ${PIVOT}
 
+The template ships with `status: active` (the default landing folder), so no status substitution is needed for the default path. If a future `--draft` flag ships, the substitution becomes `status: active` → `status: draft` and the write target becomes `plans/draft/`.
+
 Leave all other TODO/placeholder sections intact — the author will flesh them out over the course of the plan's life (model, tickets, acceptance bars, out-of-scope, DoD).
 
 ### Step 3: Write
