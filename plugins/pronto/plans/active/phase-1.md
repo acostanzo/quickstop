@@ -79,7 +79,7 @@ Before anything lands in quickstop:
     { "name": "MCP Configuration", "weight": 0.15, "score": 70, "findings": [...] }
   ],
   "composite_score": 78,
-  "letter_grade": "B+",
+  "letter_grade": "B",
   "recommendations": [...]
 }
 ```
