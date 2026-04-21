@@ -205,7 +205,18 @@ For bars, use `█` filled and `░` empty; scale to 25 characters total; append
 
 ### JSON mode (`--json`)
 
-Emit a single JSON object on stdout matching the pronto wire contract. Shape:
+**Emit ONLY the JSON object to stdout. Nothing else.**
+
+Hard rules (violating any of these breaks `jq` piping and is a test failure, not a style nit):
+
+- No markdown code fences. Do not wrap the output in ` ```json ` / ` ``` `. The first byte on stdout must be `{` and the last must be `}`.
+- No prose preamble, no trailing narrative, no debug prints.
+- No blank line before or after the JSON object.
+- Any diagnostic must go to **stderr** (`echo "..." >&2`) or be suppressed. Never to stdout.
+
+If you are tempted to explain what you did, send it to stderr via `echo >&2` or omit it. The caller (pronto or another consumer) pipes stdout through a JSON parser without filtering — any extra byte is a bug.
+
+Shape (per `plugins/pronto/references/sibling-audit-contract.md`; the example below documents the schema, **it is not a template to copy its fences from**):
 
 ```json
 {
@@ -250,8 +261,6 @@ Emit a single JSON object on stdout matching the pronto wire contract. Shape:
   ]
 }
 ```
-
-In `--json` mode, emit **only** the JSON object — no markdown preamble, no trailing lines, no debug prints. The caller (pronto or another consumer) must be able to pipe the output through a JSON parser without filtering.
 
 ## Error handling
 
