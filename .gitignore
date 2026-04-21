@@ -45,3 +45,6 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code plugin tool state
+.pronto/
