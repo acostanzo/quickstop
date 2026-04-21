@@ -1,6 +1,6 @@
 ---
 phase: 1
-status: planning
+status: active
 tickets: [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, a1, a2, a3]
 updated: 2026-04-21
 ---
@@ -52,7 +52,7 @@ Consumer repos end up with this shape after `/pronto:init`:
 
 | Folder | Owned by | What lives there |
 |---|---|---|
-| `project/` | avanti (content) / pronto kernel (presence) | `plans/`, `tickets/`, `adrs/`, `pulse.md` — user-authored SDLC records |
+| `project/` | avanti (content) / pronto kernel (presence) | `plans/`, `tickets/`, `adrs/`, `pulse/` — user-authored SDLC records |
 | `docs/` | inkwell (Phase 2+) | User-facing documentation |
 | `.pronto/` | pronto (tool state, hidden) | `state.json` — cached audit results; never user-authored |
 | `AGENTS.md` | pronto kernel (scaffold) / claudit (depth audit) | Agent-facing conventions |
@@ -62,7 +62,7 @@ Content-named folders (`project/`, `docs/`) for user-authored content; tool-name
 ### Kernel surface (what pronto always owns)
 
 - **AGENTS.md scaffolding** — presence + minimum-viable structure. Quality audit delegates to claudit.
-- **`project/` container presence** — scaffolds and checks presence of `project/` with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse.md`). Authoring + lifecycle delegate to avanti (Phase 1b).
+- **`project/` container presence** — scaffolds and checks presence of `project/` with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse/`). Authoring + lifecycle delegate to avanti (Phase 1b).
 - **`.pronto/` tool state** — hidden directory, git-pattern. Holds `state.json` (cached audit results). Tool-owned; never user-authored content.
 - **Basic repo hygiene presence checks** — README, LICENSE, `.gitignore`, `.claude/`. Binary presence only; depth delegates.
 - **The rubric itself** — registry of dimensions, weights, and which sibling plugin audits each.
@@ -151,7 +151,7 @@ Write `plugins/pronto/references/rubric.md` — the canonical dimension list wit
 
 ### T3 — Kernel presence checks
 
-Skill: `plugins/pronto/skills/kernel-check/`. Implements non-delegable presence checks: AGENTS.md non-empty, `project/` container present with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse.md`), `.pronto/` tool-state dir present, README/LICENSE/.gitignore/.claude present. Emits results in the sibling-audit output shape with `plugin: "pronto-kernel"`.
+Skill: `plugins/pronto/skills/kernel-check/`. Implements non-delegable presence checks: AGENTS.md non-empty, `project/` container present with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse/`), `.pronto/` tool-state dir present, README/LICENSE/.gitignore/.claude present. Emits results in the sibling-audit output shape with `plugin: "pronto-kernel"`.
 
 **Acceptance:** run against three fixtures (bare repo, pronto-init'd repo, fully populated repo) — each produces the expected score per category.
 
@@ -167,7 +167,7 @@ Ships per-sibling parsers at `plugins/pronto/agents/parsers/{claudit,skillet,com
 
 `plugins/pronto/templates/` — the minimal tree `/pronto:init` drops into a target repo:
 - `AGENTS.md` scaffold (portable, no author references)
-- `project/` container skeleton (empty `plans/`, `tickets/`, `adrs/` dirs + placeholder `pulse.md`). Pronto scaffolds presence only; avanti (Phase 1b) owns authoring + lifecycle.
+- `project/` container skeleton: empty `plans/`, `tickets/`, `adrs/`, `pulse/` dirs. Avanti creates per-day pulse files (`YYYY-MM-DD.md`) on first invocation of each day. Pronto scaffolds presence only; avanti (Phase 1b) owns authoring and lifecycle.
 - `.pronto/` tool-state dir with starter `state.json`
 - `.claude/` seed (empty dirs + placeholder README explaining what belongs there)
 - `.gitignore` additions for `.pronto/` tool state + avanti-generated noise (once avanti ships)
@@ -188,7 +188,7 @@ Skill: `plugins/pronto/skills/status/`. Reports: installed sibling plugins + ver
 
 ### T8 — `/pronto:improve` skill
 
-Skill: `plugins/pronto/skills/improve/`. Reads last audit from `.pronto/state.json`, walks lowest-scoring dimensions first, offers per dimension: "install recommended plugin X," "walk through rolling your own per `<ref>`," or "skip." Appends a journal entry to `project/pulse.md` (shared append-only log — avanti owns the richer authoring path) noting what was chosen.
+Skill: `plugins/pronto/skills/improve/`. Reads last audit from `.pronto/state.json`, walks lowest-scoring dimensions first, offers per dimension: "install recommended plugin X," "walk through rolling your own per `<ref>`," or "skip." Appends a journal entry to today's `project/pulse/YYYY-MM-DD.md` (shared append-only log — avanti owns the richer authoring path) noting what was chosen.
 
 **Acceptance:** after `/pronto:audit` run, `/pronto:improve` surfaces the weakest dimension first and offers a coherent choice menu.
 
