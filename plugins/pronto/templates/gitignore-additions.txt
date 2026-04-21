@@ -1,0 +1,6 @@
+# --- pronto (tool state) ---
+# Pronto caches audit results here — never user-authored, never committed.
+.pronto/
+
+# --- avanti (SDLC tool state, when installed) ---
+.avanti/
