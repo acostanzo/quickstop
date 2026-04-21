@@ -9,7 +9,7 @@ updated: 2026-04-21
 
 ## The pivot in one paragraph
 
-Pronto is the **meta-orchestrator** of Claude-Code-readiness. It audits a repo against a rubric of readiness dimensions, scores it, and for each dimension either (a) runs the recommended sibling plugin's audit and folds the score in, or (b) reports "not configured" with an install-or-walkthrough recommendation. Pronto doesn't re-implement what siblings do — claudit audits Claude Code config, skillet audits skills, commventional audits commit hygiene, etc. Pronto owns the rubric, the orchestration, a minimal kernel (AGENTS.md scaffold, `pronto/` vault structure), and a recommendation registry.
+Pronto is the **meta-orchestrator** of Claude-Code-readiness. It audits a repo against a rubric of readiness dimensions, scores it, and for each dimension either (a) runs the recommended sibling plugin's audit and folds the score in, or (b) reports "not configured" with an install-or-walkthrough recommendation. Pronto doesn't re-implement what siblings do — claudit audits Claude Code config, skillet audits skills, commventional audits commit hygiene, etc. Pronto owns the rubric, the orchestration, a minimal kernel (AGENTS.md scaffold, `project/` container presence check, `.pronto/` tool state), and a recommendation registry.
 
 Pronto lives at `acostanzo/quickstop/plugins/pronto/`. It is a plugin, not a separate repo.
 
@@ -27,19 +27,43 @@ Before anything lands in quickstop:
 
 | Plugin | Status | Domain | Rubric dimension it owns |
 |---|---|---|---|
-| `pronto` | to build | Auditor + coach + kernel | Orchestration + kernel dimensions |
+| `pronto` | Phase 1a (this plan) | Auditor + coach + kernel | Orchestration + kernel dimensions |
+| `avanti` | Phase 1b (parallel workstream) | SDLC work — authors plans/tickets/ADRs, drives lifecycle, owns `project/` | Project record |
 | `claudit` | exists | Claude Code config health | MCP, permissions, CLAUDE.md quality, context efficiency, over-engineering |
 | `skillet` | exists | Skills | Skill quality + structure |
 | `commventional` | exists | Commits + reviews | Commit/review hygiene |
 | `towncrier` | exists | Release notes | — (ecosystem-adjacent; not in Phase 1 rubric) |
-| `inkwell` (new) | Phase 2+ | Code documentation | Doc coverage + drift |
+| `inkwell` (new) | Phase 2+ | Code documentation — owns `docs/` | Doc coverage + drift |
 | `lintguini` (new) | Phase 2+ | Linters + formatters + language rules | Lint posture |
 | `autopompa` (new) | Phase 2+ | Event emission / observability | Observability emit |
+
+### Parallel workstream: avanti (Phase 1b)
+
+Pronto is the **audit / orchestration layer**. Avanti is the **SDLC work layer** — it authors plans, tickets, and ADRs and drives them through lifecycle (draft → active → done; open → closed; proposed → accepted → superseded). The two plugins ship as a pair:
+
+- **Phase 1a — pronto.** This plan. Kernel scaffolds `project/` container presence; the audit rubric scores the "Project record" dimension by kernel-presence only until avanti ships.
+- **Phase 1b — avanti.** Separate plan at `project/plans/active/phase-1-avanti.md` (opened after Phase 1a lands). Owns `project/` contents: authoring skills, lifecycle transitions, pulse-journal helpers, and SDLC-hygiene audits (stale plans, orphaned artifacts, pulse freshness).
+
+Pronto and avanti can land in either order. Once both exist, pronto's "Project record" dimension picks up avanti's depth audit and stops being presence-only.
+
+### Folder ownership
+
+Consumer repos end up with this shape after `/pronto:init`:
+
+| Folder | Owned by | What lives there |
+|---|---|---|
+| `project/` | avanti (content) / pronto kernel (presence) | `plans/`, `tickets/`, `adrs/`, `pulse.md` — user-authored SDLC records |
+| `docs/` | inkwell (Phase 2+) | User-facing documentation |
+| `.pronto/` | pronto (tool state, hidden) | `state.json` — cached audit results; never user-authored |
+| `AGENTS.md` | pronto kernel (scaffold) / claudit (depth audit) | Agent-facing conventions |
+
+Content-named folders (`project/`, `docs/`) for user-authored content; tool-named hidden folders (`.pronto/`) for tool state. Plugins can be swapped without filesystem churn.
 
 ### Kernel surface (what pronto always owns)
 
 - **AGENTS.md scaffolding** — presence + minimum-viable structure. Quality audit delegates to claudit.
-- **`pronto/` vault structure** — `plans/{draft,active,done}`, `tickets/{open,closed}`, `adrs/`, `state.json`, `pulse.md`. Pronto's own memory.
+- **`project/` container presence** — scaffolds and checks presence of `project/` with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse.md`). Authoring + lifecycle delegate to avanti (Phase 1b).
+- **`.pronto/` tool state** — hidden directory, git-pattern. Holds `state.json` (cached audit results). Tool-owned; never user-authored content.
 - **Basic repo hygiene presence checks** — README, LICENSE, `.gitignore`, `.claude/`. Binary presence only; depth delegates.
 - **The rubric itself** — registry of dimensions, weights, and which sibling plugin audits each.
 - **Orchestration skills** — `/pronto:audit`, `/pronto:init`, `/pronto:improve`, `/pronto:status`.
@@ -101,7 +125,7 @@ Draft weights — refinable. Total = 100.
 | Lint / format / language rules | 15 | lintguini (Phase 2+) | Lint config file exists |
 | Event emission | 5 | autopompa (Phase 2+) | Optional — 0 weight until installed |
 | AGENTS.md scaffold | 10 | pronto kernel | Non-empty AGENTS.md present |
-| Pronto vault | 5 | pronto kernel | `pronto/` directory with expected structure |
+| Project record | 5 | avanti (Phase 1b) | `project/` directory with expected structure |
 
 ### Scoring rules
 
@@ -109,7 +133,7 @@ Draft weights — refinable. Total = 100.
 - **Sibling absent, kernel presence check passes:** dimension score is **capped at 50** — "presence confirmed; depth not measured." Prevents the perverse incentive where an empty-scaffold repo scores higher than one with the auditor installed and honest findings. Installing the sibling can only move the score up toward reality.
 - **Sibling absent, kernel presence check fails:** dimension scores 0.
 - **Cap value (50) is a tuning knob.** Rebalanceable once real audits accumulate; Phase 1 ships at 50.
-- Dimensions where the recommended sibling is Phase 2+ (inkwell, lintguini, autopompa) score under presence-cap rules until the sibling lands. When the sibling arrives, its audit replaces the presence check and contributes the depth score.
+- Dimensions whose recommended sibling isn't yet shipped (avanti pending Phase 1b; inkwell, lintguini, autopompa pending Phase 2+) score under presence-cap rules until the sibling lands. When the sibling arrives, its audit replaces the presence check and contributes the depth score.
 
 ## Tickets
 
@@ -127,7 +151,7 @@ Write `plugins/pronto/references/rubric.md` — the canonical dimension list wit
 
 ### T3 — Kernel presence checks
 
-Skill: `plugins/pronto/skills/kernel-check/`. Implements non-delegable presence checks: AGENTS.md non-empty, `pronto/` vault structure valid, README/LICENSE/.gitignore/.claude present. Emits results in the sibling-audit output shape with `plugin: "pronto-kernel"`.
+Skill: `plugins/pronto/skills/kernel-check/`. Implements non-delegable presence checks: AGENTS.md non-empty, `project/` container present with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse.md`), `.pronto/` tool-state dir present, README/LICENSE/.gitignore/.claude present. Emits results in the sibling-audit output shape with `plugin: "pronto-kernel"`.
 
 **Acceptance:** run against three fixtures (bare repo, pronto-init'd repo, fully populated repo) — each produces the expected score per category.
 
@@ -143,9 +167,10 @@ Ships per-sibling parsers at `plugins/pronto/agents/parsers/{claudit,skillet,com
 
 `plugins/pronto/templates/` — the minimal tree `/pronto:init` drops into a target repo:
 - `AGENTS.md` scaffold (portable, no author references)
-- `pronto/` vault skeleton (empty plans/tickets/adrs dirs, starter `state.json`, starter `pulse.md`)
+- `project/` container skeleton (empty `plans/`, `tickets/`, `adrs/` dirs + placeholder `pulse.md`). Pronto scaffolds presence only; avanti (Phase 1b) owns authoring + lifecycle.
+- `.pronto/` tool-state dir with starter `state.json`
 - `.claude/` seed (empty dirs + placeholder README explaining what belongs there)
-- `.gitignore` additions for pronto vault noise
+- `.gitignore` additions for `.pronto/` tool state + avanti-generated noise (once avanti ships)
 
 **Acceptance:** all files portable, all frontmatter valid YAML, grep for author-specific strings returns zero matches.
 
@@ -157,13 +182,13 @@ Skill: `plugins/pronto/skills/init/`. Copies template content from `${CLAUDE_PLU
 
 ### T7 — `/pronto:status` skill
 
-Skill: `plugins/pronto/skills/status/`. Reports: installed sibling plugins + versions, last audit score + date, dimensions below threshold, dimensions not configured. Reads state from `pronto/state.json`. Two-line summary + optional `--verbose` full dump.
+Skill: `plugins/pronto/skills/status/`. Reports: installed sibling plugins + versions, last audit score + date, dimensions below threshold, dimensions not configured. Reads state from `.pronto/state.json`. Two-line summary + optional `--verbose` full dump.
 
 **Acceptance:** run on pronto-init'd repo produces a coherent one-screen report; run on a repo with no pronto state reports "no audit run yet."
 
 ### T8 — `/pronto:improve` skill
 
-Skill: `plugins/pronto/skills/improve/`. Reads last audit from `pronto/state.json`, walks lowest-scoring dimensions first, offers per dimension: "install recommended plugin X," "walk through rolling your own per `<ref>`," or "skip." Writes a journal entry to `pronto/pulse.md` noting what was chosen.
+Skill: `plugins/pronto/skills/improve/`. Reads last audit from `.pronto/state.json`, walks lowest-scoring dimensions first, offers per dimension: "install recommended plugin X," "walk through rolling your own per `<ref>`," or "skip." Appends a journal entry to `project/pulse.md` (shared append-only log — avanti owns the richer authoring path) noting what was chosen.
 
 **Acceptance:** after `/pronto:audit` run, `/pronto:improve` surfaces the weakest dimension first and offers a coherent choice menu.
 
@@ -221,14 +246,15 @@ Same test repo as A2 but with zero siblings installed beyond pronto:
 
 **Pass:** no sibling-missing failure is a traceback; each non-configured dimension offers a clear next step.
 
-## Out of scope (Phase 2+)
+## Out of scope
 
-- Building `inkwell`, `lintguini`, or `autopompa`
+- Building `avanti` (Phase 1b — parallel workstream; see `project/plans/active/phase-1-avanti.md` once opened)
+- Building `inkwell`, `lintguini`, or `autopompa` (Phase 2+)
 - Retrofitting claudit/skillet/commventional with `plugin.json` audit declaration (tracked in those plugins' own work)
 - Graded heuristics beyond what the siblings already provide
 - Playwright MCP integration in the template
 - `/pronto:worktree`, `/pronto:audit coverage`, `/pronto:learn`
-- ADR promotion workflow
+- ADR authoring / promotion workflow (avanti's responsibility)
 - CI integration
 - Cross-project aggregation (that's a consumer-orchestrator concern, stays out of pronto entirely)
 
@@ -239,4 +265,4 @@ Same test repo as A2 but with zero siblings installed beyond pronto:
 - `plugins/pronto/README.md` explains the model in under 200 words and links to the rubric + contract references.
 - Comprehensive grep for author-specific strings (`anthony`, `batcomputer`, `batdev`, `batvault`, `alfred`, `grapple-gun`, `batctl`, `mind-palace`) returns zero matches in `plugins/pronto/`.
 - Plugin loads cleanly under `claude --plugin-dir plugins/pronto` with no errors on `/reload-plugins`.
-- One ADR lands: `plugins/pronto/adrs/001-meta-orchestrator-model.md` — records the pivot from self-contained template to meta-orchestrator.
+- One ADR lands: `project/adrs/001-meta-orchestrator-model.md` — records the pivot from self-contained template to meta-orchestrator. (Repo-root `project/` is the dogfood application of the convention this plan establishes.)
