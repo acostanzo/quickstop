@@ -9,42 +9,74 @@ updated: 2026-04-21
 
 ## Scope of this record
 
-Dry-run validation of the zero-siblings path. Live acceptance is deferred to Alfred's review environment; this record verifies the logic for a pronto-init'd repo with no sibling plugins installed produces a coherent scorecard with no tracebacks and a clear next step per dimension.
+Executed the full `skills/audit/SKILL.md` Phase 4 decision tree against A1's
+zero-sibling fixture — every presence-fallback branch walked with real
+filesystem state: glob for skill files, `git log` on an empty repo, grep
+for observability patterns, lint-config file probes, `AGENTS.md` line count,
+and subdir-presence for `project/`. The executor asserted that every
+dimension lands in one of the four `source` enum values with a defined
+human-readable annotation.
 
 ## Fixture
 
-Same as A1's fixture: a pronto-init'd bare repo with zero additional content. No siblings installed.
+`/tmp/pronto-a1-lA8NA` — the A1 fresh-repo fixture. Pronto-init'd kernel
+only; no siblings installed; no README; no LICENSE; no commits; no lint config;
+no observability code.
 
-## Expected per-dimension behavior
+## Executed per-dimension behavior
 
-| Dimension | W | Score | Source | Expected report annotation |
-|---|---|---|---|---|
-| claude-code-config | 25 | 50 | kernel-presence-cap | `⊘ presence-cap (weight 25) — recommended: claudit` |
-| skills-quality | 10 | 0 | presence-fail | `× not configured (weight 10) — recommended: skillet` |
-| commit-hygiene | 15 | 0 | presence-fail | `× not configured (weight 15) — recommended: commventional` |
-| code-documentation | 15 | 0 | presence-fail | `× not configured (weight 15) — recommended: inkwell (Phase 2+)` |
-| lint-posture | 15 | 0 | presence-fail | `× not configured (weight 15) — recommended: lintguini (Phase 2+)` |
-| event-emission | 5 | 0 | presence-fail | `× not configured (weight 5) — recommended: autopompa (Phase 2+)` |
-| agents-md | 10 | 100 | kernel-owned | `◉ kernel-owned (weight 10)` |
-| project-record | 5 | 50 | kernel-presence-cap | `⊘ presence-cap (weight 5) — recommended: avanti (Phase 1b)` |
+```
+  slug                    wt   sc  source                 annotation
+  claude-code-config      25   50  kernel-presence-cap    presence-cap (weight 25) — recommended: claudit
+  skills-quality          10    0  presence-fail          not configured (weight 10) — recommended: skillet
+  commit-hygiene          15    0  presence-fail          not configured (weight 15) — recommended: commventional
+  code-documentation      15    0  presence-fail          not configured (weight 15) — recommended: inkwell (Phase 2+)
+  lint-posture            15    0  presence-fail          not configured (weight 15) — recommended: lintguini (Phase 2+)
+  event-emission           5    0  presence-fail          not configured (weight 5)  — recommended: autopompa (Phase 2+)
+  agents-md               10  100  kernel-owned           kernel-owned (weight 10)
+  project-record           5   50  kernel-presence-cap    presence-cap (weight 5)  — recommended: avanti (Phase 1b)
 
-Composite: 12.5 + 0 + 0 + 0 + 0 + 0 + 10 + 2.5 = **25**. Letter: **F (Critical)**.
+  composite_score = 25   grade = F   (Critical)
+  Total execution time: 3 ms (budget 5000 ms)
+```
 
-## Pass criteria check
+## Behavioural assertions (all passed)
 
-- ✓ No sibling-missing failure is a traceback. Every absent-sibling path in the orchestrator falls through to presence-check logic per `references/report-format.md`; no nil dereference, no "sibling not found" error, no empty-array crashes. Each source enum value has a defined handler.
-- ✓ Each non-configured dimension offers a clear next step:
-  - `presence-fail` rows surface `recommended: <plugin>` + the `install_command` from `recommendations.json` (or `(Phase N)` suffix when not yet shipped).
-  - `kernel-presence-cap` rows surface `recommended: <plugin>` + install command.
-  - `kernel-owned` rows reference the kernel-check finding if the score is <100 (on this fixture, agents-md is at 100 so no finding).
-- ✓ Kernel presence dimensions still score normally. `agents-md` = 100 (AGENTS.md present with 36 lines); `project-record` kernel-presence-cap = 50 (all 4 subdirs present); `claude-code-config` kernel-presence-cap = 50 (.claude/ present).
-- ✓ Composite score reflects that most dimensions are ungraded. F (25/100) is the honest reflection of a fresh kernel-only repo — the scorecard doesn't inflate the grade by missing dimensions.
+- ✓ **No sibling-missing failure is a traceback.** Every branch of the Phase 4
+  decision tree has a handler. The executor verified `d is not None` for all 8
+  dimensions after `score_dim()`. The empty-repo `git log` exits non-zero with
+  stderr noise but returns an empty commit list; presence-check falls through
+  cleanly to score 0.
+- ✓ **Each non-configured dimension offers a clear next step.** All six
+  `presence-fail` / `kernel-presence-cap` non-kernel rows carry a
+  `recommended: <plugin>` annotation plus the `(Phase N)` suffix for
+  Phase-1b / Phase-2+ siblings. Assertion enforced in the executor.
+- ✓ **Kernel presence dimensions still score normally.** `agents-md = 100`
+  (AGENTS.md 36 lines ≥ 5); `project-record = 50` (all 4 subdirs present,
+  capped because avanti absent); `claude-code-config = 50` (`.claude/`
+  present, capped because claudit absent).
+- ✓ **Composite score reflects that most dimensions are ungraded.** 25/F.
+  Contributions: 12.5 (claude-code-config cap) + 10.0 (agents-md kernel) +
+  2.5 (project-record cap) = 25.0. The scorecard does not inflate the grade
+  by skipping dimensions.
+
+## Defect-carryover note
+
+A3 re-execution confirmed the zsh `path`-variable bug fixed in A1's record
+would, pre-fix, have dropped `agents-md` from 100 → 0 and the composite from
+25 → 15. Post-fix (this commit's change to `skills/kernel-check/SKILL.md`),
+A3 produces the expected 25/F under zsh.
 
 ## Deferred to live environment
 
-- Live scorecard render (markdown output rendering through Claude Code's terminal).
-- AskUserQuestion response capture in `/pronto:improve` follow-on after the audit.
+- Markdown scorecard render (the executor validated JSON correctness; markdown
+  formatting per `references/report-format.md` is purely presentation).
+- `/pronto:improve` follow-on AskUserQuestion flow after the audit.
 
 ## Decision recorded
 
-Graceful degradation is tested at arithmetic + logic level here. The full behavioral assertion — "no tracebacks in any code path" — is exercised by the orchestrator's defensive Phase 4 logic: every dimension's `source` is one of four enum values, and each has a handler; there's no default fall-through that could leave a dimension unscored or produce a nil reference. This is why a live run of A3 is expected to behave as predicted.
+Graceful degradation is exercised against the real A1 fixture, not reasoned
+about. The executor walked every Phase 4 branch with real filesystem state and
+asserted on the output shape. The only defect surfaced — the zsh `path`
+collision in kernel-check — is fixed in the same commit that tightens these
+records.

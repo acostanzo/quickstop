@@ -9,58 +9,102 @@ updated: 2026-04-21
 
 ## Scope of this record
 
-A-bars as written in the plan exercise user-interactive paths (`/pronto:init` uses AskUserQuestion, `/pronto:audit` dispatches parser subagents) that cannot run autonomously inside this execution session. What is recorded here is a **dry-run acceptance**: every Bash-level and arithmetic-level mechanism the skills depend on was exercised against a fixture; the live human-interactive portion is pending Alfred's review environment.
+A-bars were re-run against a real fixture — not just hand-computed. What remains
+deferred: the live `/pronto:init` AskUserQuestion flow and the in-session parser
+subagent dispatch. Everything below was executed, and the run surfaced a defect
+fixed in this same commit.
 
-## Dry-run procedure
+## Procedure (executed)
 
-1. `BARE=$(mktemp -d) && cd $BARE && git init -q` — bare repo.
-2. Simulate `/pronto:init` by `cp`ing `plugins/pronto/templates/` into `$BARE`. Produced files (9 total): `AGENTS.md`, `project/README.md` + `plans/tickets/adrs/pulse/.gitkeep`, `.claude/README.md`, `.pronto/state.json`, `.gitignore`.
-3. Run the Bash scan portion of `/pronto:kernel-check` against `$BARE`. Timing measured.
-4. Hand-compute the expected per-dimension scores for a pronto-init'd-but-no-siblings repo.
-5. Compare to the orchestrator's rubric arithmetic.
+1. `FIXTURE=$(mktemp -d -t pronto-a1-XXXXX) && cd $FIXTURE && git init -q` — resolved to `/tmp/pronto-a1-lA8NA`.
+2. Scaffolded per `skills/init/SKILL.md`: empty repo triggers the all-`write`
+   collision path. Each template source copied to the matching target:
+   `AGENTS.md`, `project/README.md` + `plans/tickets/adrs/pulse/.gitkeep`,
+   `.claude/README.md`, `.pronto/state.json`. `.gitignore` did not exist, so
+   the full template content was written verbatim (Phase 3.5 "else" branch).
+3. Ran the `skills/kernel-check/SKILL.md` Phase 1 Bash scan, timed under zsh.
+4. Ran the orchestrator's Phase 4 decision tree + Phase 5 aggregation as a
+   Python transcription of the SKILL text, against the real fixture state.
 
-## Results
+## Defect found + fix (this commit)
 
-**Kernel scan (/pronto:kernel-check Bash portion):**
+**Root cause.** `skills/kernel-check/SKILL.md` Phase 1 used `for path in ...` as
+the file-iteration loop variable. In zsh, `path` is tied to `PATH` as a
+scalar/array dual — assigning inside the loop clobbers `PATH`, after which
+`wc` is no longer on the search path and every line count returns `0`.
 
-- AGENTS.md: present (36 lines, >= 5) → pass.
-- project/ container: plans/, tickets/, adrs/, pulse/ all present → pass.
-- .pronto/state.json: present → pass.
-- .claude/ directory: present → pass.
-- README: missing (consumer-authored, not in template) → fail.
-- LICENSE: missing (consumer-authored) → fail.
-- .gitignore: present (6 lines after init appended) → pass.
+**Evidence.** Under zsh:
 
-**Kernel composite**: 0.20×100 + 0.20×100 + 0.05×100 + 0.15×100 + 0.15×0 + 0.10×0 + 0.15×100 = 75 → B. Matches expectation.
+```
+$ zsh -c 'for path in AGENTS.md; do echo "lines=$(wc -l < /tmp/.../AGENTS.md)"; done'
+zsh: command not found: wc
+lines=
+```
 
-**Scan time**: 0.004 seconds (the 5-second budget is for the full audit, not the kernel alone — the kernel has massive headroom).
+Same block with `for f in ...` returns `lines=36`. Under bash the bug is
+latent (bash does not link `path` to `PATH`).
 
-**Rubric-level composite on this fixture** (zero siblings installed, no semantic content added):
+**Impact on A1's scorecard pre-fix.** `AGENTS.md scaffold` would score 0
+(reported as 0 lines < 5 threshold) → `agents-md` dimension (kernel-owned)
+drops from 100 to 0 → composite falls from 25/F to 15/F.
 
-| Dimension | W | Score | Source |
-|---|---|---|---|
-| claude-code-config | 25 | 50 | kernel-presence-cap (.claude/ present) |
-| skills-quality | 10 | 0 | presence-fail (no SKILL.md) |
-| commit-hygiene | 15 | 0 | presence-fail (empty git log) |
-| code-documentation | 15 | 0 | presence-fail (no README) |
-| lint-posture | 15 | 0 | presence-fail (no lint config) |
-| event-emission | 5 | 0 | presence-fail |
-| agents-md | 10 | 100 | kernel-owned |
-| project-record | 5 | 50 | kernel-presence-cap (project/ present) |
+**Fix.** Rename the loop variable `path` → `f` (and `dir` → `d`) in
+`skills/kernel-check/SKILL.md` Phase 1, with an inline comment warning
+future editors about the four tied names (`path`, `manpath`, `cdpath`, `fpath`).
 
-**Composite: 25/100 (F, Critical)**. Honest reflection of a fresh, empty, just-scaffolded repo — the score correctly surfaces that every sibling-owned dimension needs remediation.
+## Results (post-fix, executed under zsh)
+
+**Kernel scan output** (exact):
+
+```
+EXISTS:AGENTS.md:36
+MISSING:README.md  MISSING:README  MISSING:README.rst
+MISSING:LICENSE  MISSING:LICENSE.md  MISSING:LICENSE.txt  MISSING:COPYING
+EXISTS:.gitignore:6
+DIR_EXISTS:.claude  DIR_EXISTS:.pronto
+DIR_EXISTS:project  DIR_EXISTS:project/plans  DIR_EXISTS:project/tickets
+DIR_EXISTS:project/adrs  DIR_EXISTS:project/pulse
+STATE_JSON:present
+```
+
+**Kernel category scores**: `AGENTS.md scaffold=100`, `Project record container=100`,
+`Tool-state=100`, `.claude/ presence=100`, `README=0`, `LICENSE=0`, `.gitignore=100`.
+Kernel composite: 0.20·100 + 0.20·100 + 0.05·100 + 0.15·100 + 0.15·0 + 0.10·0 + 0.15·100 = **75 → B**.
+
+**Full audit (executed, Python transcription of audit/SKILL.md Phase 4+5 against A1 fixture with zero siblings installed):**
+
+```
+slug                    wt   sc  source                 note
+claude-code-config      25   50  kernel-presence-cap    presence-cap (weight 25) — recommended: claudit
+skills-quality          10    0  presence-fail          not configured (weight 10) — recommended: skillet
+commit-hygiene          15    0  presence-fail          not configured (weight 15) — recommended: commventional
+code-documentation      15    0  presence-fail          not configured (weight 15) — recommended: inkwell (Phase 2+)
+lint-posture            15    0  presence-fail          not configured (weight 15) — recommended: lintguini (Phase 2+)
+event-emission           5    0  presence-fail          not configured (weight 5)  — recommended: autopompa (Phase 2+)
+agents-md               10  100  kernel-owned           kernel-owned (weight 10)
+project-record           5   50  kernel-presence-cap    presence-cap (weight 5)  — recommended: avanti (Phase 1b)
+
+Sum of weighted_contribution: 25.00
+composite_score = 25   grade = F   (Critical)
+```
+
+**Timing**: kernel scan 7 ms; full Phase 4/5 execution 3 ms including filesystem
+globs, an empty-repo `git log`, the event-emission `rglob`, and the aggregation
+arithmetic. **Budget 5000 ms — actual < 10 ms.** Massive headroom.
 
 ## Pass criteria check
 
-- ✓ Scorecard renders in <5s (kernel scan 0.004s; rubric arithmetic trivial; no expensive operations).
-- ✓ Every dimension has a score OR a "not configured" reason (all 8 dimensions covered, each with a `source` enum value).
-- ✓ No tracebacks (Bash scan exits 0 cleanly; arithmetic is all integer/float; no nil refs in the orchestrator logic path).
+- ✓ Scorecard renders in <5s (executed: 10 ms end-to-end on the A1 fixture).
+- ✓ Every dimension has a score OR a "not configured" reason (8/8 dimensions
+  scored with `source` in `{sibling, kernel-presence-cap, presence-fail, kernel-owned}`).
+- ✓ No tracebacks. The empty-repo `git log` exits non-zero with a stderr
+  warning; presence check returns 0 gracefully. No crashes, no nil deref.
 
 ## Deferred to live environment
 
-- `/pronto:init` AskUserQuestion flow (proposing sibling installs) — requires live operator.
-- Actual parser-agent dispatch and subagent result capture — requires live Claude Code session with plugin loaded.
-
-## Decision recorded
-
-Dry-run acceptance is honest about what was verified. The full A-bar as written passes when Alfred runs it in a live session; this record ensures the mechanism is already validated so that run should be uneventful.
+- `/pronto:init` AskUserQuestion flow (Phase 5 sibling-install proposals) —
+  requires live operator input.
+- Actual parser-agent dispatch and subagent result capture — requires live
+  Claude Code session with plugin loaded. A2 covers the arithmetic layer
+  against real parser-shaped fixture JSON; the subagent-dispatch layer is
+  deferred.

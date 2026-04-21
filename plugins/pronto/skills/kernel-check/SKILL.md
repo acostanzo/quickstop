@@ -44,19 +44,22 @@ Each check produces a boolean `passed` plus a one-line human-readable finding.
 **Batch strategy:** issue one combined Bash command that exits 0 and prints the structured result for each check. Example shape:
 
 ```bash
-# Use test exit codes, print structured lines
-for path in AGENTS.md README.md README README.rst LICENSE LICENSE.md LICENSE.txt COPYING .gitignore; do
-  if [ -e "${REPO_ROOT}/${path}" ]; then
-    echo "EXISTS:${path}:$(wc -l < "${REPO_ROOT}/${path}" 2>/dev/null || echo 0)"
+# Use test exit codes, print structured lines.
+# Loop variable must NOT be `path`, `manpath`, `cdpath`, or `fpath` — zsh ties
+# those names to PATH/MANPATH/CDPATH/FPATH, and assigning to them inside a loop
+# clobbers PATH and breaks external commands like `wc`. Use `f` / `d` instead.
+for f in AGENTS.md README.md README README.rst LICENSE LICENSE.md LICENSE.txt COPYING .gitignore; do
+  if [ -e "${REPO_ROOT}/${f}" ]; then
+    echo "EXISTS:${f}:$(wc -l < "${REPO_ROOT}/${f}" 2>/dev/null || echo 0)"
   else
-    echo "MISSING:${path}"
+    echo "MISSING:${f}"
   fi
 done
-for dir in .claude .pronto project project/plans project/tickets project/adrs project/pulse; do
-  if [ -d "${REPO_ROOT}/${dir}" ]; then
-    echo "DIR_EXISTS:${dir}"
+for d in .claude .pronto project project/plans project/tickets project/adrs project/pulse; do
+  if [ -d "${REPO_ROOT}/${d}" ]; then
+    echo "DIR_EXISTS:${d}"
   else
-    echo "DIR_MISSING:${dir}"
+    echo "DIR_MISSING:${d}"
   fi
 done
 if [ -f "${REPO_ROOT}/.pronto/state.json" ]; then echo "STATE_JSON:present"; else echo "STATE_JSON:missing"; fi
