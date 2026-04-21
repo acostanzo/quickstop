@@ -1,0 +1,28 @@
+{
+  "name": "avanti",
+  "version": "0.1.0",
+  "description": "SDLC work layer — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions; audits SDLC hygiene",
+  "author": {
+    "name": "quickstop",
+    "url": "https://github.com/acostanzo/quickstop"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "plans",
+    "tickets",
+    "adrs",
+    "pulse",
+    "lifecycle",
+    "audit"
+  ],
+  "pronto": {
+    "audits": [
+      {
+        "dimension": "project-record",
+        "command": "/avanti:audit --json",
+        "weight_hint": 0.05
+      }
+    ]
+  }
+}
