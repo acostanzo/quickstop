@@ -15,6 +15,7 @@ Pronto doesn't re-implement what siblings do — `claudit` audits Claude Code co
 - [`references/sibling-audit-contract.md`](references/sibling-audit-contract.md) — the `plugin.json` declaration schema and stdout JSON shape siblings emit against.
 - [`references/report-format.md`](references/report-format.md) — the markdown scorecard template and the JSON composite shape produced by `/pronto:audit`.
 - [`references/recommendations.json`](references/recommendations.json) — dimension-to-sibling recommendation registry.
+- [`references/research-integration.md`](references/research-integration.md) — how pronto consumes claudit's knowledge cache (and the graceful-degradation path when claudit isn't installed).
 
 ## Commands
 

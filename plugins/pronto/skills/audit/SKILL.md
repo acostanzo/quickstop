@@ -40,6 +40,16 @@ Determine which sibling plugins are available. Check in this order:
 
 Store the discovery result as **INSTALLED_SIBLINGS** — a map from plugin name to `{ version, native_declarations, plugin_root }`.
 
+## Phase 2.5: Load expert context (optional)
+
+If `claudit` is in INSTALLED_SIBLINGS, invoke `/claudit:knowledge ecosystem` and capture its output.
+
+- **If the skill runs successfully** (outputs `=== CLAUDIT KNOWLEDGE: ecosystem ===`): store as **EXPERT_CONTEXT**. Pass to parsers via their dispatch prompt so they can use current Anthropic best-practice knowledge when scoring edge cases.
+- **If claudit is installed but the skill invocation fails**: set EXPERT_CONTEXT to empty, note in `sibling_integration_notes`. Proceed without expert context — parsers run with their deterministic fallback logic.
+- **If claudit is not installed**: set EXPERT_CONTEXT to empty. No fallback research agents — pronto's parsers are deterministic by design. Note in the report: `expert context unavailable (install claudit for research-informed audit depth)`.
+
+See `${PLUGIN_ROOT}/references/research-integration.md` for the full cache-consumption protocol and invalidation semantics.
+
 ## Phase 3: Run kernel-check
 
 Invoke the kernel-check skill for the repo's baseline:
