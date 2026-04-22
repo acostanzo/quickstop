@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "fixtures": {
+    "mid": {
+      "repo": ".",
+      "sha": "7650b49ec9828494f066ec56682a8b653791bfcc",
+      "description": "quickstop at Phase 1.5 PR 2 merge — known mid-grade baseline (~C composite). Used by PR 3b to measure before/after variance."
+    }
+  }
+}
