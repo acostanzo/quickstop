@@ -19,11 +19,11 @@ Five tickets organized into three sequential PRs:
 
 | PR | Tickets | Lands when |
 |---|---|---|
-| PR #1 — Mechanical cleanup | T1, T2, T3 | Reviewed and green |
-| PR #2 — Orchestration dispatch | T4 (requires design call first) | After Alfred confirms the design decision |
-| PR #3 — Determinism + eval harness | T5, A1, A2 | After PR #1 and PR #2 land |
+| PR 1 — Mechanical cleanup | T1, T2, T3 | Reviewed and green |
+| PR 2 — Orchestration dispatch | T4 (requires design call first) | After Alfred confirms the design decision |
+| PR 3 — Determinism + eval harness | T5, A1, A2 | After PR 1 and PR 2 land |
 
-PR #1 and PR #2 are small and mechanical/surgical. PR #3 is the real engineering — it splits internally into eval-harness work and variance-reduction work, both on the same branch, each as its own atomic commit, but shipped together so the harness validates the fix.
+PR 1 and PR 2 are small and mechanical/surgical. PR 3 is the real engineering — it splits internally into eval-harness work and variance-reduction work, both on the same branch, each as its own atomic commit, but shipped together so the harness validates the fix.
 
 ## Out of scope
 
@@ -34,7 +34,7 @@ PR #1 and PR #2 are small and mechanical/surgical. PR #3 is the real engineering
 
 ---
 
-## PR #1 — Mechanical cleanup
+## PR 1 — Mechanical cleanup
 
 ### T1 — Strip prose and code fences from `/pronto:audit --json` output
 
@@ -85,7 +85,7 @@ Visible in the stream-json init event's `agents` array. A literal follow of Phas
 
 **Acceptance:** grep `plugins/pronto/` for `pronto:parse-` (without `parsers:`) returns zero matches. Audit runs end-to-end.
 
-### PR #1 shape
+### PR 1 shape
 
 - Branch: `fix/pronto-phase-1-5-pr1-output-hygiene`
 - Three atomic commits, one per ticket (`fix(pronto):`, `fix(avanti):`, `docs(pronto):`)
@@ -93,7 +93,7 @@ Visible in the stream-json init event's `agents` array. A literal follow of Phas
 
 ---
 
-## PR #2 — Orchestration dispatch decision
+## PR 2 — Orchestration dispatch decision
 
 ### T4 — Remove or document `disable-model-invocation` on orchestration targets
 
@@ -120,7 +120,7 @@ When pronto's audit runs under a sub-Claude, the Skill tool refuses to dispatch 
 
 **Acceptance:** a fresh `/pronto:audit` run dispatches `/avanti:audit` via the Skill tool rather than inlining. `sibling_integration_notes` reflects direct dispatch. Composite includes avanti's score via wire contract, not fallback.
 
-### PR #2 shape
+### PR 2 shape
 
 - Branch: `fix/pronto-phase-1-5-pr2-orchestration-dispatch`
 - Two atomic commits: (1) remove disable flag on avanti, (2) update pronto spec text + references
@@ -129,7 +129,7 @@ When pronto's audit runs under a sub-Claude, the Skill tool refuses to dispatch 
 
 ---
 
-## PR #3 — Determinism + eval harness
+## PR 3 — Determinism + eval harness
 
 ### T5 — Mechanize the scoreable dimensions (variance reduction)
 
@@ -187,13 +187,13 @@ Pass criteria (configurable):
 
 Run the harness before T5, record the baseline. Run after T5, record the improvement. The PR commit message body includes the numbers. If stddev on composite doesn't drop below 1.0 after T5, the PR isn't done — either iterate on T5 or document the residual variance and the cost of closing the remaining gap.
 
-**Acceptance for PR #3:**
+**Acceptance for PR 3:**
 1. `plugins/pronto/tests/eval.sh` exists, runs, produces the summary + results JSON.
 2. Baseline stddev recorded in PR commit body.
 3. Post-T5 stddev ≤ 1.0 on composite; grade-flip rate ≤ 5% on the mid fixture.
 4. Per-dimension table in `plugins/pronto/references/rubric.md` documents mechanical vs judgment split.
 
-### PR #3 shape
+### PR 3 shape
 
 - Branch: `fix/pronto-phase-1-5-pr3-determinism`
 - Commits: (1) `test(pronto): add eval harness and fixtures`, (2) `feat(pronto): mechanize scoreable dimensions`, (3) `docs(pronto): document rubric mechanical/judgment split` (if separate from 2)
@@ -223,9 +223,9 @@ Run the harness before T5, record the baseline. Run after T5, record the improve
 
 ## Sequencing note
 
-PR #1 is safe to start immediately — the fixes are mechanical and uncontroversial.
-PR #2 requires Alfred's design-decision ping to Anthony first (Option A / B / C).
-PR #3 waits on both: PR #2 because dispatch behavior affects the eval baseline; PR #1 because the harness parses `--json` output.
+PR 1 is safe to start immediately — the fixes are mechanical and uncontroversial.
+PR 2 requires Alfred's design-decision ping to Anthony first (Option A / B / C).
+PR 3 waits on both: PR 2 because dispatch behavior affects the eval baseline; PR 1 because the harness parses `--json` output.
 
 ## Session execution
 
@@ -235,5 +235,5 @@ A single autonomous session on batdev executes all three PRs sequentially in a w
 
 1. Commit this plan to `project/plans/active/phase-1-5-pronto.md` as the first atomic commit on branch `fix/pronto-phase-1-5-pr1-output-hygiene`.
 2. Execute T1, T2, T3.
-3. Open PR #1.
-4. Wait for Alfred merge signal before starting PR #2.
+3. Open PR 1.
+4. Wait for Alfred merge signal before starting PR 2.
