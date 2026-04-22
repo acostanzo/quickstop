@@ -1,8 +1,8 @@
 ---
 phase: 1.5
-status: draft
+status: in-progress
 tickets: [t1, t2, t3, t4, t5, a1, a2]
-updated: 2026-04-21
+updated: 2026-04-22
 ---
 
 # Pronto Phase 1.5 — Bugfix pass from live dogfood
@@ -130,6 +130,22 @@ When pronto's audit runs under a sub-Claude, the Skill tool refuses to dispatch 
 ---
 
 ## PR 3 — Determinism + eval harness
+
+**Split note (2026-04-22):** PR 3 is shipping as two sequential PRs so the
+measurement layer lands before the variance-reduction work that depends on
+it for its before/after proof:
+
+- **PR 3a — eval harness only (A1).** Ships `plugins/pronto/tests/eval.sh`
+  and a single pinned fixture. Captures the baseline stddev. No rubric or
+  scoring changes.
+- **PR 3b — mechanize + prove (T5 + A2).** Mechanizes scoreable rubric
+  dimensions, re-runs the harness, and cites PR 3a's baseline in its
+  commit body. Threshold gates (composite stddev ≤ 1.0, grade-flip
+  rate ≤ 5%) are PR 3b's acceptance bar.
+
+The A1/T5/A2 subsections below describe the original combined scope and
+are preserved for reference — the split is purely a delivery decision, not
+a scope change.
 
 ### T5 — Mechanize the scoreable dimensions (variance reduction)
 
