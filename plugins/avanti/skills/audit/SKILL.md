@@ -1,7 +1,6 @@
 ---
 name: audit
 description: SDLC hygiene audit — scores plan freshness, ticket hygiene, ADR completeness, pulse cadence; emits pronto wire contract JSON under --json
-disable-model-invocation: true
 argument-hint: "[--json]"
 allowed-tools: Read, Bash, Glob, Grep
 ---
