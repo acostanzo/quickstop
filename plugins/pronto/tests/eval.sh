@@ -21,6 +21,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 FIXTURES_FILE="$SCRIPT_DIR/fixtures.json"
 
+# Expected rubric dimensions — the 8 dims pronto's audit must emit for a
+# run to be contract-compliant. Source of truth:
+#   plugins/pronto/references/rubric.md        (dimension rows)
+#   plugins/pronto/references/report-format.md (JSON dimensions[] shape)
+# Hardcoded (not dynamically discovered) so the harness does not drift
+# silently if the rubric gains or loses a dimension — any change should
+# be a deliberate edit here, paired with updates to the references above.
+EXPECTED_DIMS=(
+  agents-md
+  claude-code-config
+  code-documentation
+  commit-hygiene
+  event-emission
+  lint-posture
+  project-record
+  skills-quality
+)
+EXPECTED_DIMS_CSV=$(IFS=,; echo "${EXPECTED_DIMS[*]}")
+
 FIXTURE_NAME="mid"
 N=10
 OUTPUT="$SCRIPT_DIR/eval-results.json"
@@ -182,18 +201,24 @@ for ((i=1; i<=N; i++)); do
   fi
 
   # Contract check: a valid audit run must carry a numeric composite, a
-  # letter grade, and at least one dimension score. Runs that parse as JSON
-  # but violate the contract (e.g. sub-Claude emitted a stub) are not
-  # aggregated — they skew means toward hallucinated values.
-  contract_violation=$(jq -r '
+  # letter grade, and every expected rubric dimension. Runs that parse as
+  # JSON but violate the contract (e.g. sub-Claude emitted a stub, or
+  # dropped half the dimensions) are not aggregated — they skew means
+  # toward hallucinated values. `dimensions-partial:<names>` names the
+  # missing dims so the operator sees what was dropped.
+  contract_violation=$(jq -r --arg expected "$EXPECTED_DIMS_CSV" '
       def grade_re: "^(A\\+|[ABCDF])$";
-      [
-        (if (.composite | type) != "number" then "composite-not-number" else empty end),
-        (if (.grade // null) == null then "grade-missing"
-         elif ((.grade | test(grade_re)) | not) then "grade-malformed"
-         else empty end),
-        (if (.dimensions | length) == 0 then "dimensions-empty" else empty end)
-      ] | join(",")
+      ($expected | split(",")) as $exp
+      | ($exp - (.dimensions | keys)) as $missing_dims
+      | [
+          (if (.composite | type) != "number" then "composite-not-number" else empty end),
+          (if (.grade // null) == null then "grade-missing"
+           elif ((.grade | test(grade_re)) | not) then "grade-malformed"
+           else empty end),
+          (if (.dimensions | length) == 0 then "dimensions-empty"
+           elif ($missing_dims | length) > 0 then "dimensions-partial:\($missing_dims | join("|"))"
+           else empty end)
+        ] | join(",")
     ' "$run_normalized")
 
   if [[ -n "$contract_violation" ]]; then
@@ -259,16 +284,28 @@ if ! jq '
     def mean:        (add / length);
     def stddev:      (. as $xs | ($xs | mean) as $mu
                        | [$xs[] | (. - $mu) | . * .] | (add / length) | sqrt);
-    def round1:      (. * 10 | floor / 10);
-    def round3:      (. * 1000 | floor / 1000);
+    # Half-away-from-zero rounding. `floor` would truncate toward -∞ and
+    # bias every displayed stat downward (68.79 → 68.7, not 68.8).
+    def round1:      ((. * 10)    | round) / 10;
+    def round3:      ((. * 1000)  | round) / 1000;
 
     . as $runs
+    | ($runs | length) as $n_total
     | ($runs | map(.composite // null) | map(select(. != null))) as $comps
     | ($runs | map(.grade // null) | map(select(. != null))) as $grades
     | ([$runs[].dimensions | keys[]] | unique) as $dimkeys
     | (reduce $grades[] as $g ({}; .[$g] = ((.[$g] // 0) + 1))) as $gdist
+    # Mode: pick deterministically on ties. Sort by [-count, key] so the
+    # highest count wins, alphabetically-lower key breaks equal counts.
+    # `mode_tied` surfaces the tie explicitly so a reader never mistakes
+    # the sort-order winner for a real plurality.
     | ( if ($gdist | length) == 0 then null
-        else ($gdist | to_entries | max_by(.value) | .key) end ) as $mode
+        else ($gdist | to_entries | sort_by([-.value, .key]) | .[0].key)
+        end ) as $mode
+    | ( if ($gdist | length) == 0 then false
+        else ([$gdist[]] | max) as $maxc
+             | ([$gdist[] | select(. == $maxc)] | length) > 1
+        end ) as $mode_tied
     | (if $mode == null or ($grades | length) == 0 then 0
        else ($grades | map(select(. != $mode)) | length) / ($grades | length)
        end) as $flip
@@ -283,18 +320,24 @@ if ! jq '
           } end
         ),
         grades: (
-          $gdist + { mode: $mode, flip_rate: ($flip | round3) }
+          $gdist + {
+            mode:      $mode,
+            mode_tied: $mode_tied,
+            flip_rate: ($flip | round3)
+          }
         ),
         dimensions: (
           [ $dimkeys[] as $k
             | ($runs | map(.dimensions[$k] // null) | map(select(. != null))) as $vs
             | if ($vs | length) == 0 then empty
               else { ($k): {
-                  n:      ($vs | length),
-                  mean:   ($vs | mean | round1),
-                  stddev: ($vs | stddev | round3),
-                  min:    ($vs | min),
-                  max:    ($vs | max)
+                  n:             ($vs | length),
+                  n_total:       $n_total,
+                  missing_count: ($n_total - ($vs | length)),
+                  mean:          ($vs | mean | round1),
+                  stddev:        ($vs | stddev | round3),
+                  min:           ($vs | min),
+                  max:           ($vs | max)
               } } end
           ] | add // {}
         )
@@ -351,10 +394,11 @@ fi
   # Grade distribution
   grade_line=$(jq -r '
       .grades as $g
-      | ($g | del(.mode, .flip_rate)) as $dist
+      | ($g | del(.mode, .mode_tied, .flip_rate)) as $dist
       | ($g.flip_rate // 0) as $fr
+      | ($g.mode_tied // false) as $tied
       | ($dist | to_entries | sort_by(.key) | map("\(.key)×\(.value)") | join(" ")) as $d
-      | "Grade distribution: \($d)  (flip rate \(($fr * 100) | floor)%)"
+      | "Grade distribution: \($d)  (flip rate \(($fr * 100) | floor)%\(if $tied then ", mode tied" else "" end))"
     ' "$AGG_FILE")
   echo "$grade_line"
   echo
@@ -366,7 +410,7 @@ fi
       | to_entries
       | sort_by(.key)
       | .[]
-      | "  \(.key)\t mean=\(.value.mean)\tstddev=\(.value.stddev)\tmin=\(.value.min)\tmax=\(.value.max)"
+      | "  \(.key)\t mean=\(.value.mean)\tstddev=\(.value.stddev)\tmin=\(.value.min)\tmax=\(.value.max)\("" + (if (.value.missing_count // 0) > 0 then "\tmissing=\(.value.missing_count)" else "" end))"
     ' "$AGG_FILE" | column -t -s $'\t'
   echo
   echo "Results written to $OUTPUT"
