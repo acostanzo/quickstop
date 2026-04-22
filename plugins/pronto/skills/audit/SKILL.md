@@ -40,15 +40,15 @@ Determine which sibling plugins are available. Check in this order:
 
 Store the discovery result as **INSTALLED_SIBLINGS** — a map from plugin name to `{ version, native_declarations, plugin_root }`.
 
-## Phase 2.5: Load expert context (optional)
+## Phase 2.5: Expert context is out of scope by design
 
-If `claudit` is in INSTALLED_SIBLINGS, invoke `/claudit:knowledge ecosystem` and capture its output.
+**The audit does not dispatch `/claudit:knowledge`.** Expert ecosystem context is not part of the audit path.
 
-- **If the skill runs successfully** (outputs `=== CLAUDIT KNOWLEDGE: ecosystem ===`): store as **EXPERT_CONTEXT**. Pass to parsers via their dispatch prompt so they can use current Anthropic best-practice knowledge when scoring edge cases.
-- **If claudit is installed but the skill invocation fails**: set EXPERT_CONTEXT to empty, note in `sibling_integration_notes`. Proceed without expert context — parsers run with their deterministic fallback logic.
-- **If claudit is not installed**: set EXPERT_CONTEXT to empty. No fallback research agents — pronto's parsers are deterministic by design. Note in the report: `expert context unavailable (install claudit for research-informed audit depth)`.
+Pronto's audit scope is deterministic scoring — kernel presence, sibling wire-contract scores, and per-dimension rubric evaluation. `/claudit:knowledge` emits narrative research output, not structured scores; folding it into the audit contributed to non-deterministic composites. It was removed from the audit flow deliberately.
 
-See `${PLUGIN_ROOT}/references/research-integration.md` for the full cache-consumption protocol and invalidation semantics.
+Users who want expert ecosystem context invoke `/claudit:knowledge ecosystem` directly. That skill is first-class user-facing surface, not a pronto dependency. Its absence is not a degradation — do not surface it in `sibling_integration_notes`, and do not treat it as a missing capability anywhere in the report.
+
+Parsers receive only the dispatch brief defined in Phase 4.1. There is no EXPERT_CONTEXT payload.
 
 ## Phase 3: Run kernel-check
 
@@ -250,4 +250,8 @@ If a parser exceeds 10 seconds, degrade to presence and log a note.
 
 - **Do not shell to interactive sibling commands.** `/claudit` is a multi-phase interactive skill; running it inside `/pronto:audit` would disrupt the user. Parsers read repo state directly and emit contract JSON. This is the Phase 1 reality — Phase 2+ siblings will ship `--json` flags and this skill will prefer those.
 - **Do not write outside `.pronto/state.json`.** The orchestrator is read-mostly. Any fix-applying behavior belongs to `/pronto:improve`.
-- **Respect `sibling_integration_notes`.** Surface partial failures visibly — the consumer should never wonder why a dimension got a degraded score.
+- **`sibling_integration_notes` is a warnings array, not a success log.**
+  - Empty `[]` is the steady state when every sibling dispatched and every parser returned valid JSON.
+  - Populate for real degradations: parser returned invalid JSON, sibling timed out, kernel-check failed, `.pronto/` wasn't writable, validation warnings.
+  - **Never frame intentional omissions as degradation.** `/claudit:knowledge` is out of audit scope by design (Phase 2.5); do not emit a note about it. Its absence is not a sibling integration issue.
+  - When a successful sibling dispatch is worth surfacing for clarity, use direct language: `"avanti: dispatched via Skill tool, composite <N> (<grade>)"`. Never write `"invoked inline"`, `"executed scoring logic inline"`, or `"skipped to avoid nested skill invocation"` — those phrasings describe failure modes that no longer exist in this spec.
