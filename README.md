@@ -56,7 +56,7 @@ Emit a structured JSON event for every Claude Code hook to a configurable transp
 
 **Default output:** `~/.towncrier/events.jsonl` — `tail -F` and `jq` to start
 
-### Pronto (v0.1.0)
+### Pronto (v0.1.1)
 
 Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins.
 
@@ -67,7 +67,7 @@ Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric o
 - Machine-parseable `--json` output alongside the human-readable markdown scorecard
 
 **Commands:** `/pronto:init`, `/pronto:audit`, `/pronto:status`, `/pronto:improve`
-### Avanti (v0.1.0)
+### Avanti (v0.1.1)
 
 The SDLC work layer — authors and maintains the records under `project/` (plans, tickets, ADRs, pulse journal) and drives each record through its lifecycle.
 

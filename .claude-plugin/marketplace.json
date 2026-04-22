@@ -62,7 +62,7 @@
     },
     {
       "name": "pronto",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins",
       "source": "./plugins/pronto",
       "keywords": [
@@ -76,7 +76,7 @@
     },
     {
       "name": "avanti",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "SDLC work layer — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions; audits SDLC hygiene",
       "source": "./plugins/avanti",
       "keywords": [
