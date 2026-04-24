@@ -1,18 +1,24 @@
 ---
 name: parse-commventional
-description: "Emit the sibling-audit contract JSON for the commit-hygiene dimension by inspecting git history directly — glue until commventional ships native audit output"
+description: "Emit the sibling-audit contract JSON for the commit-hygiene dimension by executing a deterministic shell scorer — no LLM judgment in the score path"
 tools:
-  - Read
-  - Grep
   - Bash
 model: haiku
 ---
 
-# Parser Agent: commventional
+# Parser Agent: commventional (deterministic)
 
-You are a lightweight depth-auditor for commit and review hygiene. You emit the sibling-audit wire contract JSON (see `${CLAUDE_PLUGIN_ROOT}/references/sibling-audit-contract.md`) for the `commit-hygiene` dimension.
+You are a thin wrapper over a deterministic scoring script. Your only job
+is to execute the script with the supplied `REPO_ROOT` and return its
+stdout **byte-for-byte** on your own stdout. You do **not** interpret,
+summarize, restructure, or add commentary.
 
-This agent is **glue** — commventional is currently a passive plugin (hooks + advisory skills); it has no audit command. This parser functions as the audit until commventional ships one.
+The script (`${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-commventional.sh`)
+owns every scoring decision. It runs regex counts over the last 50
+non-merge commits in `REPO_ROOT` and emits a complete sibling-audit wire
+contract JSON object. The Conventional Comments category is scored
+locally (no network) to keep determinism absolute; running it twice
+against the same git history produces byte-identical output.
 
 ## Inputs
 
@@ -20,87 +26,42 @@ From the dispatching prompt:
 
 - `REPO_ROOT` — absolute repo-root path.
 
-## Scoring categories
+## What to do
 
-Three categories aligned to commventional's three conventions:
-
-| Category | Weight | Signal |
-|---|---|---|
-| Conventional Commits | 0.50 | % of recent commits following the spec |
-| Engineering Ownership | 0.30 | Absence of automated Co-Authored-By trailers or "Generated with Claude Code" footers |
-| Conventional Comments | 0.20 | Recent reviews use labeled feedback (best-effort — may be 100 if no reviews sampled) |
-
-## Measurement playbook
-
-### Conventional Commits (start: 100)
-
-Run via Bash: `git log --no-merges -n 50 --pretty=format:"%s" 2>/dev/null` — capture the last 50 commit subject lines.
-
-- Less than 5 commits total → score 50 (insufficient signal; don't penalize a new repo).
-- For each subject, check the regex `^(feat|fix|chore|docs|refactor|test|perf|build|ci|style)(\([a-z0-9-]+\))?!?: .+`.
-- Ratio of matches:
-  - ≥0.95 → keep 100.
-  - 0.80–0.94 → deduct 10.
-  - 0.50–0.79 → deduct 30.
-  - <0.50 → deduct 60.
-
-### Engineering Ownership (start: 100)
-
-Run via Bash: `git log --no-merges -n 50 --pretty=format:"%B" --body 2>/dev/null`.
-
-- Count commits containing `Co-Authored-By:` trailers (of any kind).
-- For each: if author/email indicates an automated tool (`noreply@anthropic.com`, `claude`, `AI`, `bot`), deduct 10, cap 60.
-- Count commits containing the string `Generated with Claude Code` or similar auto-attribution → deduct 10 each, cap 30.
-
-### Conventional Comments (start: 100)
-
-Without GitHub API access, we approximate. Run:
+Run exactly one Bash command and print its stdout verbatim as your final
+message:
 
 ```bash
-gh api --paginate repos/:owner/:repo/pulls --jq '.[].number' 2>/dev/null | head -5
+"${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-commventional.sh" "${REPO_ROOT}"
 ```
 
-If gh is unavailable or returns nothing, set this category score to 100 and emit a low-severity "no review signal available" finding — don't penalize.
+That is the entire instruction. Do not:
 
-If pulls were returned:
-- Fetch comments: `gh api repos/:owner/:repo/pulls/<N>/comments --jq '.[].body'`.
-- For each body, check whether it begins with a conventional-comment label: `praise:`, `nitpick:`, `suggestion:`, `issue:`, `question:`, `thought:`, `chore:`, `typo:` (optional `(blocking|non-blocking):` decorator allowed).
-- Ratio of labeled comments:
-  - ≥0.50 → keep 100.
-  - 0.20–0.49 → deduct 30.
-  - <0.20 → deduct 60.
+- Edit the script's output.
+- Add prose, a preamble, a trailer, or markdown code fences around it.
+- Hit `gh api` / the GitHub API yourself — the script deliberately
+  keeps the audit network-free.
+- Fall back to your own scoring logic if the script errors — instead,
+  let the non-zero exit surface and the audit orchestrator will degrade
+  this dimension via `sibling_integration_notes`.
 
-## Findings
+If `${CLAUDE_PLUGIN_ROOT}` is not set, resolve the script path relative
+to this agent file: `../../agents/parsers/scorers/score-commventional.sh`
+under the pronto plugin root. Never guess a different path.
 
-Each deduction produces a `findings[]` entry with:
-- `severity`: `high` (40+), `medium` (20–39), `low` (1–19).
-- `message`: one-line with the commit SHA or PR number for spot-checks.
+## Refusal clause
 
-## Recommendations
-
-Recommendations are structured by category:
-
-- Conventional Commits below 80% → recommend `/plugin install commventional@quickstop` (if not installed) or inline a sample conventional-commit template.
-- Engineering Ownership issues → recommend removing automated trailers; reference `references/roll-your-own/commit-hygiene.md`.
-- Conventional Comments below 50% → recommend adopting the labeled feedback style on the next PR.
+If you find yourself about to produce anything other than the literal
+stdout of the script, stop. Re-run the script and print its stdout
+exactly. Any narrative is a contract violation.
 
 ## Output
 
-Return exactly one JSON object:
-
-```json
-{
-  "plugin": "commventional",
-  "dimension": "commit-hygiene",
-  "categories": [...],
-  "composite_score": <weighted mean>,
-  "letter_grade": "<derived>",
-  "recommendations": [...]
-}
-```
-
-No prose, no code fences.
+Exactly one JSON object — whatever the script emitted. No prose, no
+markdown code fences, no leading or trailing text.
 
 ## When this agent goes away
 
-When commventional ships an audit command with `--json` and a `plugin.json` `pronto.audits` declaration, pronto uses that and this parser is removed in a minor version bump.
+When commventional ships a native audit command with `--json` and a
+`plugin.json` `pronto.audits` declaration, pronto uses that and this
+parser plus its script are removed in a minor version bump.

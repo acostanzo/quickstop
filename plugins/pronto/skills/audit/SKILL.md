@@ -99,15 +99,56 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
    - Else if a `parser_agent` is registered for this dimension (e.g., `parsers/claudit`, `parsers/skillet`, `parsers/commventional`) → dispatch the parser as a subagent (see Phase 4.1 below). Source: `sibling` (the parser *is* the sibling's audit in Phase 1). Score: parser's `composite_score`.
    - Else → fall through to presence check.
 3. **Presence fallback** (sibling not installed AND no parser):
-   - Run the presence check defined in `rubric.md` for this dimension. Presence checks by dimension:
-     - `claude-code-config`: `KERNEL_CATEGORY_SCORES[".claude/ presence"]`
-     - `code-documentation`: `KERNEL_CATEGORY_SCORES["README"]`
-     - `skills-quality`: Glob `${REPO_ROOT}/.claude/skills/*/SKILL.md`, `${REPO_ROOT}/plugins/*/skills/*/SKILL.md` — if any matches → 100, else 0.
-     - `commit-hygiene`: `git log -20 --pretty=format:%s`; count lines matching `^(feat|fix|chore|docs|refactor|test|perf|build|ci|style)(\([a-z0-9-]+\))?!?: .+`; ratio ≥ 0.80 → 100, else 0.
-     - `lint-posture`: check for any of the files listed in rubric.md's lint-posture row. Any exists → 100, else 0.
-     - `event-emission`: Grep `${REPO_ROOT}` (excluding `.git/`, `node_modules/`, `.venv/`, `dist/`, `build/`) for `opentelemetry|OTEL_|tracer|metric|event_bus|eventbus|emit\(|structlog|pino|winston|logrus`. Any match → 100, else 0.
-   - If presence passes → score 50, source `kernel-presence-cap`.
-   - If presence fails → score 0, source `presence-fail`.
+   - Each presence check is a single, **literal** Bash command that must
+     be run unmodified. The command prints `100` on a passing presence
+     check and `0` on failure. Do not paraphrase, expand, or narrow these
+     greps — running them as written is what keeps the audit
+     deterministic across runs (Phase 1.5 PR 3b mechanization).
+
+   - `claude-code-config` — use `KERNEL_CATEGORY_SCORES[".claude/ presence"]` directly. No additional Bash needed.
+   - `code-documentation` — use `KERNEL_CATEGORY_SCORES["README"]` directly. No additional Bash needed.
+   - `skills-quality` — run:
+
+     ```bash
+     if compgen -G "${REPO_ROOT}/.claude/skills/*/SKILL.md" >/dev/null \
+        || compgen -G "${REPO_ROOT}/plugins/*/skills/*/SKILL.md" >/dev/null
+     then echo 100; else echo 0; fi
+     ```
+
+   - `commit-hygiene` — run:
+
+     ```bash
+     subj=$(git -C "${REPO_ROOT}" log --no-merges -n 20 --pretty=format:'%s' 2>/dev/null)
+     n=$(printf '%s\n' "$subj" | grep -c .)
+     m=$(printf '%s\n' "$subj" | grep -cE '^(feat|fix|chore|docs|refactor|test|perf|build|ci|style)(\([a-z0-9-]+\))?!?: .+' || true)
+     if [ "$n" -gt 0 ] && [ "$((m * 100 / n))" -ge 80 ]; then echo 100; else echo 0; fi
+     ```
+
+   - `lint-posture` — run:
+
+     ```bash
+     for f in "${REPO_ROOT}"/.eslintrc* "${REPO_ROOT}"/.prettierrc* \
+              "${REPO_ROOT}"/pyproject.toml "${REPO_ROOT}"/.flake8 \
+              "${REPO_ROOT}"/rustfmt.toml "${REPO_ROOT}"/Cargo.toml \
+              "${REPO_ROOT}"/.golangci.yml "${REPO_ROOT}"/biome.json \
+              "${REPO_ROOT}"/dprint.json
+     do [ -e "$f" ] && { echo 100; exit 0; }
+     done
+     echo 0
+     ```
+
+   - `event-emission` — run:
+
+     ```bash
+     if grep -rqE 'opentelemetry|OTEL_|tracer|metric|event_bus|eventbus|emit\(|structlog|pino|winston|logrus' \
+          "${REPO_ROOT}" \
+          --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv \
+          --exclude-dir=dist --exclude-dir=build
+     then echo 100; else echo 0; fi
+     ```
+
+   - If presence passes (`100`) → score 50, source `kernel-presence-cap`.
+   - If presence fails (`0`) → score 0, source `presence-fail`.
 
 ### Phase 4.1: Parser dispatch
 
@@ -115,7 +156,7 @@ When dispatching a parser agent, use the Task tool with these fields:
 
 - `subagent_type`: `pronto:parsers:parse-claudit`, `pronto:parsers:parse-skillet`, or `pronto:parsers:parse-commventional`. Claude Code namespaces agents by plugin **and** subdirectory, so the `agents/parsers/` subdirectory becomes a `parsers:` segment in the registered name. The agent's `name:` frontmatter (`parse-claudit` etc.) is the final segment. Verify against the stream-json init event's `agents` array if in doubt.
 - `description`: `Parse <sibling> audit`.
-- `prompt`: A compact brief telling the parser which repo to audit (absolute path), the dimension slug it's scoring, and the contract shape it must emit. Instruct the parser to return **only** the JSON object — no prose wrapping.
+- `prompt`: **minimal**. The parser agents are deterministic shell-script wrappers (Phase 1.5 PR 3b mechanization) — they read `REPO_ROOT` from the prompt and execute `${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh` to produce the contract JSON. Send exactly: `REPO_ROOT=<absolute path>. Run the deterministic scorer and emit its stdout verbatim.` Do not paste rubric prose, scoring guidance, or restate the contract — extra context invites the parser to interpret instead of execute, which reintroduces the variance the mechanization removed.
 
 Parsers run foreground because their output feeds the next phase directly. Validate the parser's return: must be valid JSON, must have `plugin`, `dimension`, `composite_score`, `categories[]`. On invalid return, degrade to the presence fallback and append a note to `sibling_integration_notes`.
 
@@ -128,6 +169,17 @@ For each dimension in the rubric:
 - `weighted_contribution = round(weight * score / 100, 1)`.
 
 Compute `composite_score = round(sum(weighted_contribution))`. Clamp to 0–100.
+
+**Compute the math via Bash + jq, not in your head.** Even simple weighted sums are an LLM determinism hazard — a half-up vs half-even rounding choice in one run vs another contributes 1pt of composite stddev for free. Write the per-dimension `{weight, score}` pairs to a temp file and aggregate with one `jq` expression, e.g.:
+
+```bash
+jq -n --argjson dims "$DIMS_JSON" '
+    ($dims | map(.weight * .score / 100)) as $contribs
+    | { weighted_contributions: ($contribs | map(. * 10 | round / 10)),
+        composite_score:        ($contribs | add | round) }'
+```
+
+Use the returned `composite_score` directly in Phase 6's emission. Do not re-add the rounded `weighted_contributions` in your head — `round(sum(x))` and `sum(round(x))` differ.
 
 Derive `composite_grade` and `composite_label` per the bands in `rubric.md`:
 
