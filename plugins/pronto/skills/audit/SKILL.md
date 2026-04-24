@@ -99,54 +99,23 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
    - Else if a `parser_agent` is registered for this dimension (e.g., `parsers/claudit`, `parsers/skillet`, `parsers/commventional`) → dispatch the parser as a subagent (see Phase 4.1 below). Source: `sibling` (the parser *is* the sibling's audit in Phase 1). Score: parser's `composite_score`.
    - Else → fall through to presence check.
 3. **Presence fallback** (sibling not installed AND no parser):
-   - Each presence check is a single, **literal** Bash command that must
-     be run unmodified. The command prints `100` on a passing presence
-     check and `0` on failure. Do not paraphrase, expand, or narrow these
-     greps — running them as written is what keeps the audit
-     deterministic across runs (Phase 1.5 PR 3b mechanization).
-
-   - `claude-code-config` — use `KERNEL_CATEGORY_SCORES[".claude/ presence"]` directly. No additional Bash needed.
-   - `code-documentation` — use `KERNEL_CATEGORY_SCORES["README"]` directly. No additional Bash needed.
-   - `skills-quality` — run:
+   - For `claude-code-config` and `code-documentation`, use the existing
+     kernel-check category score directly: `KERNEL_CATEGORY_SCORES[".claude/ presence"]`
+     and `KERNEL_CATEGORY_SCORES["README"]` respectively. No additional Bash needed.
+   - For `skills-quality`, `commit-hygiene`, `lint-posture`, and
+     `event-emission`, invoke the deterministic presence check via Bash:
 
      ```bash
-     if compgen -G "${REPO_ROOT}/.claude/skills/*/SKILL.md" >/dev/null \
-        || compgen -G "${REPO_ROOT}/plugins/*/skills/*/SKILL.md" >/dev/null
-     then echo 100; else echo 0; fi
+     "${CLAUDE_PLUGIN_ROOT}/skills/audit/presence-check.sh" <dimension> "${REPO_ROOT}"
      ```
 
-   - `commit-hygiene` — run:
-
-     ```bash
-     subj=$(git -C "${REPO_ROOT}" log --no-merges -n 20 --pretty=format:'%s' 2>/dev/null)
-     n=$(printf '%s\n' "$subj" | grep -c .)
-     m=$(printf '%s\n' "$subj" | grep -cE '^(feat|fix|chore|docs|refactor|test|perf|build|ci|style)(\([a-z0-9-]+\))?!?: .+' || true)
-     if [ "$n" -gt 0 ] && [ "$((m * 100 / n))" -ge 80 ]; then echo 100; else echo 0; fi
-     ```
-
-   - `lint-posture` — run:
-
-     ```bash
-     for f in "${REPO_ROOT}"/.eslintrc* "${REPO_ROOT}"/.prettierrc* \
-              "${REPO_ROOT}"/pyproject.toml "${REPO_ROOT}"/.flake8 \
-              "${REPO_ROOT}"/rustfmt.toml "${REPO_ROOT}"/Cargo.toml \
-              "${REPO_ROOT}"/.golangci.yml "${REPO_ROOT}"/biome.json \
-              "${REPO_ROOT}"/dprint.json
-     do [ -e "$f" ] && { echo 100; exit 0; }
-     done
-     echo 0
-     ```
-
-   - `event-emission` — run:
-
-     ```bash
-     if grep -rqE 'opentelemetry|OTEL_|tracer|metric|event_bus|eventbus|emit\(|structlog|pino|winston|logrus' \
-          "${REPO_ROOT}" \
-          --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv \
-          --exclude-dir=dist --exclude-dir=build
-     then echo 100; else echo 0; fi
-     ```
-
+     Where `<dimension>` is the slug literally (e.g. `event-emission`).
+     The script prints `100` on pass, `0` on fail — and nothing else.
+     Do **not** compose your own grep, find, or git invocation here;
+     the script exists precisely so the orchestrator never reinvents
+     the check (Phase 1.5 PR 3b: composing the grep with different
+     `--exclude-dir` sets across runs was the largest pre-mechanization
+     variance source).
    - If presence passes (`100`) → score 50, source `kernel-presence-cap`.
    - If presence fails (`0`) → score 0, source `presence-fail`.
 
