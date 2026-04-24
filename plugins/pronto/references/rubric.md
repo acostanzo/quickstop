@@ -91,8 +91,8 @@ mechanical/judgment axis.
 | `skills-quality` | 10 | Deterministic shell scorer at `agents/parsers/scorers/score-skillet.sh` — per-skill frontmatter field presence, line-count thresholds, `TODO` counts, stray-file counts, broken `references/` pointers. | None. |
 | `commit-hygiene` | 15 | Deterministic shell scorer at `agents/parsers/scorers/score-commventional.sh` — `git log` regex match ratios plus trailer and auto-attribution counts. Conventional Comments defaults to 100 with a low-severity "no review signal" note; the audit stays network-free. | None. |
 | `code-documentation` | 15 | Kernel presence check: `README` ≥10 non-blank lines → 50 capped (sibling `inkwell` not yet shipped). | None. |
-| `lint-posture` | 15 | Literal Bash check baked into `skills/audit/SKILL.md` Phase 4.3: any of the language-appropriate lint config files → 50 capped (sibling `lintguini` not yet shipped). | None. |
-| `event-emission` | 5 | Literal Bash grep baked into `skills/audit/SKILL.md` Phase 4.3 with fixed `--exclude-dir` set → 50 capped (sibling `autopompa` not yet shipped). | None. |
+| `lint-posture` | 15 | Deterministic presence check via `skills/audit/presence-check.sh lint-posture ${REPO_ROOT}` — fixed list of language-appropriate lint config files → 50 capped (sibling `lintguini` not yet shipped). | None. |
+| `event-emission` | 5 | Deterministic presence check via `skills/audit/presence-check.sh event-emission ${REPO_ROOT}` — `grep -rqE` with the documented pattern set and a fixed `--exclude-dir` list → 50 capped (sibling `autopompa` not yet shipped). | None. |
 | `agents-md` | 10 | Kernel binary: `AGENTS.md` exists and ≥5 non-blank lines → 100, else 0. No presence cap — this dimension is always kernel-driven. | None. |
 | `project-record` | 5 | Avanti's native `/avanti:audit --json` (declared in `plugins/avanti/.claude-plugin/plugin.json`) returns a deterministic composite. Falls back to kernel binary (capped at 50) only if the avanti dispatch itself fails. | None. |
 
