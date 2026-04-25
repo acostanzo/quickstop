@@ -1,6 +1,6 @@
 {
   "name": "pronto",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins",
   "author": {
     "name": "quickstop",
