@@ -23,6 +23,7 @@ Parse `$ARGUMENTS`:
 1. **REPO_ROOT**: `git rev-parse --show-toplevel 2>/dev/null`. If this fails, tell the user the audit must run inside a git repo and stop.
 2. **TIMESTAMP**: `date -u +"%Y-%m-%dT%H:%M:%SZ"` — ISO 8601 UTC.
 3. **PLUGIN_ROOT**: `${CLAUDE_PLUGIN_ROOT}` — pronto's own root, for reading references.
+4. **PRONTO_VERSION**: `jq -r '.version' "${PLUGIN_ROOT}/.claude-plugin/plugin.json"` — pronto's running version, used for the ADR-004 §2 sibling handshake in Phase 4.
 
 ## Phase 1: Load registries
 
@@ -36,9 +37,9 @@ Determine which sibling plugins are available. Check in this order:
 
 1. **Repo-local plugins**: Read `${REPO_ROOT}/.claude-plugin/marketplace.json` if present — lists plugins available in the current marketplace (e.g., quickstop itself).
 2. **Installed plugins**: Read `~/.claude/plugins/installed_plugins.json` if present — lists globally installed plugins.
-3. **Plugin.json declarations**: For each installed plugin, read its `plugin.json`. If it carries a `pronto.audits` block, record the dimension → command mapping for native emission.
+3. **Plugin.json declarations**: For each installed plugin, read its `plugin.json`. If it carries a `pronto.audits` block, record the dimension → command mapping for native emission. Also read `pronto.compatible_pronto` (the optional ADR-004 §2 version range); treat absent as the empty string.
 
-Store the discovery result as **INSTALLED_SIBLINGS** — a map from plugin name to `{ version, native_declarations, plugin_root }`.
+Store the discovery result as **INSTALLED_SIBLINGS** — a map from plugin name to `{ version, compatible_pronto, native_declarations, plugin_root }`.
 
 ## Phase 2.5: Expert context is out of scope by design
 
@@ -94,11 +95,26 @@ Walk every dimension in the rubric (8 rows in Phase 1). For each, resolve the sc
 For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-documentation`, `lint-posture`, `event-emission`:
 
 1. **Look up recommendation**: from `recommendations.json`, get `recommended_plugin`, `audit_command`, `parser_agent`.
-2. **Check sibling installed**:
-   - If the recommended plugin is in INSTALLED_SIBLINGS AND declares the dimension natively in its `plugin.json` `pronto.audits` block → invoke the declared command with `--json`, capture stdout, parse as JSON. Validate against the contract. Source: `sibling`. Score: `composite_score`.
+2. **Version handshake** (per ADR-004 §2): if the recommended plugin is in INSTALLED_SIBLINGS, gate dispatch on its `compatible_pronto` declaration. Invoke:
+
+   ```bash
+   "${PLUGIN_ROOT}/skills/audit/compatible-pronto-check.sh" \
+       "${PRONTO_VERSION}" \
+       "${INSTALLED_SIBLINGS[<plugin>].compatible_pronto}"
+   ```
+
+   Parse the helper's JSON output and branch on `.branch`:
+   - `in_range` → continue to step 3 (dispatch normally), no note.
+   - `unset` → continue to step 3 (dispatch normally) AND append a soft note to `sibling_integration_notes`: `"<plugin> does not declare compatible_pronto; dispatching at sibling's risk per ADR-004 §2."`
+   - `out_of_range` → **skip dispatch entirely**, fall through to step 4 (presence fallback) for this dimension, AND append a hard note to `sibling_integration_notes` of the form: `"<plugin> <version> declares compatible_pronto '<range>' but this pronto is <PRONTO_VERSION>. Sibling audit skipped; upgrade <plugin> to re-enable depth scoring."` Take `<version>` and `<range>` from `INSTALLED_SIBLINGS[<plugin>]`. Source: `kernel-presence-cap` (or `presence-fail` if the presence check itself fails); record `source_plugin` as the recommended plugin name so consumers see which sibling was skipped.
+
+   If the recommended plugin is NOT in INSTALLED_SIBLINGS, skip the handshake (no sibling means no declaration to check) and fall through to step 4 directly.
+
+3. **Sibling dispatch** (only when handshake says `in_range` or `unset`):
+   - If the plugin declares the dimension natively in its `plugin.json` `pronto.audits` block → invoke the declared command with `--json`, capture stdout, parse as JSON. Validate against the contract. Source: `sibling`. Score: `composite_score`.
    - Else if a `parser_agent` is registered for this dimension (e.g., `parsers/claudit`, `parsers/skillet`, `parsers/commventional`) → dispatch the parser as a subagent (see Phase 4.1 below). Source: `sibling` (the parser *is* the sibling's audit in Phase 1). Score: parser's `composite_score`.
    - Else → fall through to presence check.
-3. **Presence fallback** (sibling not installed AND no parser):
+4. **Presence fallback** (sibling not installed, handshake forced skip, OR no parser registered):
    - For `claude-code-config` and `code-documentation`, use the existing
      kernel-check category score directly: `KERNEL_CATEGORY_SCORES[".claude/ presence"]`
      and `KERNEL_CATEGORY_SCORES["README"]` respectively. No additional Bash needed.
