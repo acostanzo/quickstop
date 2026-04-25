@@ -1,8 +1,8 @@
 ---
 id: 005
-status: proposed
+status: accepted
 superseded_by: null
-updated: 2026-04-25
+updated: 2026-04-24
 ---
 
 # ADR 005 — Sibling skill conventions: `:audit`, `:doctor`, and the observations/scoring split
