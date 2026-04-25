@@ -30,7 +30,7 @@ if [[ -z "$PRONTO_VERSION" || "$PRONTO_VERSION" == "null" ]]; then
   exit 1
 fi
 
-# Build a tmpdir of fake siblings — three plugin.json files with distinct
+# Build a tmpdir of fake siblings — four plugin.json files with distinct
 # compatible_pronto declarations.
 FIXTURE_DIR="$(mktemp -d -t pronto-h1-handshake.XXXXXX)"
 trap 'rm -rf "$FIXTURE_DIR"' EXIT
