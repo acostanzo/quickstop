@@ -75,18 +75,22 @@ sub-reasons split cleanly by the JSON span size into two sub-shapes with
 ### Sub-shape A — Sibling sub-audit echo (11/21)
 
 The orchestrator emits the **avanti sub-audit's** JSON envelope as its
-own final output, not its own composite envelope. Sample
-(continuation/run-25):
+own final output, not its own composite envelope. The leak is verbatim:
+avanti's own output preface bleeds through unchanged. Sample
+(continuation/run-25, first ~500 bytes of stdout):
 
 ```
-All measurements complete. Emitting the JSON composite.
+All categories clean. Emitting avanti:audit JSON:
 
 {"plugin":"avanti","dimension":"project-record",
  "categories":[{"name":"Plan freshness","weight":0.30,"score":100,...}],
  "composite_score":100,"letter_grade":"A+","recommendations":[]}
 ```
 
-What ships to stdout is the avanti sub-audit's shape (`plugin`,
+The preamble names avanti by plugin name (`Emitting avanti:audit JSON:`)
+— this is avanti's own emission language, not pronto's. What ships to
+pronto's stdout is therefore the avanti sub-audit's entire emission
+pipeline, prose preface and all. The shape is avanti's (`plugin`,
 `dimension`, `letter_grade`), not pronto's composite shape
 (`schema_version`, `repo`, `composite_score`, `dimensions[]`). All 11
 echo-shape failures show this same pattern — sometimes the avanti JSON
