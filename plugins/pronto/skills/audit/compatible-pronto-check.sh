@@ -75,7 +75,7 @@ clause_satisfied() {
     '>')    (( cmp >  0 )) ;;
     '<')    (( cmp <  0 )) ;;
     '=')    (( cmp == 0 )) ;;
-    *) return 2 ;;
+    *) err "internal: clause_satisfied received unknown op '$op' — entrypoint parser and clause_satisfied are out of sync" ;;
   esac
 }
 

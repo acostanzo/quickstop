@@ -106,7 +106,7 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
    Parse the helper's JSON output and branch on `.branch`:
    - `in_range` → continue to step 3 (dispatch normally), no note.
    - `unset` → continue to step 3 (dispatch normally) AND append a soft note to `sibling_integration_notes`: `"<plugin> does not declare compatible_pronto; dispatching at sibling's risk per ADR-004 §2."`
-   - `out_of_range` → **skip dispatch entirely**, fall through to step 4 (presence fallback) for this dimension, AND append a hard note to `sibling_integration_notes` of the form: `"<plugin> <version> declares compatible_pronto '<range>' but this pronto is <PRONTO_VERSION>. Sibling audit skipped; upgrade <plugin> to re-enable depth scoring."` Take `<version>` and `<range>` from `INSTALLED_SIBLINGS[<plugin>]`. Source: `kernel-presence-cap` (or `presence-fail` if the presence check itself fails); record `source_plugin` as the recommended plugin name so consumers see which sibling was skipped.
+   - `out_of_range` → **skip dispatch entirely**, fall through to step 4 (presence fallback) for this dimension, AND append a hard note to `sibling_integration_notes` of the form: `"<plugin> <version> declares compatible_pronto '<range>' but this pronto is <PRONTO_VERSION>. Sibling audit skipped; upgrade <plugin> to re-enable depth scoring."` Take `<version>` and `<range>` from `INSTALLED_SIBLINGS[<plugin>]`. The fallback's source stays `kernel-presence-cap` / `presence-fail` per the existing report-format contract; consumers correlate the skipped sibling via this entry plus the per-dimension `notes` template in step 4.
 
    If the recommended plugin is NOT in INSTALLED_SIBLINGS, skip the handshake (no sibling means no declaration to check) and fall through to step 4 directly.
 
@@ -134,6 +134,9 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
      variance source).
    - If presence passes (`100`) → score 50, source `kernel-presence-cap`.
    - If presence fails (`0`) → score 0, source `presence-fail`.
+   - The per-dimension `notes` field must reflect *why* the fallback ran, not a generic stub:
+     - Sibling not installed (and no parser): `"<plugin> not installed; presence check passed; capped at 50"` (or `"...presence check failed; score 0"`).
+     - Handshake forced skip (`out_of_range`): `"<plugin> <version> installed but compatible_pronto excludes pronto <PRONTO_VERSION>; sibling audit skipped; presence-only."` Otherwise the row contradicts the hard note in `sibling_integration_notes`.
 
 ### Phase 4.1: Parser dispatch
 
