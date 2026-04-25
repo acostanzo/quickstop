@@ -40,32 +40,56 @@ EXPECTED_DIMS=(
 )
 EXPECTED_DIMS_CSV=$(IFS=,; echo "${EXPECTED_DIMS[*]}")
 
+CATEGORIZE_HELPER="$SCRIPT_DIR/eval-categorize.sh"
+
 FIXTURE_NAME="mid"
 N=10
 OUTPUT="$SCRIPT_DIR/eval-results.json"
+# Default model alias. Pinned so failure-rate measurements across runs
+# are comparable — without a pin every run is implicitly "current CLI
+# default model", and a silent default bump between baseline and
+# verification would confound the H2b acceptance bar.
+EVAL_MODEL="${EVAL_MODEL:-sonnet}"
+# Optional durable destination for per-run artefacts. When empty, runs
+# go to a mktemp dir that's deleted on exit (matches prior behaviour).
+PRESERVE_RUNS="${EVAL_PRESERVE_RUNS:-}"
 
 usage() {
   cat >&2 <<EOF
 Usage: $(basename "$0") [--fixture <name>] [--n <int>] [--output <path>]
+                        [--model <name>] [--preserve-runs <dir>]
 
 Options:
-  --fixture <name>   Fixture entry in fixtures.json (default: mid)
-  --n <int>          Number of audit runs (default: 10)
-  --output <path>    Path to write eval-results.json
-                     (default: $SCRIPT_DIR/eval-results.json)
-  -h, --help         Show this help and exit
+  --fixture <name>        Fixture entry in fixtures.json (default: mid)
+  --n <int>               Number of audit runs (default: 10)
+  --output <path>         Path to write eval-results.json
+                          (default: $SCRIPT_DIR/eval-results.json)
+  --model <name>          Claude model alias passed to claude -p
+                          (default: $EVAL_MODEL; override via EVAL_MODEL)
+  --preserve-runs <dir>   Keep per-run artefacts (stdout, stderr,
+                          meta.json, normalized JSON, aggregates) in
+                          this directory instead of deleting them.
+                          Override via EVAL_PRESERVE_RUNS.
+  -h, --help              Show this help and exit
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --fixture) FIXTURE_NAME="${2:-}"; shift 2 ;;
-    --n)       N="${2:-}"; shift 2 ;;
-    --output)  OUTPUT="${2:-}"; shift 2 ;;
+    --fixture)        FIXTURE_NAME="${2:-}"; shift 2 ;;
+    --n)              N="${2:-}"; shift 2 ;;
+    --output)         OUTPUT="${2:-}"; shift 2 ;;
+    --model)          EVAL_MODEL="${2:-}"; shift 2 ;;
+    --preserve-runs)  PRESERVE_RUNS="${2:-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
   esac
 done
+
+if [[ -z "$EVAL_MODEL" ]]; then
+  echo "Error: --model must be non-empty (got empty string)" >&2
+  exit 2
+fi
 
 if ! [[ "$N" =~ ^[0-9]+$ ]] || [[ "$N" -lt 1 ]]; then
   echo "Error: --n must be a positive integer (got: $N)" >&2
@@ -79,6 +103,11 @@ fi
 
 if ! command -v claude >/dev/null 2>&1; then
   echo "Error: claude CLI is required but not found on PATH" >&2
+  exit 2
+fi
+
+if [[ ! -x "$CATEGORIZE_HELPER" ]]; then
+  echo "Error: categorize helper not found or not executable: $CATEGORIZE_HELPER" >&2
   exit 2
 fi
 
@@ -121,7 +150,12 @@ if ! git -C "$FIXTURE_REPO" cat-file -e "$FIXTURE_SHA^{commit}" 2>/dev/null; the
 fi
 
 WORKTREE="/tmp/pronto-eval-fixture-${FIXTURE_NAME}-$$"
-RUNS_DIR="$(mktemp -d -t pronto-eval-runs.XXXXXX)"
+if [[ -n "$PRESERVE_RUNS" ]]; then
+  mkdir -p "$PRESERVE_RUNS"
+  RUNS_DIR="$PRESERVE_RUNS"
+else
+  RUNS_DIR="$(mktemp -d -t pronto-eval-runs.XXXXXX)"
+fi
 
 cleanup() {
   local rc=$?
@@ -131,7 +165,11 @@ cleanup() {
   fi
   git -C "$FIXTURE_REPO" worktree prune >/dev/null 2>&1 || true
   if [[ -n "${RUNS_DIR:-}" && -d "$RUNS_DIR" ]]; then
-    rm -rf "$RUNS_DIR"
+    if [[ -n "$PRESERVE_RUNS" ]]; then
+      echo "Per-run artefacts preserved at: $RUNS_DIR" >&2
+    else
+      rm -rf "$RUNS_DIR"
+    fi
   fi
   exit "$rc"
 }
@@ -154,6 +192,8 @@ done
 
 echo "Plan: $N runs of '/pronto:audit --json' against fixture worktree" >&2
 echo "Plugins loaded from: $REPO_ROOT/plugins/{$(IFS=,; echo "${PLUGIN_DIRS[*]}")}" >&2
+echo "Model: $EVAL_MODEL" >&2
+echo "Runs dir: $RUNS_DIR" >&2
 echo >&2
 
 START_TS=$(date +%s)
@@ -161,13 +201,44 @@ FAILED_RUNS=0
 SUCCESS_RUNS=0
 RUN_JSON_FILES=()
 
+# write_meta — emit per-run meta.json. Always called once per run, success
+# or failure, so post-hoc analysis sees a complete picture without needing
+# to cross-reference stdout files. Failure runs carry an embedded
+# `failure` object from the categorize helper; success runs carry the
+# composite/grade pair.
+write_meta() {
+  local meta_file="$1" run_index="$2" exit_code="$3" duration="$4" outcome="$5"
+  local extra_args=("${@:6}")
+  jq -n \
+    --argjson run "$run_index" \
+    --arg model "$EVAL_MODEL" \
+    --argjson exit_code "$exit_code" \
+    --argjson dur "$duration" \
+    --arg outcome "$outcome" \
+    --arg stdout_rel "run-$run_index.stdout" \
+    --arg stderr_rel "run-$run_index.stderr" \
+    "${extra_args[@]}" \
+    '{
+       run: $run,
+       model: $model,
+       exit_code: $exit_code,
+       duration_seconds: $dur,
+       outcome: $outcome,
+       stdout_path: $stdout_rel,
+       stderr_path: $stderr_rel
+     } + $extra' \
+    > "$meta_file"
+}
+
 for ((i=1; i<=N; i++)); do
   run_stdout="$RUNS_DIR/run-$i.stdout"
   run_stderr="$RUNS_DIR/run-$i.stderr"
   run_normalized="$RUNS_DIR/run-$i.normalized.json"
+  run_meta="$RUNS_DIR/run-$i.meta.json"
   printf '[run %d/%d] invoking /pronto:audit --json...' "$i" "$N" >&2
   run_start=$(date +%s)
   if (cd "$WORKTREE" && claude -p "/pronto:audit --json" \
+        --model "$EVAL_MODEL" \
         --dangerously-skip-permissions \
         "${PLUGIN_ARGS[@]}" \
         >"$run_stdout" 2>"$run_stderr"); then
@@ -178,55 +249,71 @@ for ((i=1; i<=N; i++)); do
   run_end=$(date +%s)
   run_dur=$((run_end - run_start))
 
-  if [[ "$run_rc" -ne 0 ]]; then
-    printf ' FAIL (exit %d, %ds)\n' "$run_rc" "$run_dur" >&2
-    FAILED_RUNS=$((FAILED_RUNS+1))
-    continue
-  fi
+  # Failure detection ladder. Each rung short-circuits to the categorize
+  # block below; the categorize helper assigns the operator-facing
+  # bucket (prose-contamination, partial-emission, refusal-or-empty,
+  # contract-violation, exit-nonzero, other).
+  outcome="success"
+  contract_violation=""
 
-  if ! jq -e . "$run_stdout" >/dev/null 2>&1; then
-    printf ' FAIL (non-JSON stdout, %ds)\n' "$run_dur" >&2
-    FAILED_RUNS=$((FAILED_RUNS+1))
-    continue
-  fi
-
-  if ! jq -c '{
+  if (( run_rc != 0 )); then
+    outcome="failure"
+  elif ! jq -e . "$run_stdout" >/dev/null 2>&1; then
+    outcome="failure"
+  elif ! jq -c '{
       composite: (.composite_score // null),
       grade:     (.composite_grade // null),
       dimensions: ([.dimensions[]? | {(.dimension): .score}] | add // {})
     }' "$run_stdout" > "$run_normalized" 2>/dev/null; then
-    printf ' FAIL (jq normalize, %ds)\n' "$run_dur" >&2
-    FAILED_RUNS=$((FAILED_RUNS+1))
-    continue
+    outcome="failure"
+  else
+    # Contract check: a valid audit run must carry a numeric composite, a
+    # letter grade, and every expected rubric dimension. Runs that parse
+    # as JSON but violate the contract (e.g. sub-Claude emitted a stub,
+    # or dropped half the dimensions) are not aggregated — they skew
+    # means toward hallucinated values. `dimensions-partial:<names>`
+    # names the missing dims so the operator sees what was dropped.
+    contract_violation=$(jq -r --arg expected "$EXPECTED_DIMS_CSV" '
+        def grade_re: "^(A\\+|[ABCDF])$";
+        ($expected | split(",")) as $exp
+        | ($exp - (.dimensions | keys)) as $missing_dims
+        | [
+            (if (.composite | type) != "number" then "composite-not-number" else empty end),
+            (if (.grade // null) == null then "grade-missing"
+             elif ((.grade | test(grade_re)) | not) then "grade-malformed"
+             else empty end),
+            (if (.dimensions | length) == 0 then "dimensions-empty"
+             elif ($missing_dims | length) > 0 then "dimensions-partial:\($missing_dims | join("|"))"
+             else empty end)
+          ] | join(",")
+      ' "$run_normalized")
+    if [[ -n "$contract_violation" ]]; then
+      outcome="failure"
+    fi
   fi
 
-  # Contract check: a valid audit run must carry a numeric composite, a
-  # letter grade, and every expected rubric dimension. Runs that parse as
-  # JSON but violate the contract (e.g. sub-Claude emitted a stub, or
-  # dropped half the dimensions) are not aggregated — they skew means
-  # toward hallucinated values. `dimensions-partial:<names>` names the
-  # missing dims so the operator sees what was dropped.
-  contract_violation=$(jq -r --arg expected "$EXPECTED_DIMS_CSV" '
-      def grade_re: "^(A\\+|[ABCDF])$";
-      ($expected | split(",")) as $exp
-      | ($exp - (.dimensions | keys)) as $missing_dims
-      | [
-          (if (.composite | type) != "number" then "composite-not-number" else empty end),
-          (if (.grade // null) == null then "grade-missing"
-           elif ((.grade | test(grade_re)) | not) then "grade-malformed"
-           else empty end),
-          (if (.dimensions | length) == 0 then "dimensions-empty"
-           elif ($missing_dims | length) > 0 then "dimensions-partial:\($missing_dims | join("|"))"
-           else empty end)
-        ] | join(",")
-    ' "$run_normalized")
+  if [[ "$outcome" == "failure" ]]; then
+    # The harness always redirects to $run_stderr, so the file exists
+    # by the time we get here (it may be zero bytes — the helper handles
+    # that as "no stderr tail in evidence").
+    categorize_args=(--stdout "$run_stdout" --stderr "$run_stderr" --exit-code "$run_rc")
+    if [[ -n "$contract_violation" ]]; then
+      categorize_args+=(--contract "$contract_violation")
+    fi
 
-  if [[ -n "$contract_violation" ]]; then
-    composite=$(jq -r '.composite // "?"' "$run_normalized")
-    grade=$(jq -r '.grade // "?"' "$run_normalized")
-    dimcount=$(jq -r '.dimensions | length' "$run_normalized")
-    printf ' FAIL (contract: %s; composite=%s grade=%s dims=%s, %ds)\n' \
-      "$contract_violation" "$composite" "$grade" "$dimcount" "$run_dur" >&2
+    if ! categorize_json="$("$CATEGORIZE_HELPER" "${categorize_args[@]}" 2>/dev/null)"; then
+      # The helper is defensive enough that this should be unreachable,
+      # but if it does fail we still must produce a meta.json — losing
+      # the run from the aggregate would understate the failure rate.
+      categorize_json='{"category":"other","sub_reason":"categorize-helper-failed","evidence":{"stdout_head":null,"stdout_tail":null,"stderr_tail":null}}'
+    fi
+
+    cat_label=$(echo "$categorize_json" | jq -r '"\(.category)/\(.sub_reason)"')
+    printf ' FAIL (%s, %ds)\n' "$cat_label" "$run_dur" >&2
+
+    write_meta "$run_meta" "$i" "$run_rc" "$run_dur" "failure" \
+      --argjson extra "$(jq -n --argjson failure "$categorize_json" '{failure: $failure}')"
+
     FAILED_RUNS=$((FAILED_RUNS+1))
     continue
   fi
@@ -234,6 +321,10 @@ for ((i=1; i<=N; i++)); do
   composite=$(jq -r '.composite' "$run_normalized")
   grade=$(jq -r '.grade' "$run_normalized")
   printf ' ok (composite=%s grade=%s, %ds)\n' "$composite" "$grade" "$run_dur" >&2
+
+  write_meta "$run_meta" "$i" "$run_rc" "$run_dur" "success" \
+    --argjson extra "$(jq -n --argjson composite "$composite" --arg grade "$grade" '{composite: $composite, grade: $grade}')"
+
   RUN_JSON_FILES+=("$run_normalized")
   SUCCESS_RUNS=$((SUCCESS_RUNS+1))
 done
@@ -252,22 +343,54 @@ format_dur() {
 
 echo >&2
 
+# Build failures_by_category from per-run meta files. This gives the
+# operator a one-line answer to "what dominant failure mode does this
+# run-batch surface" without having to grep the meta files. Counts are
+# of failed runs only; success runs are absent.
+FAILURES_BY_CATEGORY="$RUNS_DIR/failures_by_category.json"
+shopt -s nullglob
+META_FILES=( "$RUNS_DIR"/run-*.meta.json )
+shopt -u nullglob
+
+if (( ${#META_FILES[@]} > 0 )); then
+  if ! jq -s '
+      map(select(.outcome == "failure") | .failure.category)
+      | group_by(.)
+      | map({key: .[0], value: length})
+      | from_entries
+    ' "${META_FILES[@]}" > "$FAILURES_BY_CATEGORY"; then
+    echo "Warning: failed to compute failures_by_category aggregate" >&2
+    echo '{}' > "$FAILURES_BY_CATEGORY"
+  fi
+else
+  echo '{}' > "$FAILURES_BY_CATEGORY"
+fi
+
 if [[ "$SUCCESS_RUNS" -eq 0 ]]; then
   echo "All $N runs failed — no aggregation possible." >&2
   # Write a minimal results file capturing the failure.
-  cat >"$OUTPUT" <<EOF
-{
-  "fixture": "$FIXTURE_NAME",
-  "fixture_sha": "$FIXTURE_SHA",
-  "fixture_description": $(printf '%s' "$FIXTURE_DESC" | jq -Rs .),
-  "n": $N,
-  "n_success": 0,
-  "n_failed": $FAILED_RUNS,
-  "duration_seconds": $DURATION,
-  "runs": [],
-  "aggregates": null
-}
-EOF
+  jq -n \
+    --arg fixture "$FIXTURE_NAME" \
+    --arg sha "$FIXTURE_SHA" \
+    --arg desc "$FIXTURE_DESC" \
+    --arg model "$EVAL_MODEL" \
+    --argjson n "$N" \
+    --argjson n_failed "$FAILED_RUNS" \
+    --argjson dur "$DURATION" \
+    --slurpfile failures_by_category "$FAILURES_BY_CATEGORY" \
+    '{
+       fixture: $fixture,
+       fixture_sha: $sha,
+       fixture_description: $desc,
+       model: $model,
+       n: $n,
+       n_success: 0,
+       n_failed: $n_failed,
+       duration_seconds: $dur,
+       failures_by_category: $failures_by_category[0],
+       runs: [],
+       aggregates: null
+     }' > "$OUTPUT"
   exit 3
 fi
 
@@ -352,19 +475,23 @@ if ! jq \
     --arg fixture "$FIXTURE_NAME" \
     --arg sha "$FIXTURE_SHA" \
     --arg desc "$FIXTURE_DESC" \
+    --arg model "$EVAL_MODEL" \
     --argjson n "$N" \
     --argjson n_success "$SUCCESS_RUNS" \
     --argjson n_failed "$FAILED_RUNS" \
     --argjson dur "$DURATION" \
     --slurpfile runs "$ALL_RUNS" \
+    --slurpfile failures_by_category "$FAILURES_BY_CATEGORY" \
     '{
       fixture: $fixture,
       fixture_sha: $sha,
       fixture_description: $desc,
+      model: $model,
       n: $n,
       n_success: $n_success,
       n_failed: $n_failed,
       duration_seconds: $dur,
+      failures_by_category: $failures_by_category[0],
       runs: $runs[0],
       aggregates: .
     }' \
@@ -379,8 +506,20 @@ fi
   if [[ -n "$FIXTURE_DESC" ]]; then
     echo "  $FIXTURE_DESC"
   fi
+  echo "Model: $EVAL_MODEL"
   echo "Runs: $SUCCESS_RUNS successful, $FAILED_RUNS failed (of $N total)"
   echo "Duration: $(format_dur "$DURATION")"
+  if (( FAILED_RUNS > 0 )); then
+    fbc_line=$(jq -r '
+        to_entries
+        | sort_by(-.value)
+        | map("\(.key)×\(.value)")
+        | join("  ")
+      ' "$FAILURES_BY_CATEGORY")
+    if [[ -n "$fbc_line" ]]; then
+      echo "Failures by category: $fbc_line"
+    fi
+  fi
   echo
 
   # Composite
