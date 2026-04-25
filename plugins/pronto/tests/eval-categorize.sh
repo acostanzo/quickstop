@@ -36,6 +36,12 @@
 #   eval-categorize.sh --stdout <path> --exit-code <int> \
 #                      [--stderr <path>] [--contract <violation-string>]
 #
+# Note: --contract always wins over --exit-code. eval.sh's inline use only
+# passes --contract when rc=0 (the contract check runs after JSON parse
+# succeeds), so the precedence is harmless there. Standalone callers
+# should only pass --contract when --exit-code is 0 — otherwise the
+# helper reports contract-violation even when the CLI itself crashed.
+#
 # Exit codes:
 #   0  classification succeeded (always — even "other" is a result)
 #   2  caller-side bug (missing required arg, file not readable)
@@ -153,7 +159,10 @@ fi
 if ! grep -q '{' "$STDOUT_FILE"; then
   # Common refusal/apology patterns. Not exhaustive — "other" catches the
   # rest. The point is naming the dominant pattern, not enumerating all.
-  if echo "$STDOUT_CONTENT" | grep -qiE "i (can'?t|cannot|am unable|won'?t)|i'?m sorry|apolog(y|ies)|i'?m not able"; then
+  # printf '%s' (not echo) — STDOUT_CONTENT could plausibly start with -e
+  # or -n, which bash's built-in echo would interpret as flags and silently
+  # truncate from the grep input.
+  if printf '%s' "$STDOUT_CONTENT" | grep -qiE "i (can'?t|cannot|am unable|won'?t)|i'?m sorry|apolog(y|ies)|i'?m not able"; then
     emit "refusal-or-empty" "refusal"
   fi
   emit "refusal-or-empty" "no-json"
@@ -166,6 +175,13 @@ fi
 # Brace balance: count { vs } across the full stdout. Open > close means
 # the closing brace never arrived → partial emission. Equal counts but
 # parse-fail means structurally broken JSON or prose around it.
+#
+# NB: counts raw bytes, not parsed JSON tokens — a brace inside a string
+# value (e.g. {"msg": "call func {foo}"}) can fool this into reporting
+# unbalanced. The misclassification is bucket-to-bucket (partial-emission
+# vs prose-contamination/other), not a false-success path: jq -e .
+# already failed before we got here, so we're confidently in failure
+# territory and only debating the label.
 BRACE_OPEN=$(tr -cd '{' < "$STDOUT_FILE" | wc -c | tr -d ' ')
 BRACE_CLOSE=$(tr -cd '}' < "$STDOUT_FILE" | wc -c | tr -d ' ')
 
