@@ -76,15 +76,22 @@ expect_branch "future-major against >=99"    "1.0.0" ">=99.0.0"      "out_of_ran
 expect_branch "unset (empty range)"        "0.1.4" ""    "unset"
 expect_branch "unset (whitespace only)"    "0.1.4" "   " "unset"
 
-# --- error cases ---
+# --- malformed cases (sibling-supplied garbage; rc=0, branch=malformed) ---
+
+expect_branch "non-semver in clause"     "0.1.4"  ">=0.1"        "malformed"
+expect_branch "garbage clause"           "0.1.4"  ">>0.1.0"      "malformed"
+expect_branch "prerelease in clause"     "0.1.4"  ">=0.1.0-rc"   "malformed"
+expect_branch "caret range (npm-style)"  "0.1.4"  "^0.1.0"       "malformed"
+expect_branch "tilde range (npm-style)"  "0.1.4"  "~0.1.0"       "malformed"
+expect_branch "lone equals"              "0.1.4"  "="            "malformed"
+expect_branch "trailing partial clause"  "0.1.4"  ">=0.1.0 <"    "malformed"
+
+# --- error cases (caller-side bugs only; rc=2) ---
 
 expect_error "missing pronto_version"   ""         ">=0.1.0"
 expect_error "non-semver pronto"        "1.0"      ">=0.1.0"
 expect_error "non-semver pronto (text)" "abc"      ">=0.1.0"
-expect_error "non-semver in clause"     "0.1.4"    ">=0.1"
-expect_error "garbage clause"           "0.1.4"    ">>0.1.0"
 expect_error "prerelease in pronto"     "1.0.0-rc" ">=0.1.0"
-expect_error "prerelease in clause"     "0.1.4"    ">=0.1.0-rc"
 
 # --- output shape ---
 
@@ -107,6 +114,7 @@ shape_check() {
 
 shape_check "0.1.4" ">=0.1.0"      # in_range branch
 shape_check "0.1.4" ">=99.0.0"     # out_of_range branch
+shape_check "0.1.4" "^0.1.0"       # malformed branch
 shape_check "0.1.4" ""             # unset branch
 
 # --- summary ---

@@ -7,8 +7,9 @@
 #   3. Invoke compatible-pronto-check.sh with pronto's running version
 #   4. Assert the helper's branch matches expectation
 #
-# Three fake-sibling fixtures (in_range, out_of_range, unset) cover the three
-# ADR-004 §2 outcomes. Run: ./h1-version-handshake.sh
+# Four fake-sibling fixtures (in_range, out_of_range, unset, malformed) cover
+# every helper branch SKILL.md must dispatch on per ADR-004 §2.
+# Run: ./h1-version-handshake.sh
 # Exits 0 on all-green, non-zero on any failing case.
 
 set -uo pipefail
@@ -34,7 +35,7 @@ fi
 FIXTURE_DIR="$(mktemp -d -t pronto-h1-handshake.XXXXXX)"
 trap 'rm -rf "$FIXTURE_DIR"' EXIT
 
-mkdir -p "$FIXTURE_DIR/in_range" "$FIXTURE_DIR/out_of_range" "$FIXTURE_DIR/unset"
+mkdir -p "$FIXTURE_DIR/in_range" "$FIXTURE_DIR/out_of_range" "$FIXTURE_DIR/unset" "$FIXTURE_DIR/malformed"
 
 # Fixture A: in_range — declares a range that includes pronto's version.
 #   ">=0.1.0 <99.0.0" comfortably covers any plausible pronto version.
@@ -67,6 +68,21 @@ cat > "$FIXTURE_DIR/unset/plugin.json" <<EOF
   "name": "fake-unset-sibling",
   "version": "0.9.0",
   "pronto": {
+    "audits": [{"dimension": "lint-posture", "command": "/fake:audit --json"}]
+  }
+}
+EOF
+
+# Fixture D: malformed — declares an unparseable range (caret syntax, common in npm).
+#   The helper rejects ops outside { >= <= > < = "" }; "^0.1.0" is a sibling-side
+#   declaration error and must surface as the malformed branch (rc=0, JSON note),
+#   not exit 2 — that's how the orchestrator handles it gracefully.
+cat > "$FIXTURE_DIR/malformed/plugin.json" <<EOF
+{
+  "name": "fake-malformed-sibling",
+  "version": "3.1.4",
+  "pronto": {
+    "compatible_pronto": "^0.1.0",
     "audits": [{"dimension": "lint-posture", "command": "/fake:audit --json"}]
   }
 }
@@ -118,6 +134,7 @@ echo
 check_fixture "in_range"     "in_range"
 check_fixture "out_of_range" "out_of_range"
 check_fixture "unset"        "unset"
+check_fixture "malformed"    "malformed"
 
 echo
 echo "h1-version-handshake: $PASS passed, $FAIL failed"

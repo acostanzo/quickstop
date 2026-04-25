@@ -8,19 +8,27 @@
 # Both arguments are strings. <compatible_pronto_range> may be empty (signals
 # the sibling did not declare it). Outputs a single-line JSON object on stdout:
 #
-#   {"branch": "in_range" | "out_of_range" | "unset", "message": "..."}
+#   {"branch": "in_range" | "out_of_range" | "unset" | "malformed", "message": "..."}
 #
-# Branches map to ADR-004 §2's three handshake outcomes:
+# Branches map to ADR-004 §2's handshake outcomes (plus a fourth for sibling-side
+# parse failures — see "malformed" below):
 #   - in_range:     sibling's range covers pronto's version. Caller dispatches normally.
 #   - out_of_range: sibling's range excludes pronto's version. Caller skips the sibling
 #                   and falls back to presence-only scoring; emits a version-mismatch finding.
 #   - unset:        sibling has no compatible_pronto. Caller dispatches anyway and emits
 #                   a soft finding noting the missing handshake.
+#   - malformed:    sibling's range can't be parsed as space-separated <op>MAJOR.MINOR.PATCH
+#                   clauses (e.g. caret/tilde syntax, partial versions, prerelease tags).
+#                   Caller skips the sibling and falls back to presence-only scoring with
+#                   a hard finding naming the unparseable range. Distinct from caller-side
+#                   bugs (missing/invalid pronto_version), which exit non-zero.
 #
 # Exit codes:
-#   0   on any successful classification (including out_of_range and unset — those
-#       are signals to the caller, not errors)
-#   2   on malformed input (invalid pronto_version or unparseable range clause)
+#   0   on any successful classification (in_range, out_of_range, unset, malformed —
+#       all four are signals to the caller, not errors)
+#   2   on caller-side bugs only: missing or non-semver pronto_version, or an internal
+#       desync between the entrypoint op parser and clause_satisfied. Sibling-supplied
+#       garbage is the malformed branch above, not exit 2.
 #
 # Range syntax: space-separated AND clauses. Each clause is <op><version> where:
 #   op      ∈ { >=, <=, >, <, =, "" }   (empty op treated as "=")
@@ -132,7 +140,13 @@ for clause in "${CLAUSES[@]}"; do
   fi
 
   if ! is_valid_version "$cv"; then
-    err "range clause '$clause' has invalid version '$cv' (expect MAJOR.MINOR.PATCH)"
+    # Sibling-supplied range clause is unparseable. Distinct from caller bugs
+    # (missing/invalid pronto_version) — those still err with rc=2. Sibling
+    # malformed input becomes the `malformed` branch with rc=0 so the
+    # orchestrator's parse-and-branch flow handles it uniformly per ADR-004 §2.
+    emit_json "malformed" \
+      "Sibling's compatible_pronto clause '$clause' has invalid version '$cv' (expect MAJOR.MINOR.PATCH; full range: '$RANGE')."
+    exit 0
   fi
 
   if ! clause_satisfied "$PRONTO_VERSION" "$op" "$cv"; then

@@ -87,8 +87,8 @@ Walk every dimension in the rubric (8 rows in Phase 1). For each, resolve the sc
 
 ### Dimension: project-record (kernel-owned until avanti ships)
 
-- If `avanti` is in INSTALLED_SIBLINGS and declares `project-record` natively → invoke declared command, use composite_score. Source: `sibling`.
-- Else → use `KERNEL_CATEGORY_SCORES["Project record container"]`; cap at 50 if 100 (present), 0 if 0 (absent). Source: `kernel-presence-cap` or `presence-fail`.
+- If `avanti` is in INSTALLED_SIBLINGS and declares `project-record` natively, the dispatch is a sibling dispatch and **must go through the same version handshake** as the other sibling-owned dimensions below. Run `compatible-pronto-check.sh` against `INSTALLED_SIBLINGS[avanti].compatible_pronto` first; only invoke the declared command on `in_range` or `unset` (apply the same notes per branch as in "Other dimensions" step 2). On `out_of_range` or `malformed`, skip the sibling dispatch and fall back to the kernel-presence-cap path below. Source on successful sibling dispatch: `sibling`.
+- Else (avanti absent, or handshake forced a skip) → use `KERNEL_CATEGORY_SCORES["Project record container"]`; cap at 50 if 100 (present), 0 if 0 (absent). Source: `kernel-presence-cap` or `presence-fail`.
 
 ### Other dimensions (sibling-owned with optional parser)
 
@@ -107,6 +107,9 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
    - `in_range` → continue to step 3 (dispatch normally), no note.
    - `unset` → continue to step 3 (dispatch normally) AND append a soft note to `sibling_integration_notes`: `"<plugin> does not declare compatible_pronto; dispatching at sibling's risk per ADR-004 §2."`
    - `out_of_range` → **skip dispatch entirely**, fall through to step 4 (presence fallback) for this dimension, AND append a hard note to `sibling_integration_notes` of the form: `"<plugin> <version> declares compatible_pronto '<range>' but this pronto is <PRONTO_VERSION>. Sibling audit skipped; upgrade <plugin> to re-enable depth scoring."` Take `<version>` and `<range>` from `INSTALLED_SIBLINGS[<plugin>]`. The fallback's source stays `kernel-presence-cap` / `presence-fail` per the existing report-format contract; consumers correlate the skipped sibling via this entry plus the per-dimension `notes` template in step 4.
+   - `malformed` → **skip dispatch entirely** (same handling as `out_of_range`), fall through to step 4, AND append a hard note to `sibling_integration_notes`: `"<plugin> <version> declares compatible_pronto '<range>' which is not parseable per ADR-004 §2 (must be space-separated <op>MAJOR.MINOR.PATCH clauses; ops: >= <= > < =). Sibling audit skipped; fix the sibling's plugin.json to re-enable depth scoring."`
+
+   If the helper itself exits non-zero (rc != 0), that is a pronto-side bug — pronto's own version is malformed, the call site forgot an argument, or there's an internal desync. Capture stderr, append it to `sibling_integration_notes` prefixed `pronto bug: compatible-pronto-check.sh exited <rc>: <stderr>`, treat the dimension as `out_of_range` for the rest of dispatch (skip sibling, fall through to step 4). The pronto bug is not a sibling problem — but masking it would be worse than a noisy log.
 
    If the recommended plugin is NOT in INSTALLED_SIBLINGS, skip the handshake (no sibling means no declaration to check) and fall through to step 4 directly.
 
@@ -136,7 +139,9 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
    - If presence fails (`0`) → score 0, source `presence-fail`.
    - The per-dimension `notes` field must reflect *why* the fallback ran, not a generic stub:
      - Sibling not installed (and no parser): `"<plugin> not installed; presence check passed; capped at 50"` (or `"...presence check failed; score 0"`).
-     - Handshake forced skip (`out_of_range`): `"<plugin> <version> installed but compatible_pronto excludes pronto <PRONTO_VERSION>; sibling audit skipped; presence-only."` Otherwise the row contradicts the hard note in `sibling_integration_notes`.
+     - Handshake forced skip (`out_of_range`): `"<plugin> <version> installed but compatible_pronto excludes pronto <PRONTO_VERSION>; sibling audit skipped; presence-only."`
+     - Handshake forced skip (`malformed`): `"<plugin> <version> installed but compatible_pronto '<range>' is unparseable; sibling audit skipped; presence-only."`
+     - Otherwise the row contradicts the hard note in `sibling_integration_notes`.
 
 ### Phase 4.1: Parser dispatch
 
