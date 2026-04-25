@@ -88,7 +88,12 @@ Walk every dimension in the rubric (8 rows in Phase 1). For each, resolve the sc
 ### Dimension: project-record (kernel-owned until avanti ships)
 
 - If `avanti` is in INSTALLED_SIBLINGS and declares `project-record` natively, the dispatch is a sibling dispatch and **must go through the same version handshake** as the other sibling-owned dimensions below. Run `compatible-pronto-check.sh` against `INSTALLED_SIBLINGS[avanti].compatible_pronto` first; only invoke the declared command on `in_range` or `unset` (apply the same notes per branch as in "Other dimensions" step 2). On `out_of_range` or `malformed`, skip the sibling dispatch and fall back to the kernel-presence-cap path below. Source on successful sibling dispatch: `sibling`.
-- Else (avanti absent, or handshake forced a skip) → use `KERNEL_CATEGORY_SCORES["Project record container"]`; cap at 50 if 100 (present), 0 if 0 (absent). Source: `kernel-presence-cap` or `presence-fail`.
+- Else (avanti absent, or handshake forced a skip) → use `KERNEL_CATEGORY_SCORES["Project record container"]`; cap at 50 if 100 (present), 0 if 0 (absent). Source: `kernel-presence-cap` or `presence-fail`. The per-dimension `notes` field must reflect *which* fallback path was taken — apply the same templates as "Other dimensions" step 4, substituting `avanti` for `<plugin>`:
+  - avanti absent: `"avanti not installed; presence check passed; capped at 50"` (or `"...presence check failed; score 0"`).
+  - Handshake `out_of_range`: `"avanti <version> installed but compatible_pronto excludes pronto <PRONTO_VERSION>; sibling audit skipped; presence-only."`
+  - Handshake `malformed`: `"avanti <version> installed but compatible_pronto '<range>' is unparseable; sibling audit skipped; presence-only."`
+
+  Otherwise the row's `notes` will contradict the hard entry in `sibling_integration_notes`.
 
 ### Other dimensions (sibling-owned with optional parser)
 
