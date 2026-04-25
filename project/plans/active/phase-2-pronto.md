@@ -2,7 +2,7 @@
 phase: 2
 status: active
 tickets: [h1, h2a, h2b, h3, h4, 2a1, 2a2, 2a3, 2b1, 2b2, 2b3, 2c1, 2c2, 2c3]
-updated: 2026-04-24
+updated: 2026-04-25
 ---
 
 # Pronto Phase 2 — Breadth: new siblings on a hardened foundation
