@@ -5,6 +5,7 @@ tickets: [t1]
 updated: 2026-04-26
 ---
 
+
 # Avanti Phase 1 follow-up — Sibling alignment + A3 step 3
 
 ## The role in one paragraph
@@ -24,7 +25,7 @@ Add `compatible_pronto: ">=0.1.0"` under the `pronto` block in `plugins/avanti/.
 - **Migration to `observations[]` payload (ADR-005 §3).** Blocked on pronto Phase 2 PR H3 (wire-contract `$schema_version: 2` bump), which has not landed. Will be picked up as a separate ticket once H3 ships; ADR-005's back-compat `score` passthrough means avanti's current v1 emission keeps working in the interim.
 - **Pronto-side `recommendations.json` `plugin_status` update** (`phase-1b → shipped`). That's a pronto data-file change; sequenced under pronto's session, not avanti's.
 - **Avanti `:doctor` skill (ADR-005 §2).** Optional convention; no current self-diagnostic logic to formalize. Worth proposing only if a real diagnostic surface emerges.
-- **Live end-to-end `/pronto:audit` invocation against an installed avanti.** Requires an interactive Claude Code session with both plugins installed via `--plugin-dir`; structural verification (Phase 4 dispatch trace) covers the wire-contract correctness this branch can prove. Live invocation belongs in a Phase 1.5 harness pass once both plugins are in the constellation harness.
+- ~~**Live end-to-end `/pronto:audit` invocation against an installed avanti.**~~ **Re-evaluated during execution and superseded.** The "needs interactive Claude Code session" framing was overcautious — `claude --print --plugin-dir <pronto> --plugin-dir <avanti>` orchestrated by Bash works as a live integration primitive from the batch agent. Live invocation ran successfully; full result captured in `project/tickets/closed/t1-handshake-and-contract-align.md` (A3 step 3 verification, "structural + live" section).
 
 ## Definition of done
 

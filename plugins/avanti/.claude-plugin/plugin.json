@@ -17,7 +17,7 @@
     "audit"
   ],
   "pronto": {
-    "compatible_pronto": ">=0.1.0",
+    "compatible_pronto": ">=0.2.0 <0.3.0",
     "audits": [
       {
         "dimension": "project-record",

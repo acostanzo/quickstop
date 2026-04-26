@@ -70,9 +70,9 @@ Parse the integer suffix from each entry that matches `^t\d+$` (e.g., `t3` → `
 
 ### Step 3: Check for file collision
 
-Glob for `project/tickets/*/${NEW_ID}-*.md` under REPO_ROOT. If any file matches (should never happen under correct usage, but guard against it), abort — IDs must remain monotonic and never overlap.
+Glob for `project/tickets/*/${NEW_ID}-*.md` under REPO_ROOT. For every match, read the file's frontmatter and check whether `plan:` equals **PLAN_SLUG**. **Only abort if a same-plan match exists** — different plans legitimately each have their own `t1`, `t2`, … sequence, so a `t1-foo.md` under another plan is not a collision. If a same-plan match is found, abort: "Ticket id ${NEW_ID} is already in use by `<path>` under plan `${PLAN_SLUG}`." (Cross-plan IDs sharing the same numeric prefix are by design — see `references/sdlc-conventions.md#plan-scoped-ticket-ids`.)
 
-Also glob for `project/tickets/*/*-${SLUG}.md`. If any match, the slug is already in use under this plan or another. Warn the user clearly and abort:
+Also glob for `project/tickets/*/*-${SLUG}.md`. Slug uniqueness is **repo-wide** because filenames don't carry the plan slug — two plans both choosing the slug `foo` would produce filename collisions. If any match, warn the user clearly and abort:
 
 ```
 A ticket with slug "${SLUG}" already exists at <path>.

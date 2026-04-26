@@ -19,7 +19,7 @@ This ticket is the alignment patch.
 
 `plugins/avanti/.claude-plugin/plugin.json`:
 
-- Added `compatible_pronto: ">=0.1.0"` to the `pronto` block.
+- Added `compatible_pronto: ">=0.2.0 <0.3.0"` to the `pronto` block. Range chosen for pre-1.0 semver discipline: floor matches what avanti was actually tested against (pronto 0.2.0); pinned-minor ceiling forces deliberate re-validation when pronto 0.3.x ships PR H3 (wire-contract `$schema_version: 2` + `observations[]`) — re-validation timing aligns with the natural avanti follow-up to migrate emission to the new payload.
 - Bumped `version` 0.1.2 → 0.1.3.
 
 `.claude-plugin/marketplace.json` and root `README.md` updated to reflect v0.1.3 per the repo's three-file version-bump convention.
@@ -49,16 +49,16 @@ Step 4b previously surfaced `audit_ignore: true` overrides only in verbose markd
 === Discovery & declaration ===
 pronto version:           0.2.0
 avanti version:           0.1.3
-avanti.compatible_pronto: >=0.1.0
+avanti.compatible_pronto: >=0.2.0 <0.3.0
 avanti claims dimension:  project-record
 avanti audit_command:     /avanti:audit --json
 skills/audit/SKILL.md:    yes  (ADR-005 §1)
 
 === Handshake ===
-{"branch":"in_range","message":"pronto 0.2.0 satisfies sibling's compatible_pronto range '>=0.1.0'."}
+{"branch":"in_range","message":"pronto 0.2.0 satisfies sibling's compatible_pronto range '>=0.2.0 <0.3.0'."}
 ```
 
-**Live integration** — `claude --print --plugin-dir <pronto> --plugin-dir <avanti> --no-session-persistence --max-budget-usd 5.00 "/pronto:audit --json"` against a fresh fixture repo with both plugins side-loaded. The full pronto envelope embedded avanti's contract:
+**Live integration (canonical run)** — `claude --print --plugin-dir <pronto> --plugin-dir <avanti> --no-session-persistence --max-budget-usd 5.00 "/pronto:audit --json"` against a fresh fixture repo with both plugins side-loaded. Run was against the `>=0.1.0` range; the subsequent value tighten to `>=0.2.0 <0.3.0` is verified by the handshake helper (still `in_range` for pronto 0.2.0) — same dispatch path, only the gate predicate changed. The full pronto envelope embedded avanti's contract:
 
 ```json
 {
@@ -96,9 +96,15 @@ And, contrasting against the three Phase-1-shipped siblings that have not yet de
 
 Avanti is the only sibling on this run that gets dispatched **without** a `compatible_pronto`-missing soft note — the value proposition of this ticket validated end-to-end. Pronto's project-record contribution lands at `weighted_contribution: 5.0` (full weight per the rubric), not the 50-cap kernel-presence fallback.
 
+**Side-observations from re-runs** (both worth flagging to pronto's session, neither blocking this PR):
+
+1. **Cache wins over `--plugin-dir` for sibling discovery.** A re-run with the tightened range against unsynced `~/.claude/plugins/cache/quickstop/avanti/0.1.2/` (no `compatible_pronto` field) produced the `unset` integration note (`"avanti does not declare compatible_pronto..."`) even though `--plugin-dir` pointed at the worktree with the field declared. The post-merge cache refresh will fix this naturally once 0.1.3 ships, but the testing-environment friction is real — sibling-side handshake changes can't be exercised end-to-end from a worktree without first syncing the cache. Worth a pronto follow-up to make discovery `--plugin-dir`-aware (or at least clearly document the cache-takes-precedence behavior).
+
+2. **Orchestrator non-emission failure** when discovery sources mismatched. A second re-run with the cache *synced* to the worktree state produced empty stdout (1-byte newline) and exit 0 — the pronto Phase 2 PR H2a/H2b "non-JSON stdout" failure mode visible in their fixture data. Surfacing as a data point on H2b's eval target.
+
 ## Acceptance
 
-- `compatible-pronto-check.sh "0.2.0" ">=0.1.0"` returns `branch: "in_range"` ✓
+- `compatible-pronto-check.sh "0.2.0" ">=0.2.0 <0.3.0"` returns `branch: "in_range"` ✓
 - Finding and recommendation field names in `skills/audit/SKILL.md` match the pronto contract ✓
 - `./scripts/check-plugin-versions.sh` passes (avanti bumped 0.1.2 → 0.1.3) ✓
 - `grep -nE '"level"|"path":|"action":|"rationale":|<action>|<rationale>|\[<level>\]' plugins/avanti/skills/audit/SKILL.md` → zero matches (covers both JSON keys and markdown placeholders) ✓
@@ -111,7 +117,7 @@ The remaining Phase 2-shaped follow-up — migrating `/avanti:audit` to emit `ob
 
 Pronto's `recommendations.json` still lists avanti at `plugin_status: phase-1b`. That's a pronto data-file change; flagging here for the pronto session to update on their next pass.
 
-Latent bug found while filing this ticket: `/avanti:ticket`'s ID-collision check globs `project/tickets/*/${NEW_ID}-*.md` repo-wide, which would falsely block a new plan from minting its own `t1` whenever any other plan's `t1-*.md` already exists. The convention is plan-scoped IDs — the check should glob per-id then read frontmatter for `plan:` match, only aborting on same-plan reuse. Filing this as a separate ticket on the next pass; not bundled here to keep the follow-up focused. Ticket records hand-authored during this branch dodge the bug because the skill isn't invoked.
+Latent bug found while filing this ticket: `/avanti:ticket`'s ID-collision check globbed `project/tickets/*/${NEW_ID}-*.md` repo-wide, which would have falsely blocked a new plan from minting its own `t1` whenever any other plan's `t1-*.md` already existed. **Bundled into this ticket** during the review-iteration loop after weighing it against scope discipline — the fix is a small markdown edit (skills are prose, not code), the bug surfaced during this exact work, and bundling closes it while context is fresh. Updated `skills/ticket/SKILL.md` Step 3: glob per-id then read each match's frontmatter, only abort on same-plan reuse. Slug-collision guard left as repo-wide (filenames don't carry plan slug, so two plans choosing slug `foo` would still produce filename collisions — the convention is repo-wide unique slugs).
 
 ## Links
 
