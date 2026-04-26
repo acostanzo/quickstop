@@ -35,7 +35,7 @@ This ticket is the alignment patch.
 | `recommendations[]` | `action` | `title` |
 | `recommendations[]` | `rationale` | (split into `command` + `category` + `impact_points`) |
 
-Markdown scorecard label updated from `[<level>] <path>` to `[<severity>] <file>` for consistency. The prose paragraph on recommendations now references the contract directly.
+Markdown scorecard label updated from `[<level>] <path>` to `[<severity>] <file>` for consistency. The recommendations rendering example was also brought across the rename — `1. [<priority>] <action>` / `   <rationale>` became `1. [<priority>] <title>  (+<impact_points> pts <category>)` / `   <command, if any>`. The prose paragraph on recommendations now references the contract directly.
 
 ### audit_ignore surfaces in JSON too
 
@@ -72,7 +72,7 @@ Pronto picks avanti up at step 1 of the ADR-005 §5 discovery ladder (`plugins/a
 - `compatible-pronto-check.sh "0.2.0" ">=0.1.0"` returns `branch: "in_range"` ✓
 - Finding and recommendation field names in `skills/audit/SKILL.md` match the pronto contract ✓
 - `./scripts/check-plugin-versions.sh` passes (avanti bumped 0.1.2 → 0.1.3) ✓
-- `grep -E '"level"|"path"|"action":|"rationale":' plugins/avanti/skills/audit/SKILL.md` → zero matches ✓
+- `grep -nE '"level"|"path":|"action":|"rationale":|<action>|<rationale>|\[<level>\]' plugins/avanti/skills/audit/SKILL.md` → zero matches (covers both JSON keys and markdown placeholders) ✓
 - Author-string grep on `plugins/avanti/` → zero matches ✓
 - Project-record dispatch trace ends at `source: sibling` ✓
 
