@@ -41,9 +41,9 @@ Markdown scorecard label updated from `[<level>] <path>` to `[<severity>] <file>
 
 Step 4b previously surfaced `audit_ignore: true` overrides only in verbose markdown output. Promoted to also emit one **info**-severity JSON finding per overridden artifact under whichever category would have applied the deduction, so consumers (and pronto, eventually) can detect the pattern programmatically.
 
-### A3 step 3 structural verification
+### A3 step 3 verification (structural + live)
 
-Traced pronto's project-record dispatch path against avanti's declarations on the current main:
+**Structural trace** against current main:
 
 ```
 === Discovery & declaration ===
@@ -56,16 +56,45 @@ skills/audit/SKILL.md:    yes  (ADR-005 §1)
 
 === Handshake ===
 {"branch":"in_range","message":"pronto 0.2.0 satisfies sibling's compatible_pronto range '>=0.1.0'."}
-
-=== Pronto's project-record dispatch path (per audit SKILL.md Phase 4) ===
-1. avanti in INSTALLED_SIBLINGS?           yes (registered in marketplace.json)
-2. Declares project-record natively?       yes (pronto.audits[].dimension)
-3. Handshake branch?                       in_range — dispatch normally
-4. Source for the report:                  sibling (real depth, not capped)
-5. Score path:                             /avanti:audit --json composite_score
 ```
 
-Pronto picks avanti up at step 1 of the ADR-005 §5 discovery ladder (`plugins/avanti/skills/audit/SKILL.md` exists). The handshake helper returns `in_range`. The dispatch resolves as a real sibling call (not the kernel-presence-cap fallback), and avanti's now-aligned wire contract feeds the orchestrator's per-dimension scoring without reshape glue.
+**Live integration** — `claude --print --plugin-dir <pronto> --plugin-dir <avanti> --no-session-persistence --max-budget-usd 5.00 "/pronto:audit --json"` against a fresh fixture repo with both plugins side-loaded. The full pronto envelope embedded avanti's contract:
+
+```json
+{
+  "dimension": "project-record",
+  "weight": 5,
+  "score": 100,
+  "weighted_contribution": 5.0,
+  "source": "sibling",
+  "source_plugin": "avanti",
+  "source_audit": {
+    "plugin": "avanti",
+    "dimension": "project-record",
+    "categories": [ /* 4 entries: Plan freshness/Ticket hygiene/ADR completeness/Pulse cadence */ ],
+    "composite_score": 100,
+    "letter_grade": "A+",
+    "recommendations": []
+  },
+  "notes": null
+}
+```
+
+`sibling_integration_notes` for the run carried a single avanti entry confirming clean dispatch:
+
+```
+"avanti: dispatched via Skill tool, composite 100 (A+)."
+```
+
+And, contrasting against the three Phase-1-shipped siblings that have not yet declared `compatible_pronto`:
+
+```
+"claudit does not declare compatible_pronto; dispatching at sibling's risk per ADR-004 §2."
+"skillet does not declare compatible_pronto; dispatching at sibling's risk per ADR-004 §2."
+"commventional does not declare compatible_pronto; dispatching at sibling's risk per ADR-004 §2."
+```
+
+Avanti is the only sibling on this run that gets dispatched **without** a `compatible_pronto`-missing soft note — the value proposition of this ticket validated end-to-end. Pronto's project-record contribution lands at `weighted_contribution: 5.0` (full weight per the rubric), not the 50-cap kernel-presence fallback.
 
 ## Acceptance
 
