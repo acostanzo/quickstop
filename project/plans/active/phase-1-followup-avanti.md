@@ -5,7 +5,6 @@ tickets: [t1]
 updated: 2026-04-26
 ---
 
-
 # Avanti Phase 1 follow-up — Sibling alignment + A3 step 3
 
 ## The role in one paragraph
@@ -16,9 +15,9 @@ Avanti Phase 1 (PR #41) shipped its plugin shell, seven skills, and a wire-contr
 
 ### T1 — Declare compatible_pronto and align audit emission to the v1 contract
 
-Add `compatible_pronto: ">=0.1.0"` under the `pronto` block in `plugins/avanti/.claude-plugin/plugin.json`. Bump avanti to `0.1.3` across plugin.json + marketplace.json + root README. Sweep `skills/audit/SKILL.md` for wire-contract field-name divergences from `plugins/pronto/references/sibling-audit-contract.md`: rename finding `level` → `severity`, `path` → `file`; rename recommendation `action` → `title` and `rationale` → `command`/`category`/`impact_points` per the contract; promote `audit_ignore: true` overrides from a markdown-only surface to JSON `info`-severity findings so consumers detect them programmatically. Trace pronto's project-record dispatch path against avanti's declarations to verify A3 step 3 structurally now that pronto has shipped.
+Add `compatible_pronto: ">=0.2.0 <0.3.0"` under the `pronto` block in `plugins/avanti/.claude-plugin/plugin.json` (range chosen for pre-1.0 semver discipline: floor matches the version tested against, pinned-minor ceiling forces deliberate re-validation when pronto H3 ships and bumps to 0.3.x). Bump avanti to `0.1.3` across plugin.json + marketplace.json + root README. Sweep `skills/audit/SKILL.md` for wire-contract field-name divergences from `plugins/pronto/references/sibling-audit-contract.md`: rename finding `level` → `severity`, `path` → `file`; rename recommendation `action` → `title` and `rationale` → `command`/`category`/`impact_points` per the contract; promote `audit_ignore: true` overrides from a markdown-only surface to JSON `info`-severity findings so consumers detect them programmatically. Trace pronto's project-record dispatch path against avanti's declarations and run a live `/pronto:audit --json` against a fresh fixture to verify A3 step 3 end-to-end now that pronto has shipped.
 
-**Acceptance:** `compatible-pronto-check.sh "$(jq -r .version plugins/pronto/.claude-plugin/plugin.json)" ">=0.1.0"` returns `branch: "in_range"`. Avanti's `findings[]` and `recommendations[]` schemas in `skills/audit/SKILL.md` match `plugins/pronto/references/sibling-audit-contract.md` field-for-field, in **both** the JSON schema example and the markdown-rendering example. `./scripts/check-plugin-versions.sh` passes. `grep -nE '"level"\|"path":\|"action":\|"rationale":\|<action>\|<rationale>\|\[<level>\]' plugins/avanti/skills/audit/SKILL.md` returns zero matches (covers both JSON keys and markdown placeholders). Trace document records pronto's project-record path as `INSTALLED_SIBLINGS lookup → handshake in_range → native dispatch → source: sibling`.
+**Acceptance:** `compatible-pronto-check.sh "$(jq -r .version plugins/pronto/.claude-plugin/plugin.json)" ">=0.2.0 <0.3.0"` returns `branch: "in_range"`. Avanti's `findings[]` and `recommendations[]` schemas in `skills/audit/SKILL.md` match `plugins/pronto/references/sibling-audit-contract.md` field-for-field, in **both** the JSON schema example and the markdown-rendering example. `./scripts/check-plugin-versions.sh` passes. `grep -nE '"level"\|"path":\|"action":\|"rationale":\|<action>\|<rationale>\|\[<level>\]' plugins/avanti/skills/audit/SKILL.md` returns zero matches (covers both JSON keys and markdown placeholders). Trace document records pronto's project-record path as `INSTALLED_SIBLINGS lookup → handshake in_range → native dispatch → source: sibling`. Live `/pronto:audit --json` against a fixture repo (with both plugins side-loaded) returns avanti's full envelope embedded under `dimensions[].source_audit` with `source: sibling`, `weighted_contribution: 5.0` (full weight, not 50-cap). Fixture is cleaned up after.
 
 ## Out of scope
 
@@ -29,8 +28,9 @@ Add `compatible_pronto: ">=0.1.0"` under the `pronto` block in `plugins/avanti/.
 
 ## Definition of done
 
-- `plugins/avanti/.claude-plugin/plugin.json` carries `compatible_pronto: ">=0.1.0"` and v0.1.3.
+- `plugins/avanti/.claude-plugin/plugin.json` carries `compatible_pronto: ">=0.2.0 <0.3.0"` and v0.1.3.
 - `marketplace.json` and root `README.md` reflect v0.1.3.
 - `skills/audit/SKILL.md` finding and recommendation field names match `sibling-audit-contract.md`.
-- Trace document under `project/tickets/closed/t1-handshake-and-contract-align.md` shows the dispatch path arriving at `source: sibling`.
-- One atomic conventional commit; PR opened and ready for review.
+- `skills/ticket/SKILL.md` ID-collision guard scopes per-id check to PLAN_SLUG (cross-plan IDs by design).
+- Trace document under `project/tickets/closed/t1-handshake-and-contract-align.md` shows both the structural dispatch path arriving at `source: sibling` and the live `/pronto:audit --json` envelope embedding avanti's contract.
+- All commits on the branch are atomic conventional commits, rebase-merge friendly. PR approved through the test-then-review loop before merge.
