@@ -1,7 +1,7 @@
 ---
 phase: 2
 status: active
-tickets: [h1, h2a, h2b, h3, h4, 2a1, 2a2, 2a3, 2b1, 2b2, 2b3, 2c1, 2c2, 2c3]
+tickets: [h1, h2a, h2b, h2c, h2d, h3, h4, 2a1, 2a2, 2a3, 2b1, 2b2, 2b3, 2c1, 2c2, 2c3]
 updated: 2026-04-25
 ---
 
