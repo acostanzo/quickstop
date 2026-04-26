@@ -40,7 +40,7 @@ If a per-repo `.avanti/config.json` override exists under REPO_ROOT, its `thresh
 
 ### Step 4b: Honor per-artifact overrides
 
-Before any staleness, cadence, or ticket-age deduction runs in Phase 1, check the artifact's frontmatter for `audit_ignore: true`. If set, skip staleness/cadence deductions for that artifact but still include it in presence counts. Surface the override in verbose markdown output so the pattern doesn't become a quiet way to hide rot. See `references/audit-thresholds.md#overrides` for the semantics.
+Before any staleness, cadence, or ticket-age deduction runs in Phase 1, check the artifact's frontmatter for `audit_ignore: true`. If set, skip staleness/cadence deductions for that artifact but still include it in presence counts. Emit one **info**-severity finding per overridden artifact (under whichever category would have applied the deduction) of the form `"audit_ignore: true on <path> — staleness deductions skipped"` so consumers and reviewers can detect the pattern from the JSON envelope as well as the verbose markdown. See `references/audit-thresholds.md#overrides` for the semantics.
 
 ### Step 5: Resolve today
 
@@ -168,7 +168,7 @@ Letter grade bands (matching the pronto contract):
 
 Compile the top findings across all categories into a ranked recommendation list. Ordering: critical → high → medium → low. Within a priority tier, sort by category weight (so ticket hygiene / plan freshness recommendations surface before ADR / pulse recommendations at equal priority).
 
-Each recommendation carries: `priority`, `action` (short imperative), `rationale` (1 sentence).
+Each recommendation carries the wire-contract fields per `plugins/pronto/references/sibling-audit-contract.md` §`recommendations[]`: `priority`, `category` (the avanti subcategory the recommendation lifts — e.g. `Plan freshness`), `title` (short imperative), `impact_points` (estimated lift to that subcategory's score), and `command` where applicable (e.g. `/avanti:promote plan:<slug>`).
 
 ## Phase 4: Emit
 
@@ -191,7 +191,7 @@ Pulse cadence        ██████████████░░░░░�
 FINDINGS
 --------
 <for each finding, grouped by category, ordered by severity>
-  [<level>] <path or "-"> — <message>
+  [<severity>] <file or "-"> — <message>
 
 RECOMMENDATIONS
 ---------------
@@ -227,7 +227,7 @@ Shape (per `plugins/pronto/references/sibling-audit-contract.md`; the example be
       "weight": 0.30,
       "score": 80,
       "findings": [
-        { "level": "high", "path": "project/plans/active/foo.md", "message": "..." }
+        { "severity": "high", "message": "...", "file": "project/plans/active/foo.md" }
       ]
     },
     {
@@ -254,8 +254,10 @@ Shape (per `plugins/pronto/references/sibling-audit-contract.md`; the example be
   "recommendations": [
     {
       "priority": "high",
-      "action": "Promote or annotate stale active plans",
-      "rationale": "Plan foo has been active 75 days with no commit."
+      "category": "Plan freshness",
+      "title": "Promote or annotate stale active plans",
+      "impact_points": 6,
+      "command": "/avanti:promote plan:<slug>"
     }
   ]
 }

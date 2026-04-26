@@ -1,6 +1,6 @@
 {
   "name": "avanti",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "SDLC work layer — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions; audits SDLC hygiene",
   "author": {
     "name": "quickstop",
@@ -17,6 +17,7 @@
     "audit"
   ],
   "pronto": {
+    "compatible_pronto": ">=0.1.0",
     "audits": [
       {
         "dimension": "project-record",
