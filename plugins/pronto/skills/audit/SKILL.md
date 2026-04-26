@@ -196,7 +196,9 @@ Derive `composite_grade` and `composite_label` per the bands in `rubric.md`:
 
 ### If OUTPUT_MODE == "json"
 
-**Emit ONLY the JSON object to stdout. Nothing else.**
+**Phase 6 emits exactly one object: pronto's composite envelope.** The first byte on stdout is `{` from that envelope. The last byte is `}` from that envelope. Nothing precedes either. No preamble. No trailing narrative.
+
+**Sentinel — verify before emitting.** The about-to-emit object's top-level fields **must** include `schema_version`, `composite_score`, and `dimensions[]` (per `references/report-format.md`). If your top-level fields look like `{plugin, dimension, categories[], letter_grade, ...}` instead, you have a *sibling sub-audit* in your hand — Phase 4 captured it as a value, Phase 5 should have aggregated from it, and Phase 6 must not echo it. Re-enter Phase 5 and compose the composite envelope from your per-dimension state. See the Phase 4 isolation invariant.
 
 Hard rules (violating any of these breaks `jq` piping and is a test failure, not a style nit):
 
