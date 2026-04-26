@@ -1,6 +1,6 @@
 ---
 phase: 1
-status: active
+status: done
 tickets: [t1]
 updated: 2026-04-26
 ---
