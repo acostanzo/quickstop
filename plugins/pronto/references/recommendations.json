@@ -86,7 +86,7 @@
       "plugin_status": "phase-1b",
       "install_command": "/plugin install avanti@quickstop",
       "audit_command": "/avanti:audit --json",
-      "parser_agent": null,
+      "parser_agent": "parsers/avanti",
       "roll_your_own_ref": "roll-your-own/project-record.md",
       "presence_check": "project/ directory with plans/, tickets/, adrs/, pulse/ subdirs"
     }
