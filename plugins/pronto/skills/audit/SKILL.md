@@ -90,7 +90,7 @@ Walk every dimension in the rubric (8 rows in Phase 1). For each, resolve the sc
 - If `avanti` is in INSTALLED_SIBLINGS and declares `project-record` natively, the dispatch is a sibling dispatch and **must go through the same version handshake** as the other sibling-owned dimensions below. Run `compatible-pronto-check.sh` against `INSTALLED_SIBLINGS[avanti].compatible_pronto` first; only proceed to sibling dispatch on `in_range` or `unset` (apply the same notes per branch as in "Other dimensions" step 2). On `out_of_range` or `malformed`, skip the sibling dispatch and fall back to the kernel-presence-cap path below. Source on successful sibling dispatch: `sibling`.
 
   **Sub-path selection (handshake passed).** Consult `recommendations.json` for the `project-record` dimension's `parser_agent` field:
-  - If `parser_agent` is set (e.g. `parsers/avanti`) → **prefer this path**: dispatch the parser as a subagent per Phase 4.1 below. Parser-agent dispatch via the Task tool isolates the sub-audit's JSON return from pronto's stdout structurally — the property that gave parser-dispatched siblings zero verbatim-echo leaks across 45 H2a runs. Score: parser's `composite_score`.
+  - If `parser_agent` is set (e.g. `parsers/avanti`) → **prefer this path**: invoke the deterministic scorer script directly via Bash per Phase 4.1 below. Direct-shell dispatch removes the LLM-controlled instruction-following step from the score path entirely — the script owns every scoring decision and runs byte-deterministically. Score: scorer's `composite_score`.
   - Else → invoke avanti's declared command (e.g. `/avanti:audit --json`) via the SlashCommand tool, **bind its stdout into a per-dimension local variable**, parse as JSON, validate against the contract. Score: `composite_score`.
 
   **Isolation invariant.** Whichever sub-path the handshake selects, avanti's sub-audit JSON is a *bound value* used in Phase 5 aggregation — it is never pronto's stdout. The sibling sub-audit JSON has shape `{plugin, dimension, categories[], letter_grade, ...}` (per `references/sibling-audit-contract.md`); pronto's composite envelope has shape `{schema_version, repo, composite_score, dimensions[], ...}` (per `references/report-format.md`). If you ever find yourself about to write the captured sibling JSON to pronto's stdout, you are emitting the wrong object — see the Phase 6 sentinel for the runtime backstop.
@@ -128,7 +128,7 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
    - If the plugin declares the dimension natively in its `plugin.json` `pronto.audits` block → invoke the declared command (a slash command, e.g. `/skillet:audit --json`) via the SlashCommand tool, **bind its stdout into a per-dimension local variable**, parse as JSON, validate against the contract. Source: `sibling`. Score: `composite_score`.
 
      **Isolation invariant.** The captured JSON is a *bound value* used in Phase 5 aggregation. **It is not pronto's stdout.** Pronto's stdout is reserved for the composite envelope emitted in Phase 6, and only Phase 6 writes to it. A sibling sub-audit's JSON has shape `{plugin, dimension, categories[], letter_grade, ...}` (per `references/sibling-audit-contract.md`); pronto's composite envelope has shape `{schema_version, repo, composite_score, dimensions[], ...}` (per `references/report-format.md`). If you ever find yourself about to write the captured sibling JSON to pronto's stdout, you are emitting the wrong object — see the Phase 6 sentinel. The same isolation rule applies whether Sub-path A (this sub-bullet) or Sub-path B (parser dispatch, Phase 4.1 below) sourced the JSON.
-   - Else if a `parser_agent` is registered for this dimension (e.g., `parsers/claudit`, `parsers/skillet`, `parsers/commventional`) → dispatch the parser as a subagent (see Phase 4.1 below). Source: `sibling` (the parser *is* the sibling's audit in Phase 1). Score: parser's `composite_score`.
+   - Else if a `parser_agent` is registered for this dimension (e.g., `parsers/claudit`, `parsers/skillet`, `parsers/commventional`) → invoke the deterministic scorer script directly via Bash (see Phase 4.1 below). Source: `sibling` (the scorer *is* the sibling's audit in Phase 1). Score: scorer's `composite_score`.
    - Else → fall through to presence check.
 4. **Presence fallback** (sibling not installed, handshake forced skip, OR no parser registered):
    - For `claude-code-config` and `code-documentation`, use the existing
@@ -156,15 +156,21 @@ For each of `claude-code-config`, `skills-quality`, `commit-hygiene`, `code-docu
      - Handshake forced skip (`malformed`): `"<plugin> <version> installed but compatible_pronto '<range>' is unparseable; sibling audit skipped; presence-only."`
      - Otherwise the row contradicts the hard note in `sibling_integration_notes`.
 
-### Phase 4.1: Parser dispatch
+### Phase 4.1: Parser dispatch (deterministic shell)
 
-When dispatching a parser agent, use the Task tool with these fields:
+When the `parser_agent` field is set for a dimension, invoke the deterministic scorer script directly via the Bash tool. The scorer owns every scoring decision and runs byte-deterministically — there is no LLM step in the score path.
 
-- `subagent_type`: `pronto:parsers:parse-claudit`, `pronto:parsers:parse-skillet`, `pronto:parsers:parse-commventional`, or `pronto:parsers:parse-avanti`. Claude Code namespaces agents by plugin **and** subdirectory, so the `agents/parsers/` subdirectory becomes a `parsers:` segment in the registered name. The agent's `name:` frontmatter (`parse-claudit` etc.) is the final segment. Verify against the stream-json init event's `agents` array if in doubt.
-- `description`: `Parse <sibling> audit`.
-- `prompt`: **minimal**. The parser agents are deterministic shell-script wrappers (Phase 1.5 PR 3b mechanization) — they read `REPO_ROOT` from the prompt and execute `${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh` to produce the contract JSON. Send exactly: `REPO_ROOT=<absolute path>. Run the deterministic scorer and emit its stdout verbatim.` Do not paste rubric prose, scoring guidance, or restate the contract — extra context invites the parser to interpret instead of execute, which reintroduces the variance the mechanization removed.
+Invoke (substituting `<sibling>` from the `parser_agent` filename, e.g. `parser_agent: parsers/claudit` → `<sibling>` = `claudit`):
 
-Parsers run foreground because their output feeds the next phase directly. Validate the parser's return: must be valid JSON, must have `plugin`, `dimension`, `composite_score`, `categories[]`. On invalid return, degrade to the presence fallback and append a note to `sibling_integration_notes`.
+```bash
+"${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh" "${REPO_ROOT}"
+```
+
+Capture stdout into a per-dimension local variable. Validate: must be valid JSON, must have `plugin`, `dimension`, `composite_score`, `categories[]`. On invalid return or non-zero exit, degrade to the presence fallback and append a note to `sibling_integration_notes`.
+
+The orchestrator does not summarize, restructure, re-derive, or "sanity-check" the script's output — its only job here is to capture the byte stream and validate the contract envelope.
+
+The parser-agent files at `agents/parsers/<sibling>.md` are legacy scaffolding from when parser dispatch routed through the Task tool (pre-H2d). They remain checked in as documentation of the contract but are not in the hot path; pronto invokes the scorer scripts directly.
 
 ## Phase 5: Aggregate
 
