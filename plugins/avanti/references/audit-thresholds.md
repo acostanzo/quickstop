@@ -12,7 +12,7 @@ Tunable knobs for `/avanti:audit`. Phase 1 ships lenient defaults to avoid naggi
 
 ## Scoring summary
 
-Each category starts at 100 and deducts based on findings. See `skills/audit/SKILL.md` for the exact deduction rules per finding level. The four categories are weighted 0.30 / 0.30 / 0.20 / 0.20 into a composite score, which maps to a letter grade via the bands documented in the pronto wire contract (A+ 95-100, A 90-94, B 75-89, C 60-74, D 40-59, F 0-39).
+Each category starts at 100 and deducts based on findings. See `skills/audit/SKILL.md` for the exact deduction rules per finding severity (`critical | high | medium | low`; `info` is informational and does not deduct). The four categories are weighted 0.30 / 0.30 / 0.20 / 0.20 into a composite score, which maps to a letter grade via the bands documented in the pronto wire contract (A+ 95-100, A 90-94, B 75-89, C 60-74, D 40-59, F 0-39).
 
 ## Overrides
 

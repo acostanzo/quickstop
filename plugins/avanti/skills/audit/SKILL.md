@@ -40,7 +40,7 @@ If a per-repo `.avanti/config.json` override exists under REPO_ROOT, its `thresh
 
 ### Step 4b: Honor per-artifact overrides
 
-Before any staleness, cadence, or ticket-age deduction runs in Phase 1, check the artifact's frontmatter for `audit_ignore: true`. If set, skip staleness/cadence deductions for that artifact but still include it in presence counts. Emit one **info**-severity finding per overridden artifact (under whichever category would have applied the deduction) of the form `"audit_ignore: true on <path> — staleness deductions skipped"` so consumers and reviewers can detect the pattern from the JSON envelope as well as the verbose markdown. See `references/audit-thresholds.md#overrides` for the semantics.
+Before any staleness, cadence, or ticket-age deduction runs in Phase 1, check the artifact's frontmatter for `audit_ignore: true`. If set, skip staleness/cadence deductions for that artifact but still include it in presence counts. Emit one **info**-severity finding per overridden artifact (under whichever category would have applied the deduction) of the form `"audit_ignore: true on <path> — staleness deductions skipped"` so consumers and reviewers can detect the pattern from the JSON envelope as well as the verbose markdown. **Info findings are informational only — they do not deduct from any category score** (the per-category scoring rules in Phase 1 only enumerate critical/high/medium/low). See `references/audit-thresholds.md#overrides` for the semantics.
 
 ### Step 5: Resolve today
 
@@ -195,8 +195,8 @@ FINDINGS
 
 RECOMMENDATIONS
 ---------------
-1. [<priority>] <action>
-   <rationale>
+1. [<priority>] <title>  (+<impact_points> pts <category>)
+   <command, if any>
 2. …
 ```
 
