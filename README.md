@@ -67,7 +67,7 @@ Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric o
 - Machine-parseable `--json` output alongside the human-readable markdown scorecard
 
 **Commands:** `/pronto:init`, `/pronto:audit`, `/pronto:status`, `/pronto:improve`
-### Avanti (v0.1.2)
+### Avanti (v0.1.3)
 
 The SDLC work layer — authors and maintains the records under `project/` (plans, tickets, ADRs, pulse journal) and drives each record through its lifecycle.
 

@@ -1,0 +1,35 @@
+---
+phase: 1
+status: active
+tickets: [t1]
+updated: 2026-04-26
+---
+
+# Avanti Phase 1 follow-up — Sibling alignment + A3 step 3
+
+## The role in one paragraph
+
+Avanti Phase 1 (PR #41) shipped its plugin shell, seven skills, and a wire-contract-emitting audit. Since then the constellation has ratified ADR-004 (loose coupling + version handshake) and ADR-005 (sibling skill conventions), and pronto v0.2.0 now enforces the `compatible_pronto` handshake at audit dispatch. This follow-up brings avanti into compliance and closes the live `/pronto:audit` integration step that A3 deferred at PR-41 time. Out: anything that depends on pronto Phase 2 PR H3 (wire-contract `$schema_version: 2` + `observations[]`) — that's a separate Phase 1.5 ticket once H3 lands.
+
+## Tickets
+
+### T1 — Declare compatible_pronto and align audit emission to the v1 contract
+
+Add `compatible_pronto: ">=0.1.0"` under the `pronto` block in `plugins/avanti/.claude-plugin/plugin.json`. Bump avanti to `0.1.3` across plugin.json + marketplace.json + root README. Sweep `skills/audit/SKILL.md` for wire-contract field-name divergences from `plugins/pronto/references/sibling-audit-contract.md`: rename finding `level` → `severity`, `path` → `file`; rename recommendation `action` → `title` and `rationale` → `command`/`category`/`impact_points` per the contract; promote `audit_ignore: true` overrides from a markdown-only surface to JSON `info`-severity findings so consumers detect them programmatically. Trace pronto's project-record dispatch path against avanti's declarations to verify A3 step 3 structurally now that pronto has shipped.
+
+**Acceptance:** `compatible-pronto-check.sh "$(jq -r .version plugins/pronto/.claude-plugin/plugin.json)" ">=0.1.0"` returns `branch: "in_range"`. Avanti's `findings[]` and `recommendations[]` schemas in `skills/audit/SKILL.md` match `plugins/pronto/references/sibling-audit-contract.md` field-for-field. `./scripts/check-plugin-versions.sh` passes. `grep -E '"level"|"path"|"action":|"rationale":' plugins/avanti/skills/audit/SKILL.md` returns zero matches. Trace document records pronto's project-record path as `INSTALLED_SIBLINGS lookup → handshake in_range → native dispatch → source: sibling`.
+
+## Out of scope
+
+- **Migration to `observations[]` payload (ADR-005 §3).** Blocked on pronto Phase 2 PR H3 (wire-contract `$schema_version: 2` bump), which has not landed. Will be picked up as a separate ticket once H3 ships; ADR-005's back-compat `score` passthrough means avanti's current v1 emission keeps working in the interim.
+- **Pronto-side `recommendations.json` `plugin_status` update** (`phase-1b → shipped`). That's a pronto data-file change; sequenced under pronto's session, not avanti's.
+- **Avanti `:doctor` skill (ADR-005 §2).** Optional convention; no current self-diagnostic logic to formalize. Worth proposing only if a real diagnostic surface emerges.
+- **Live end-to-end `/pronto:audit` invocation against an installed avanti.** Requires an interactive Claude Code session with both plugins installed via `--plugin-dir`; structural verification (Phase 4 dispatch trace) covers the wire-contract correctness this branch can prove. Live invocation belongs in a Phase 1.5 harness pass once both plugins are in the constellation harness.
+
+## Definition of done
+
+- `plugins/avanti/.claude-plugin/plugin.json` carries `compatible_pronto: ">=0.1.0"` and v0.1.3.
+- `marketplace.json` and root `README.md` reflect v0.1.3.
+- `skills/audit/SKILL.md` finding and recommendation field names match `sibling-audit-contract.md`.
+- Trace document under `project/tickets/closed/t1-handshake-and-contract-align.md` shows the dispatch path arriving at `source: sibling`.
+- One atomic conventional commit; PR opened and ready for review.
