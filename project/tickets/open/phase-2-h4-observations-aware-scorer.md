@@ -2,7 +2,7 @@
 id: h4
 plan: phase-2-pronto
 status: open
-updated: 2026-04-26
+updated: 2026-04-27
 ---
 
 # H4 — Observations-aware scorer in pronto
@@ -37,39 +37,46 @@ The translator. Takes `<dimension-slug> <scorer-json-path>`, reads the rubric st
 }
 ```
 
-`SKILL.md` Phase 4.1 captures the scorer's stdout exactly as today (the H2d direct-shell dispatch shape), then pipes that JSON through `observations-to-score.sh`, takes its `composite_score` as the dimension score, and folds entries from `dropped[]` into `sibling_integration_notes`. The `passthrough_used` flag travels through unchanged for visibility but no special handling. Pure shell + jq for arithmetic, plus a YAML extractor for the rubric stanzas (see open question Q1 below).
+`SKILL.md` Phase 4.1 captures the scorer's stdout exactly as today (the H2d direct-shell dispatch shape), then pipes that JSON through `observations-to-score.sh`, takes its `composite_score` as the dimension score, and folds entries from `dropped[]` into `sibling_integration_notes`. The translator also accumulates a passthrough count for the audit-level summary line (see Decision Q3). Pure shell + jq throughout — rules are JSON, no YAML conversion step needed.
 
 ### `rubric.md` shape — per-observation translation rules
 
-Add a new section `## Observation translation rules` after the existing `## Mechanical vs judgment split`. Per-dimension stanzas live next to the rubric row that owns them. Each stanza is fenced YAML:
+Add a new section `## Observation translation rules` after the existing `## Mechanical vs judgment split`. Per-dimension stanzas live next to the rubric row that owns them. Each stanza is fenced JSON (parsed by `jq` directly — see Decision Q1):
 
 ````markdown
 ### `claude-code-config` translation rules
 
-```yaml
-observations:
-  - id: claude-md-redundancy-ratio
-    kind: ratio
-    rule: ladder
-    bands:
-      - { gte: 0.20, score: 40 }
-      - { gte: 0.10, score: 70 }
-      - { gte: 0.05, score: 85 }
-      - { else: 100 }
-    weight: 0.20
-  - id: mcp-server-count
-    kind: count
-    rule: ladder
-    bands:
-      - { gte: 6, score: 50 }
-      - { gte: 1, score: 100 }
-      - { else: 0 }
-    weight: 0.15
-default_rule: passthrough   # for kind: score observations with no explicit rule
+```json
+{
+  "observations": [
+    {
+      "id": "claude-md-redundancy-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.20, "score": 40 },
+        { "gte": 0.10, "score": 70 },
+        { "gte": 0.05, "score": 85 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "mcp-server-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 6, "score": 50 },
+        { "gte": 1, "score": 100 },
+        { "else": 0 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
 ```
 ````
 
-`presence` rules are `{rule: boolean, present: 100, absent: 0}`. `score` rules are `{rule: passthrough}`.
+`presence` rules are `{"rule": "boolean", "present": 100, "absent": 0}`. `score` rules are `{"rule": "passthrough"}`. `weight` is optional per observation; absent → equal-weight share within the dimension (see Decision Q2). Comments live in the markdown surrounding the JSON fence, not in the JSON itself.
 
 H4 ships stanzas only for the three currently parser-driven dimensions: `claude-code-config`, `skills-quality`, `commit-hygiene`. Phase 2 sibling PRs (2a/2b/2c) add stanzas for their own dimensions in their own work.
 
@@ -88,42 +95,37 @@ Rationale: matches the contract's existing posture for unknown `kind` and missin
 5. **`plugins/pronto/agents/parsers/scorers/score-fixture-observations.sh`** — synthetic fixture script emitting a v2 payload with hand-crafted `observations[]` covering all four kinds. Used by the unit suite, not by the eval harness.
 6. **Eval harness on `mid` fixture** — verify composite stddev still ≤ 1.0 and per-dimension means within ±0.5 of the H2d-closeout baseline (composite=61, all dimensions stddev=0). Shipped scorers still emit v1 today, so this run exercises the passthrough rule on every dimension; byte-equivalence to pre-H4 is the key invariant.
 
-## Open questions (need sign-off before implementation)
+## Decisions
 
-These are real architectural choices that warrant Anthony's call before code lands. Recommendations are mine; defer if disagreed.
+The four architectural questions originally filed against this ticket were decided by Anthony on 2026-04-27. The agreed answers are encoded above; this section is the audit trail.
 
-### Q1. `yq` as a runtime dependency
+### Q1. Rules format — JSON, not YAML
 
-The fenced YAML stanzas in `rubric.md` need a YAML→JSON step in `observations-to-score.sh`. Two paths:
+**Decided: rules are JSON fenced inside `rubric.md`.** Original recommendation was YAML with a new `yq` runtime dependency (cleaner human editing). Anthony pushed back: pronto already parses JSON via `jq`; adding `yq` is a categorical not incremental dep; the only editors are him and me, and neither of us suffers over JSON braces. Co-location in `rubric.md` is preserved (the dimension stanza sits next to the rubric prose for that dimension); inline comments move to the surrounding markdown, where they're more discoverable anyway.
 
-- **(a) Add `yq` to pronto's runtime deps.** `yq` is already in batdev's toolchain. Cleanest extractor; one tool, well-trodden CLI shape.
-- **(b) Hand-rolled awk/jq YAML→JSON for the rule subset we use.** No new dep, but more code to test and maintain; deviations from spec become silent extractor bugs.
+Net effect: drop `yq` entirely. `observations-to-score.sh` extracts the JSON fences from `rubric.md` with a small awk/sed step (or a markdown-aware extraction helper) and pipes straight into `jq` for evaluation.
 
-**Recommendation: (a) — add `yq`.** Plugin runtime deps already include `jq`; adding `yq` is incremental, not categorical. Hand-rolled YAML extraction in shell is the kind of code that bites later.
+### Q2. Weights — equal-share default, explicit weights as opt-in
 
-### Q2. Per-observation weights vs equal weights within a dimension
+**Decided: equal weights derived from `1/n` are the default; an observation may opt in to explicit `weight` to override.** Original recommendation was always-explicit weights matching the rubric table's per-dimension weight shape. The pushback: that table is at *dimension* level, not *observation* level — different scope, different math, internal consistency at one level doesn't require it at the next. At our scale (~2–4 observations per dimension) the rebalancing cost of explicit weights outweighs the tuning benefit. Equal-weight default keeps sibling PRs friction-free; explicit weights remain available when a dimension genuinely needs to express dominance.
 
-The example schema gives each observation an explicit `weight` summing to 1.0 within the dimension. Alternative: equal weights, derived (one observation → 1.0; two → 0.5 each; etc.). Explicit weights are more flexible but more rules to maintain; equal weights are simpler but mean adding an observation rebalances all the others.
+The translator treats absent `weight` as `1/n` where `n` is the count of *kept* observations after drops. Mixed (some explicit, some absent) is a configuration error and rejected by the translator's stanza loader.
 
-**Recommendation: explicit weights.** Pronto's existing per-dimension rubric weights (in the `rubric.md` table) are explicit; matching that shape internally to the dimension keeps the surface consistent. Sibling PRs that add observations will need to set weights anyway; equal-weights would force them to not.
+### Q3. Passthrough surfacing — single summary line, always on
 
-### Q3. Surfacing `passthrough_used` in the audit report
+**Decided: surface a single summary line in `sibling_integration_notes` reporting the passthrough count, always on.** Original recommendation was to gate behind a verbose flag. Anthony's read: invisible passthroughs make the migration invisible — six months later you might still have half the fleet on v1 and never notice from reading reports.
 
-When a sibling emits v1 (no observations), `passthrough_used: true` flows through. Should pronto:
+Format: `N/M siblings scored via legacy passthrough — observations[] migration pending`. When `N` reaches `0`, the migration is complete; that's the trigger point to file a follow-up deprecating the back-compat passthrough rule itself.
 
-- **(a) Always surface in `sibling_integration_notes`** ("\<plugin\>: scored via legacy passthrough — no observations[] emitted").
-- **(b) Gate behind a verbose flag** (`--explain` or similar).
-- **(c) Not surface at all** — passthrough is the steady-state for in-flight migration.
+This replaces the per-sibling warning shape (which would noise every report with three lines today) with a single trend-tracking line that decreases as siblings migrate. Concrete, low-noise, always visible.
 
-**Recommendation: (b).** Until 2a/2b/2c ship, every audit will have three (claudit, skillet, commventional) passthroughs in the notes — that's noise on every report. Gate behind a verbose flag during the migration window; surface unconditionally once a deprecation policy is set.
+### Q4. Stanza coverage — three parser-driven dimensions only
 
-### Q4. Stanza coverage in this ticket
+**Decided: only `claude-code-config`, `skills-quality`, and `commit-hygiene` get stanzas in this ticket.** Reasoning unchanged from the original recommendation:
 
-Should H4 add observation-rule stanzas to `rubric.md` for *all* eight rubric dimensions, or only the three currently parser-driven (`claude-code-config`, `skills-quality`, `commit-hygiene`)?
-
-**Recommendation: only the three currently parser-driven.** Phase 2 sibling PRs (2a/2b/2c) own their own dimension's stanza as part of their tickets — that's the per-PR ownership pattern. Adding stubs for `code-documentation`, `lint-posture`, `event-emission` here would land empty rules that would either need calibration before the sibling ships (out-of-order work) or shadowed-rules placeholder code in the translator (unnecessary complexity).
-
-`agents-md` and `project-record` are kernel- and avanti-scored respectively and don't go through observations; they don't need stanzas.
+- The other observation-using dimensions (`code-documentation`, `lint-posture`, `event-emission`) are exactly what Phase 2 sibling PRs (2a/2b/2c) introduce. Each of those PRs owns its dimension's stanza — that's the per-PR ownership pattern, and pre-writing those stanzas here means making decisions inside another ticket's scope and calibrating against behavior that doesn't exist yet.
+- `agents-md` and `project-record` are kernel- and avanti-scored respectively and don't go through observations; they don't need stanzas.
+- The three covered dimensions have shipped siblings emitting v1 today, so their stanzas can be calibrated against current scorer behavior — the rules will produce identical scores to today's path on day one (the passthrough invariant).
 
 ## Acceptance
 
@@ -140,8 +142,8 @@ Should H4 add observation-rule stanzas to `rubric.md` for *all* eight rubric dim
 ## Out of scope
 
 - Phase 2 sibling PRs (2a/2b/2c) ship their own observation stanzas and emit `observations[]` against this scorer.
-- Already-shipped siblings (claudit, skillet, commventional) keep emitting v1 — they ride passthrough until their own work cycle migrates them.
-- A formal deprecation policy for the v1 passthrough rule (when does v1 stop being accepted?). Plan-level concern; not a Phase 2 ticket.
+- Already-shipped siblings (claudit, skillet, commventional) keep emitting v1 — they ride passthrough until tickets M1/M2/M3 migrate them. Those tickets are tracked in `phase-2-pronto.md` under "Post-Phase-2 — legacy sibling migration."
+- The follow-up that deprecates the back-compat passthrough rule itself (stop accepting v1 payloads) — fires once M1/M2/M3 ship and the passthrough-count line reads `0/3`. Separate work cycle.
 
 ## References
 
