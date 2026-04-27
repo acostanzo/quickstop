@@ -166,9 +166,13 @@ Invoke (substituting `<sibling>` from the `parser_agent` filename, e.g. `parser_
 "${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh" "${REPO_ROOT}"
 ```
 
-Capture stdout into a per-dimension local variable. Validate: must be valid JSON, must have `plugin`, `dimension`, `composite_score`, `categories[]`. On invalid return or non-zero exit, degrade to the presence fallback and append a note to `sibling_integration_notes`.
+Capture stdout into a per-dimension local variable.
 
-The orchestrator does not summarize, restructure, re-derive, or "sanity-check" the script's output — its only job here is to capture the byte stream and validate the contract envelope.
+Pipe the captured scorer JSON through the observations-aware translator before the score is folded into Phase 5. Invoke `"${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/observations-to-score.sh" <dimension-slug> <captured-json-path>` — write the scorer's stdout to a temp file first, since the helper takes a path. The translator emits an envelope of shape `{composite_score, observations_applied, passthrough_used, dropped}`: take its `composite_score` as the dimension's score (overriding any `composite_score` the scorer itself emitted), append every entry in its `dropped[]` to `sibling_integration_notes` as `"<plugin>:<dimension>: dropped observation '<id>' (<reason>)"`, and increment a per-audit `passthrough_count` accumulator when its `passthrough_used` is `true`. A `passthrough_total` accumulator counts every dimension that went through this Phase 4.1 path (i.e. every `parser_agent`-driven sibling), regardless of outcome — those two counters together drive the audit-level summary line emitted in Phase 5. Translator exit 3 (stanza-loader rejects the rubric) is a pronto-side configuration bug, not a sibling problem; surface stderr verbatim in `sibling_integration_notes` prefixed `pronto bug: observations-to-score.sh exited 3: <stderr>` and degrade to the raw scorer's `composite_score` for the dimension.
+
+Validate the translator's envelope: must be valid JSON, must have a numeric `composite_score` (or `null` only when the input was a v1 payload with no `composite_score` either — that case degrades to presence-cap). On invalid return, non-zero exit (other than the configuration-bug case above), or `composite_score: null`, degrade to the presence fallback and append a note to `sibling_integration_notes`.
+
+The orchestrator does not summarize, restructure, re-derive, or "sanity-check" the script's output — its only job here is to capture the byte stream, run it through the translator, and validate the resulting envelope.
 
 The parser-agent files at `agents/parsers/<sibling>.md` are legacy scaffolding from when parser dispatch routed through the Task tool (pre-H2d). They remain checked in as documentation of the contract but are not in the hot path; pronto invokes the scorer scripts directly.
 
@@ -192,6 +196,8 @@ jq -n --argjson dims "$DIMS_JSON" '
 ```
 
 Use the returned `composite_score` directly in Phase 6's emission. Do not re-add the rounded `weighted_contributions` in your head — `round(sum(x))` and `sum(round(x))` differ.
+
+**Audit-level passthrough summary.** When `passthrough_total > 0`, append a single trend-tracking line to `sibling_integration_notes` of the form `"<passthrough_count>/<passthrough_total> siblings scored via legacy passthrough — observations[] migration pending"`. Per H4 Decision Q3, this surfaces always (never gated behind a verbose flag) so the migration progress is visible in every report; when `passthrough_count` reaches `0` the line still emits (`"0/N ..."`) until the back-compat passthrough rule itself is deprecated. The line is appended after every per-dimension drop note from Phase 4.1, so the order on the report reads: hard sibling-skip notes (handshake), then per-observation drops, then the migration-progress summary.
 
 Derive `composite_grade` and `composite_label` per the bands in `rubric.md`:
 
