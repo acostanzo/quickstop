@@ -1,7 +1,7 @@
 ---
 id: h2d
 plan: phase-2-pronto
-status: open
+status: closed
 updated: 2026-04-26
 ---
 
@@ -160,3 +160,32 @@ the boundary before that compounding lands.
 - PR #56 — H2b-followup lever 3 (parse-avanti migration), the
   reference implementation that this ticket extends to the other
   three parsers
+
+## Closure
+
+Closed via lever 2 (direct-shell parser dispatch), implemented in
+`plugins/pronto/skills/audit/SKILL.md` Phase 4.1 — the parser_agent
+branch now invokes `${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh`
+directly via the Bash tool. The Task-tool subagent dispatch shape (model:
+haiku, descriptive prose) is removed; the parser-agent files at
+`agents/parsers/<sibling>.md` remain checked in as legacy scaffolding.
+
+Migrated all four siblings uniformly (avanti, claudit, skillet,
+commventional). The score path no longer routes through any LLM — every
+scoring decision is owned by the deterministic shell scripts shipped in
+Phase 1.5 PR 3b.
+
+Acceptance verified at **20/20** on `mid` fixture sonnet:
+
+- All four parser-dispatched dimensions returned per-run scores at the
+  expected fixture levels (claude-code-config 96, skills-quality 97,
+  commit-hygiene 82, project-record 100), every run
+- Zero dispatch failures (was 33-67% on three of four siblings under
+  Task-tool dispatch)
+- Composite stddev=0 — the ~10-point composite variance H2d named was
+  driven entirely by parser dispatch failures degrading to cap-50
+  presence fallbacks; lever 2 closes that variance source
+
+Artefacts preserved at `/tmp/h2c-h2d-n20-runs/` on batdev. Combined with
+H2c (closed in the same branch), this clears the Phase 2 H2 hardening
+bar end-to-end.

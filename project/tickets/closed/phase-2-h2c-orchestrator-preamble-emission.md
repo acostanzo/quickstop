@@ -1,7 +1,7 @@
 ---
 id: h2c
 plan: phase-2-pronto
-status: open
+status: closed
 updated: 2026-04-26
 ---
 
@@ -115,3 +115,25 @@ failures, this clears the Phase 2 H2 hardening bar end-to-end.
   N=20 that produced the 18/20 measurement this ticket cites
 - N=20 run artefacts: `/tmp/h2b-followup-n20-real/` on batdev (preserved
   for forensic review)
+
+## Closure
+
+Closed via lever 2 (composite envelope assembly via deterministic shell
+composer), implemented in `plugins/pronto/skills/audit/compose-composite.sh`
+plus the Phase 6 `OUTPUT_MODE == json` restructure into Step 1 (build the
+envelope file via `jq -n`) + Step 2 (emit via `compose-composite.sh`,
+transcribe verbatim). The orchestrator's emit responsibility shrank from
+"construct and emit a multi-KB JSON object" to "transcribe these bytes",
+removing the LLM-controlled construction step from the emit boundary.
+
+Acceptance verified at **20/20** on `mid` fixture sonnet:
+
+- `composite=61 grade=C` every run (mean=61, stddev=0)
+- All 8 dimensions stddev=0 (per-dim breakdown unchanged from PR #56's
+  18/20 successful runs — the structural lever didn't perturb scoring)
+- Zero failures of any shape (no `prose-contamination`, no
+  `refusal-or-empty`, no `partial-emission`, no `contract-violation`)
+
+Artefacts preserved at `/tmp/h2c-h2d-n20-runs/` on batdev. Combined with
+H2d (closed in the same branch), this clears the Phase 2 H2 hardening
+bar end-to-end.
