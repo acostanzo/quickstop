@@ -208,21 +208,15 @@ Derive `composite_grade` and `composite_label` per the bands in `rubric.md`:
 
 ### If OUTPUT_MODE == "json"
 
-**Phase 6 emits exactly one object: pronto's composite envelope.** The first byte on stdout is `{` from that envelope. The last byte is `}` from that envelope. Nothing precedes either. No preamble. No trailing narrative.
+**Phase 6 produces the composite envelope via a deterministic shell composer.** The orchestrator's job here is two steps: (1) write the envelope JSON to a known file path, and (2) emit the composer's stdout verbatim. There is no LLM-controlled construction step inside the emit boundary — the composer reads the prepared file, validates the schema, and prints a byte-clean envelope; the orchestrator transmits its bytes unchanged.
 
-**Sentinel — verify before emitting.** The about-to-emit object's top-level fields **must** include `schema_version` and `dimensions[]` (per `references/report-format.md`) — these two fields are the structural discriminators (the sibling sub-audit shape lacks both; `composite_score` alone does not discriminate because it appears at the top level of *both* the sub-audit and the composite). If your top-level fields look like `{plugin, dimension, categories[], letter_grade, ...}` instead, you have a *sibling sub-audit* in your hand — Phase 4 captured it as a value, Phase 5 should have aggregated from it, and Phase 6 must not echo it. Re-enter Phase 5 and compose the composite envelope from your per-dimension state. See the Phase 4 isolation invariant.
+The split exists because LLM-controlled construction-and-emit at this boundary is a known instruction-following ceiling (see `project/tickets/closed/phase-2-h2c-orchestrator-preamble-emission.md`). Building the envelope into a file first, then emitting a script's verbatim stdout, replaces "construct and emit a multi-KB JSON object" with "transcribe these bytes" — a strictly simpler instruction.
 
-Hard rules (violating any of these breaks `jq` piping and is a test failure, not a style nit):
+**Sentinel — verify before building.** The envelope's top-level fields **must** include `schema_version` and `dimensions[]` (per `references/report-format.md`) — these two fields are the structural discriminators (the sibling sub-audit shape lacks both; `composite_score` alone does not discriminate because it appears at the top level of *both* the sub-audit and the composite). If your in-flight per-dimension state looks like `{plugin, dimension, categories[], letter_grade, ...}`, you have a *sibling sub-audit* in your hand — Phase 4 captured it as a value, Phase 5 should have aggregated from it, and Phase 6 must not echo it. Re-enter Phase 5 and compose the composite envelope from your per-dimension state. See the Phase 4 isolation invariant.
 
-- No markdown code fences. Do not wrap the output in ` ```json ` / ` ``` `. The first byte on stdout must be `{` and the last must be `}`.
-- No prose preamble ("Emitting the JSON composite…", "Here is the output:").
-- No trailing narrative ("State persisted to .pronto/state.json", "Composite 57/100…", summary lines, next-step banners).
-- No blank line before or after the JSON object.
-- All progress, state-persistence confirmations, and diagnostics go to **stderr** (`echo "..." >&2`) or are suppressed entirely. Never to stdout.
+#### Step 1: Build the envelope file
 
-If you are tempted to explain what you did, either send it to stderr via `echo >&2` or omit it. Machine consumers pipe stdout through `jq` — any prose, any fence, any extra line contaminates the pipe and is a bug.
-
-The object shape is defined in `references/report-format.md`. Top-level required fields:
+Compose the full composite envelope as a JSON object and write it to `${REPO_ROOT}/.pronto/composite-out.json`. Use a single `jq -n` invocation — do not assemble the JSON by string concatenation. The shape is defined in `references/report-format.md`. Required top-level fields:
 
 - `schema_version`: `1`
 - `repo`: absolute REPO_ROOT path
@@ -233,6 +227,50 @@ The object shape is defined in `references/report-format.md`. Top-level required
 - `dimensions`: array, one entry per rubric dimension (shape in `references/report-format.md`)
 - `kernel`: the full KERNEL_JSON object captured in Phase 3
 - `sibling_integration_notes`: array of strings (empty array `[]` if no notes)
+
+Construct via Bash + `jq -n`, e.g.:
+
+```bash
+mkdir -p "${REPO_ROOT}/.pronto"
+jq -n \
+  --arg repo "${REPO_ROOT}" \
+  --arg ts "${TIMESTAMP}" \
+  --argjson cs "${COMPOSITE_SCORE}" \
+  --arg cg "${COMPOSITE_GRADE}" \
+  --arg cl "${COMPOSITE_LABEL}" \
+  --argjson dims "${DIMENSIONS_JSON}" \
+  --argjson kernel "${KERNEL_JSON}" \
+  --argjson notes "${SIBLING_INTEGRATION_NOTES_JSON}" \
+  '{
+    schema_version: 1,
+    repo: $repo,
+    timestamp: $ts,
+    composite_score: $cs,
+    composite_grade: $cg,
+    composite_label: $cl,
+    dimensions: $dims,
+    kernel: $kernel,
+    sibling_integration_notes: $notes
+  }' > "${REPO_ROOT}/.pronto/composite-out.json"
+```
+
+The bash variable names above are illustrative — substitute your in-memory state. The point is that the entire envelope is constructed inside one `jq -n` call and lands in the file in one write.
+
+#### Step 2: Emit via the composer
+
+Run:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/skills/audit/compose-composite.sh" "${REPO_ROOT}"
+```
+
+The composer reads `${REPO_ROOT}/.pronto/composite-out.json`, validates the schema (must have `schema_version=1`, `dimensions[8]`, all required top-level fields, and structurally valid types), and prints the envelope to stdout byte-clean — compact JSON, no leading or trailing whitespace.
+
+**Your final response is byte-identical to the composer's stdout.** Transcribe it exactly. Do not add a preamble. Do not add a trailer. Do not summarise the result. Do not narrate "audit complete" or "envelope emitted." The composer is the emit; your job is to transmit its output unchanged to pronto's stdout.
+
+If the composer exits non-zero, the envelope file failed validation. Read its stderr, fix the underlying issue (re-run Step 1 with corrected fields), and re-run the composer. **Do not emit anything until the composer succeeds with exit 0.** A non-zero composer exit is not a failure to recover from by hand-emitting the envelope — it is a signal that Step 1 produced an invalid file, and emitting that invalid file would be worse than failing cleanly.
+
+The composer enforces every byte-cleanliness rule the previous emit prose tried to enumerate (no fences, no preamble, no trailer, no blank lines, single compact JSON object). Diagnostics from any phase still go to **stderr** (`echo "..." >&2`) or are suppressed; the composer's stdout is the only thing that reaches pronto's stdout.
 
 ### If OUTPUT_MODE == "markdown"
 
