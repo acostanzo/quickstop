@@ -190,6 +190,30 @@ Full depth: composite across (a) structured logging ratio, (b) metrics presence,
 
 ---
 
+## Post-Phase-2 — legacy sibling migration
+
+The three siblings shipping today (claudit, skillet, commventional) emit the v1 wire shape (`composite_score`, no `observations[]`). H4's scorer handles them via the back-compat passthrough rule from ADR-005 §3, so they continue to score correctly through the transition. But passthrough is a transitional posture, not a destination — the architectural goal is every sibling emitting `observations[]` so pronto's rubric translation rules govern *all* scoring uniformly.
+
+H4 surfaces the count of legacy-passthrough siblings as a single line in `sibling_integration_notes` (`N/M siblings scored via legacy passthrough — observations[] migration pending`). When that count reaches `0/M`, the migration is complete and the back-compat passthrough rule itself can be deprecated.
+
+These migrations don't gate Phase 2 closure (they're closing-out commitments, not phase deliverables) — but they're tracked here so the roadmap sees the whole arc.
+
+### Migration tickets
+
+| Ticket | Plugin | Dimension | Notes |
+|---|---|---|---|
+| **M1** | claudit | `claude-code-config` | Refactor `:audit` skill to emit `observations[]` against the H4 stanzas. Eval invariant: byte-equivalent scoring on existing fixtures. |
+| **M2** | skillet | `skills-quality` | Same shape as M1. |
+| **M3** | commventional | `commit-hygiene` | Same shape as M1. |
+
+All three are structurally identical: replace the v1 emit with an `observations[]` emit whose IDs match the H4 rubric stanzas for that dimension. Each plugin's scorer logic is preserved; only the wire shape changes. Can land in any order, in parallel, in their own work cycles.
+
+### Closing-out trigger — deprecate the passthrough rule
+
+Once M1+M2+M3 ship and the passthrough-count line reads `0/3`, file a follow-up ticket to deprecate the back-compat passthrough rule in pronto: stop accepting v1 payloads, fail loudly on `composite_score` without `observations[]`. That deprecation is a separate work cycle and its acceptance is *outside* Phase 2.
+
+---
+
 ## Links
 
 - Pronto meta: `project/plans/active/phase-1-pronto.md`, `project/plans/active/phase-1-5-pronto.md`
