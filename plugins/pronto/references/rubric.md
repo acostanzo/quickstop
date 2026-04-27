@@ -129,6 +129,193 @@ that a Haiku wrapper is acceptable (and still useful: it keeps the
 dispatch shape intact for the day a sibling ships native `--json` and
 the parser becomes a no-op to delete).
 
+
+## Observation translation rules
+
+Per ADR-005 §3 and the v2 wire contract (`sibling-audit-contract.md`), siblings on schema 2 emit `observations[]` instead of (or alongside) the legacy `composite_score` field. Each observation carries a stable `id` and one of four `kind` values — `ratio`, `count`, `presence`, `score`. Pronto's translator (`agents/parsers/scorers/observations-to-score.sh`) reads the per-dimension stanzas below, applies the matching rule to each observation, and produces the dimension's composite score.
+
+Stanza shape:
+
+- `observations[]` — one rule per known observation `id`. Required keys: `id`, `kind`, `rule`. `kind`-specific keys: `bands` for `kind: ratio` and `kind: count` with `rule: ladder`; `present`/`absent` integers for `kind: presence` with `rule: boolean`; `rule: passthrough` (no extra keys) for `kind: score`. An optional `weight` (decimal 0.0–1.0) overrides the default equal-share weighting; if any observation declares a weight, every observation in the stanza must declare one.
+- `default_rule` — applied when an observation's `kind` is `score` and no specific rule is registered. Always `passthrough` for v2 observations.
+
+Bands evaluate top-to-bottom; the first matching `gte` (numeric threshold) wins, falling through to `else` when none match. Observation `id`s with no matching rubric rule are dropped per the contract's missing-rule policy: dropped observations are recorded in `sibling_integration_notes`, the dimension is scored from the remainder, and if every observation drops out the translator falls through to legacy `composite_score` passthrough (then to presence-cap if no `composite_score` is present either).
+
+The three stanzas below cover the parser-driven dimensions that ship today (`claude-code-config`, `skills-quality`, `commit-hygiene`). Each is calibrated against its current scorer's category logic so that — when the matching sibling migrates to native `observations[]` emission — the rubric-applied score reproduces today's path. Until then, the shipped siblings stay on v1 and ride the back-compat passthrough rule unchanged.
+
+### `claude-code-config` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "claude-md-redundancy-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.20, "score": 40 },
+        { "gte": 0.10, "score": 70 },
+        { "gte": 0.05, "score": 85 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "mcp-server-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 6, "score": 50 },
+        { "gte": 1, "score": 100 },
+        { "else": 0 }
+      ]
+    },
+    {
+      "id": "claude-md-line-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 200, "score": 80 },
+        { "gte": 10,  "score": 100 },
+        { "else": 60 }
+      ]
+    },
+    {
+      "id": "settings-default-mode-explicit",
+      "kind": "presence",
+      "rule": "boolean",
+      "present": 100,
+      "absent": 80
+    },
+    {
+      "id": "broad-allow-glob-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 2, "score": 70 },
+        { "gte": 1, "score": 85 },
+        { "else": 100 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
+The bands above mirror `score-claudit.sh`: the redundancy ratio reflects its 5/10/20-percent CLAUDE.md restated-builtin deduction ladder; `mcp-server-count` reflects the >5 sprawl signal (-10) and the 0-server presence-fail; `claude-md-line-count` matches the dual ≥200 verbosity and <10 skeletal deductions; `settings-default-mode-explicit` and `broad-allow-glob-count` track the security-posture deductions for missing/bypass `defaultMode` and broad `Bash(*)`/`Write(*)` allow entries respectively. When `claudit` migrates to native v2 emission it should emit observation IDs from this set; until then the v1 `composite_score` passthrough applies.
+
+### `skills-quality` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "skill-frontmatter-completeness-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.95, "score": 100 },
+        { "gte": 0.80, "score": 85 },
+        { "gte": 0.60, "score": 70 },
+        { "else": 40 }
+      ]
+    },
+    {
+      "id": "skill-skeletal-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1, "score": 60 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "skill-todo-marker-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 3, "score": 70 },
+        { "gte": 1, "score": 90 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "skill-broken-references-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 2, "score": 60 },
+        { "gte": 1, "score": 80 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "skill-stray-file-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 3, "score": 85 },
+        { "gte": 1, "score": 95 },
+        { "else": 100 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
+The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-frontmatter-completeness-ratio` reflects its `name`/`description`/`allowed-tools`/`disable-model-invocation` 40/30/20/10 ladder collapsed to a fraction-of-required-fields-present view; `skill-skeletal-count` marks any skill under 20 non-blank lines; `skill-todo-marker-count` mirrors the per-skill TODO deduction (capped at 30); `skill-broken-references-count` reflects the -20 per broken `references/` pointer (cap 40); `skill-stray-file-count` tracks the per-skill stray-file deduction. Aggregation across multiple skills happens inside the sibling before emission — the observations carry already-aggregated totals.
+
+### `commit-hygiene` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "conventional-commit-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.95, "score": 100 },
+        { "gte": 0.80, "score": 90 },
+        { "gte": 0.50, "score": 70 },
+        { "else": 40 }
+      ]
+    },
+    {
+      "id": "auto-trailer-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 6, "score": 40 },
+        { "gte": 3, "score": 70 },
+        { "gte": 1, "score": 90 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "auto-attribution-marker-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 3, "score": 70 },
+        { "gte": 1, "score": 90 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "review-signal-presence",
+      "kind": "presence",
+      "rule": "boolean",
+      "present": 100,
+      "absent": 100
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
+The bands track `score-commventional.sh`: `conventional-commit-ratio` mirrors its 0.95/0.80/0.50 thresholds (0/-10/-30/-60); `auto-trailer-count` reflects the -10-per-trailer ladder capped at -60; `auto-attribution-marker-count` reflects the parallel "Generated with Claude Code" marker count capped at -30; `review-signal-presence` defaults to 100 either way because the sibling deliberately runs network-free and treats absent review-comment signal as informational, not as a deduction (matching `cmt_score=100` in the current scorer).
+
 ## Extending the rubric
 
 Dimensions are additive. Adding a new dimension requires:
