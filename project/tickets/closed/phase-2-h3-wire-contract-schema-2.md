@@ -1,7 +1,7 @@
 ---
 id: h3
 plan: phase-2-pronto
-status: open
+status: closed
 updated: 2026-04-26
 ---
 
@@ -51,3 +51,19 @@ No harness run required — the deliverable is a documentation update, not a cod
 - `project/adrs/004-sibling-composition-contract.md` — the "version exists in the registry but not on the contract doc itself" follow-up this ticket closes
 - `project/adrs/005-sibling-skill-conventions.md` §3 — the authoritative spec for `observations[]`, the four `kind` values, and the passthrough rule
 - `plugins/pronto/references/sibling-audit-contract.md` — the file under change
+
+## Closure
+
+Closed via doc-only update at `plugins/pronto/references/sibling-audit-contract.md` (commit `7a7f333`).
+
+Acceptance checklist:
+
+- [x] Doc carries `$schema_version: 2` marker — added as YAML frontmatter at the top of the doc.
+- [x] `observations[]` spec fully specified — top-level field reference row, dedicated `### observations[] entry` subsection with per-field table, plus per-`kind` description of the rubric translation rule shape pronto's scorers will apply (ratio threshold, count ladder, presence mapping, score passthrough).
+- [x] Findings vs observations relationship documented — added prose paragraph after the `findings[]` entry table making explicit they are parallel concepts with different consumers.
+- [x] Back-compat passthrough rule documented — new `## Schema version` section with `### Back-compat passthrough rule` and `### Negotiation` subsections.
+- [x] ADR-005 §3 cross-reference resolves cleanly — both directions match (the doc says what the ADR says it should say).
+- [x] ADR-004's "version exists in the registry but not on the contract doc itself" gap closes — the wire payload now carries `$schema_version` as a top-level field, and the doc itself is parseably versioned.
+- [x] No harness run required — deliverable is documentation, verified by read-through against this checklist.
+
+Unblocks H4 (consumer-side scoring path) and the Phase 2 sibling PRs (2a/2b/2c) which will ship emitting `observations[]` against schema v2 from day one.
