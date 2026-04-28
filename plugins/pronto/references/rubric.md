@@ -233,8 +233,10 @@ The bands above mirror `score-claudit.sh`: the redundancy ratio reflects its 5/1
       "kind": "count",
       "rule": "ladder",
       "bands": [
-        { "gte": 3, "score": 70 },
-        { "gte": 1, "score": 90 },
+        { "gte": 100, "score": 70 },
+        { "gte": 50,  "score": 80 },
+        { "gte": 20,  "score": 90 },
+        { "gte": 5,   "score": 95 },
         { "else": 100 }
       ]
     },
@@ -243,8 +245,10 @@ The bands above mirror `score-claudit.sh`: the redundancy ratio reflects its 5/1
       "kind": "count",
       "rule": "ladder",
       "bands": [
-        { "gte": 2, "score": 60 },
-        { "gte": 1, "score": 80 },
+        { "gte": 20, "score": 60 },
+        { "gte": 10, "score": 80 },
+        { "gte": 5,  "score": 90 },
+        { "gte": 1,  "score": 95 },
         { "else": 100 }
       ]
     },
@@ -263,7 +267,7 @@ The bands above mirror `score-claudit.sh`: the redundancy ratio reflects its 5/1
 }
 ```
 
-The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-frontmatter-completeness-ratio` reflects its `name`/`description`/`allowed-tools`/`disable-model-invocation` 40/30/20/10 ladder collapsed to a fraction-of-required-fields-present view; `skill-skeletal-count` marks any skill under 20 non-blank lines; `skill-todo-marker-count` mirrors the per-skill TODO deduction (capped at 30); `skill-broken-references-count` reflects the -20 per broken `references/` pointer (cap 40); `skill-stray-file-count` tracks the per-skill stray-file deduction. Aggregation across multiple skills happens inside the sibling before emission — the observations carry already-aggregated totals.
+The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-frontmatter-completeness-ratio` reflects its `name`/`description`/`allowed-tools`/`disable-model-invocation` 40/30/20/10 ladder collapsed to a fraction-of-required-fields-present view; `skill-skeletal-count` marks any skill under 20 non-blank lines; `skill-todo-marker-count` and `skill-broken-references-count` ride a multi-skill aggregate ladder (5/20/50/100 and 1/5/10/20 thresholds respectively) — the original `gte 3 → 70` / `gte 2 → 60` shapes were calibrated against M1's claudit per-config counts and undershot the score-skillet path by ~11 points on the harness `mid` fixture (22 skills, 31 aggregate TODOs ≈ 1.4/skill, 8 broken refs ≈ 0.36/skill); the rescaled bands re-converge the rubric path on score-skillet's per-skill cap-and-average within ±1 across `clean`/`mid`/`noisy`. `skill-stray-file-count` tracks the per-skill stray-file deduction unchanged. Aggregation across multiple skills happens inside the sibling before emission — the observations carry already-aggregated totals.
 
 ### `commit-hygiene` translation rules
 
