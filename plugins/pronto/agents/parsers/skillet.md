@@ -62,8 +62,11 @@ markdown code fences, no leading or trailing text.
 ### Empty-scope case
 
 The script already handles the zero-skills case: it emits a contract
-object with `composite_score: 0` and a single `/skillet:build`
-recommendation. You do not need to detect or special-case this path.
+object with `$schema_version: 2`, `observations: []`, `composite_score: 0`,
+and a single `/skillet:build` recommendation. The empty `observations[]`
+signals pronto's translator to fall through to the v1 `composite_score`
+passthrough rule, so the dimension scores 0 either way. You do not need
+to detect or special-case this path.
 
 ## When this agent goes away
 
