@@ -1,0 +1,106 @@
+{
+  "plugin": "claudit",
+  "dimension": "claude-code-config",
+  "categories": [
+    {
+      "name": "Over-Engineering Detection",
+      "weight": 0.20,
+      "score": 60,
+      "findings": [
+        {
+          "severity": "high",
+          "message": "CLAUDE.md exceeds 200 non-blank lines (227) — verbosity signal",
+          "file": "CLAUDE.md"
+        },
+        {
+          "severity": "high",
+          "message": "CLAUDE.md restates built-in tool behavior (6 match(es)) — deduction 20",
+          "file": "CLAUDE.md"
+        }
+      ]
+    },
+    {
+      "name": "CLAUDE.md Quality",
+      "weight": 0.20,
+      "score": 65,
+      "findings": [
+        {
+          "severity": "high",
+          "message": "CLAUDE.md verbose (227 non-blank lines, >200)",
+          "file": "CLAUDE.md"
+        },
+        {
+          "severity": "medium",
+          "message": "CLAUDE.md missing 3 arrival section(s)",
+          "file": "CLAUDE.md"
+        }
+      ]
+    },
+    {
+      "name": "Security Posture",
+      "weight": 0.15,
+      "score": 50,
+      "findings": [
+        {
+          "severity": "high",
+          "message": "permissions.defaultMode is 'missing'",
+          "file": ".claude/settings.json"
+        },
+        {
+          "severity": "high",
+          "message": "2 broad Bash(*)/Write(*) allow entry(ies)",
+          "file": ".claude/settings.json"
+        }
+      ]
+    },
+    {
+      "name": "MCP Configuration",
+      "weight": 0.15,
+      "score": 90,
+      "findings": [
+        {
+          "severity": "medium",
+          "message": "7 MCP servers declared (>5 sprawl signal)",
+          "file": ".mcp.json"
+        }
+      ]
+    },
+    {
+      "name": "Plugin Health",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Context Efficiency",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    }
+  ],
+  "composite_score": 76,
+  "letter_grade": "B",
+  "recommendations": [
+    {
+      "priority": "high",
+      "category": "over-engineering",
+      "title": "Trim CLAUDE.md / hook sprawl / builtin-restating prose",
+      "impact_points": 15,
+      "command": "/claudit"
+    },
+    {
+      "priority": "high",
+      "category": "claudemd-quality",
+      "title": "Raise CLAUDE.md substance or add missing arrival sections",
+      "impact_points": 10,
+      "command": "/claudit"
+    },
+    {
+      "priority": "high",
+      "category": "security-posture",
+      "title": "Set explicit permissions.defaultMode and narrow allow list",
+      "impact_points": 25,
+      "command": "/claudit"
+    }
+  ]
+}
