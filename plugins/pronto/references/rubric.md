@@ -165,8 +165,7 @@ The three stanzas below cover the parser-driven dimensions that ship today (`cla
       "rule": "ladder",
       "bands": [
         { "gte": 6, "score": 50 },
-        { "gte": 1, "score": 100 },
-        { "else": 0 }
+        { "else": 100 }
       ]
     },
     {
@@ -195,13 +194,23 @@ The three stanzas below cover the parser-driven dimensions that ship today (`cla
         { "gte": 1, "score": 85 },
         { "else": 100 }
       ]
+    },
+    {
+      "id": "claude-md-arrival-section-missing-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 3, "score": 80 },
+        { "gte": 1, "score": 95 },
+        { "else": 100 }
+      ]
     }
   ],
   "default_rule": "passthrough"
 }
 ```
 
-The bands above mirror `score-claudit.sh`: the redundancy ratio reflects its 5/10/20-percent CLAUDE.md restated-builtin deduction ladder; `mcp-server-count` reflects the >5 sprawl signal (-10) and the 0-server presence-fail; `claude-md-line-count` matches the dual ≥200 verbosity and <10 skeletal deductions; `settings-default-mode-explicit` and `broad-allow-glob-count` track the security-posture deductions for missing/bypass `defaultMode` and broad `Bash(*)`/`Write(*)` allow entries respectively. When `claudit` migrates to native v2 emission it should emit observation IDs from this set; until then the v1 `composite_score` passthrough applies.
+The bands above mirror `score-claudit.sh`: the redundancy ratio reflects its 5/10/20-percent CLAUDE.md restated-builtin deduction ladder; `mcp-server-count` reflects the >5 sprawl signal (-10) — and treats absent `.mcp.json` as MCP-neutral (`else: 100`) to match score-claudit's "no MCP feature configured, no deductions" behaviour; `claude-md-line-count` matches the dual ≥200 verbosity and <10 skeletal deductions; `settings-default-mode-explicit` and `broad-allow-glob-count` track the security-posture deductions for missing/bypass `defaultMode` and broad `Bash(*)`/`Write(*)` allow entries respectively; `claude-md-arrival-section-missing-count` mirrors score-claudit's CQ category 5-points-per-missing-section deduction (overview/architecture, testing, conventions) so a fixture like `mid` — one missing section, otherwise neutral — converges with the v1 path. When `claudit` migrates to native v2 emission it should emit observation IDs from this set; until then the v1 `composite_score` passthrough applies.
 
 ### `skills-quality` translation rules
 
