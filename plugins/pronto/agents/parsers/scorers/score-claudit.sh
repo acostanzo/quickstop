@@ -428,7 +428,10 @@ jq -n \
           denominator: $claudemd_nb,
           ratio: $redundancy_ratio
         },
-        summary: "\($oe_prose_matches)/\($claudemd_nb) CLAUDE.md lines restate built-in tool behavior"
+        summary: (if $claudemd_nb > 0
+                  then "\($oe_prose_matches)/\($claudemd_nb) CLAUDE.md lines restate built-in tool behavior"
+                  else "CLAUDE.md absent — no redundancy to assess"
+                  end)
       },
       {
         id: "mcp-server-count",
