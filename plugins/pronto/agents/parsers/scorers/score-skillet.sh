@@ -42,10 +42,16 @@ mapfile -d '' SKILLS_SORTED < <(
 
 # Empty-scope short-circuit.
 if (( ${#SKILLS_SORTED[@]} == 0 )); then
+  # Schema v2 envelope with an empty observations[] — the translator
+  # treats an empty array as "no usable observations" and falls through
+  # to the v1 passthrough rule, which uses the legacy composite_score.
+  # End-to-end behaviour on a no-skills repo is unchanged.
   jq -n '{
+    "$schema_version": 2,
     plugin: "skillet",
     dimension: "skills-quality",
     categories: [],
+    observations: [],
     composite_score: 0,
     letter_grade: "F",
     recommendations: [{
@@ -81,6 +87,24 @@ frontmatter_of() {
 fm_total=0; iq_total=0; ad_total=0; ds_total=0; oe_total=0; rt_total=0
 ad_counted=0  # Agent-Design is only scored on skills that dispatch subagents.
 
+# v2 observation aggregates — totals across all skills, used to populate
+# the observations[] block at emission time. Each is incremented once per
+# matching condition inside the per-skill loop below.
+#   fm_present_total   : passing required-frontmatter-field checks
+#   fm_required_total  : 4 per skill (name/description/allowed-tools/
+#                        disable-model-invocation)
+#   skeletal_count     : SKILL.md files with nblines < 20
+#   todo_total         : raw sum of `grep -c TODO` across skills
+#                        (uncapped — the rubric ladder is the cap)
+#   broken_refs_total  : raw sum of broken `references/X.md` pointers
+#   stray_total        : raw sum of stray-file matches in skill dirs
+fm_present_total=0
+fm_required_total=0
+skeletal_count=0
+todo_total=0
+broken_refs_total=0
+stray_total=0
+
 n=${#SKILLS_SORTED[@]}
 for skill in "${SKILLS_SORTED[@]}"; do
   rel="${skill#$REPO_ROOT/}"
@@ -89,27 +113,38 @@ for skill in "${SKILLS_SORTED[@]}"; do
 
   # ---- Frontmatter (start 100) ----
   fm_score=100
+  # Aggregate observation: 4 required fields per skill.
+  fm_required_total=$((fm_required_total + 4))
   if ! grep -qE '^name: *[^ ]' <<<"$fm"; then
     fm_score=$((fm_score - 40))
     emit_finding "frontmatter" "critical" "Missing 'name' in frontmatter ($rel)" "$rel"
+  else
+    fm_present_total=$((fm_present_total + 1))
   fi
   if ! grep -qE '^description: *[^ ]' <<<"$fm"; then
     fm_score=$((fm_score - 30))
     emit_finding "frontmatter" "high" "Missing 'description' in frontmatter ($rel)" "$rel"
+  else
+    fm_present_total=$((fm_present_total + 1))
   fi
   # allowed-tools: either the key is missing, or its value is the universe
   # (a literal `*` or absent list). Presence of the key with a concrete
-  # scalar/array value passes.
+  # scalar/array value passes. The universal-glob `*` is a fail; only a
+  # concrete scalar/array increments fm_present_total.
   if ! grep -qE '^allowed-tools:' <<<"$fm"; then
     fm_score=$((fm_score - 20))
     emit_finding "frontmatter" "high" "Missing 'allowed-tools' in frontmatter ($rel)" "$rel"
   elif grep -qE '^allowed-tools: *["'"'"']?\*' <<<"$fm"; then
     fm_score=$((fm_score - 20))
     emit_finding "frontmatter" "high" "'allowed-tools: *' grants universal tool access ($rel)" "$rel"
+  else
+    fm_present_total=$((fm_present_total + 1))
   fi
   if ! grep -qE '^disable-model-invocation:' <<<"$fm"; then
     fm_score=$((fm_score - 10))
     emit_finding "frontmatter" "medium" "Missing 'disable-model-invocation' in frontmatter ($rel)" "$rel"
+  else
+    fm_present_total=$((fm_present_total + 1))
   fi
   fm_score=$(clamp "$fm_score" 0 100)
   fm_total=$((fm_total + fm_score))
@@ -119,6 +154,7 @@ for skill in "${SKILLS_SORTED[@]}"; do
   if (( lines < 20 )); then
     iq_score=$((iq_score - 40))
     emit_finding "instruction-quality" "critical" "Skeletal SKILL.md ($lines non-blank lines <20) ($rel)" "$rel"
+    skeletal_count=$((skeletal_count + 1))
   fi
   if (( lines > 100 )) && ! grep -qE '^(#+ +(Phase|Step))' "$skill" 2>/dev/null; then
     iq_score=$((iq_score - 20))
@@ -126,6 +162,9 @@ for skill in "${SKILLS_SORTED[@]}"; do
   fi
   todo_count=$(grep -c 'TODO' "$skill" 2>/dev/null; true)
   todo_count=${todo_count:-0}
+  # Raw aggregate for the rubric — uncapped per-skill, the rubric
+  # ladder applies to the across-fleet total.
+  todo_total=$((todo_total + todo_count))
   todo_ded=$((todo_count * 10))
   todo_ded=$(clamp "$todo_ded" 0 30)
   if (( todo_ded > 0 )); then
@@ -167,6 +206,8 @@ for skill in "${SKILLS_SORTED[@]}"; do
       .DS_Store|*.bak|tmp.*|*~) stray_count=$((stray_count + 1)) ;;
     esac
   done < <(find "$skill_dir" -maxdepth 1 -type f -print0 2>/dev/null | sort -z)
+  # Raw aggregate for the rubric — fleet-level stray-file count.
+  stray_total=$((stray_total + stray_count))
   stray_ded=$((stray_count * 5))
   stray_ded=$(clamp "$stray_ded" 0 15)
   if (( stray_ded > 0 )); then
@@ -215,6 +256,8 @@ for skill in "${SKILLS_SORTED[@]}"; do
     fi
     broken_refs=$((broken_refs + 1))
   done < <(grep -oE 'references/[A-Za-z0-9_./-]+\.md' "$skill" 2>/dev/null | sort -u)
+  # Raw aggregate for the rubric — fleet-level broken-references count.
+  broken_refs_total=$((broken_refs_total + broken_refs))
   ref_ded=$((broken_refs * 20))
   ref_ded=$(clamp "$ref_ded" 0 40)
   if (( ref_ded > 0 )); then
@@ -259,14 +302,49 @@ if (( ds_avg < 75 )); then emit_rec "medium" "directory-structure" "Remove stray
 if (( oe_avg < 75 )); then emit_rec "medium" "over-engineering"    "Remove restated built-in tool instructions" "$((75 - oe_avg))"; fi
 if (( rt_avg < 75 )); then emit_rec "high"   "reference-tooling"   "Fix broken references/ pointers" "$((75 - rt_avg))"; fi
 
+# ------------------------------------------------------------------------
+# Observation shaping (v2 sibling-audit contract)
+# ------------------------------------------------------------------------
+# Per ADR-005 §3 / sibling-audit-contract.md schema 2: emit a stable
+# observations[] array alongside the legacy categories[] payload. Each
+# observation aggregates per-skill measurements computed in the loop
+# above; the rubric stanza in references/rubric.md applies the scoring
+# rule. Categories[] / composite_score / letter_grade / recommendations
+# / plugin / dimension are byte-identical to v1.
+#
+# Default-init under `set -u` for any aggregate that might be unset if
+# the per-skill loop never bumped it (the no-skills path short-circuits
+# above, so n>=1 here, but be defensive — matches M1's pattern).
+: "${fm_present_total:=0}"
+: "${fm_required_total:=0}"
+: "${skeletal_count:=0}"
+: "${todo_total:=0}"
+: "${broken_refs_total:=0}"
+: "${stray_total:=0}"
+
+# Frontmatter completeness ratio — 4dp deterministic, awk-computed.
+# Bash arithmetic loses precision; jq's float ingest is locale-sensitive;
+# awk's printf "%.4f" is the stable pin.
+obs_fm_ratio=$(awk -v n="$fm_present_total" -v d="$fm_required_total" \
+  'BEGIN { if (d > 0) printf "%.4f", n/d; else printf "0.0000" }')
+
 jq -n \
   --argjson fm "$fm_avg" --argjson iq "$iq_avg" --argjson ad "$ad_avg" \
   --argjson ds "$ds_avg" --argjson oe "$oe_avg" --argjson rt "$rt_avg" \
   --argjson composite "$composite" \
   --arg grade "$grade" \
+  --argjson fm_present_total  "$fm_present_total" \
+  --argjson fm_required_total "$fm_required_total" \
+  --argjson fm_ratio          "$obs_fm_ratio" \
+  --argjson skeletal_count    "$skeletal_count" \
+  --argjson todo_total        "$todo_total" \
+  --argjson broken_refs_total "$broken_refs_total" \
+  --argjson stray_total       "$stray_total" \
+  --argjson n_skills          "$n" \
   --slurpfile findings "$FINDINGS_FILE" \
   --slurpfile recs     "$RECS_FILE" \
   '{
+    "$schema_version": 2,
     plugin: "skillet",
     dimension: "skills-quality",
     categories: [
@@ -282,6 +360,42 @@ jq -n \
        findings: [$findings[] | select(.category=="over-engineering")    | del(.category)]},
       {name:"Reference & Tooling",  weight:0.15, score:$rt,
        findings: [$findings[] | select(.category=="reference-tooling")   | del(.category)]}
+    ],
+    observations: [
+      {
+        id: "skill-frontmatter-completeness-ratio",
+        kind: "ratio",
+        evidence: {
+          numerator: $fm_present_total,
+          denominator: $fm_required_total,
+          ratio: $fm_ratio
+        },
+        summary: "\($fm_present_total)/\($fm_required_total) required frontmatter fields present across \($n_skills) skill(s)"
+      },
+      {
+        id: "skill-skeletal-count",
+        kind: "count",
+        evidence: { count: $skeletal_count },
+        summary: "\($skeletal_count) SKILL.md file(s) under 20 non-blank lines"
+      },
+      {
+        id: "skill-todo-marker-count",
+        kind: "count",
+        evidence: { count: $todo_total },
+        summary: "\($todo_total) TODO marker(s) across \($n_skills) SKILL.md file(s)"
+      },
+      {
+        id: "skill-broken-references-count",
+        kind: "count",
+        evidence: { count: $broken_refs_total },
+        summary: "\($broken_refs_total) broken references/ pointer(s) across \($n_skills) SKILL.md file(s)"
+      },
+      {
+        id: "skill-stray-file-count",
+        kind: "count",
+        evidence: { count: $stray_total },
+        summary: "\($stray_total) stray file(s) across skill directories"
+      }
     ],
     composite_score: $composite,
     letter_grade:    $grade,
