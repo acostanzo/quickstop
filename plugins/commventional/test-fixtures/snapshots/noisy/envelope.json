@@ -1,0 +1,61 @@
+{
+  "plugin": "commventional",
+  "dimension": "commit-hygiene",
+  "categories": [
+    {
+      "name": "Conventional Commits",
+      "weight": 0.50,
+      "score": 40,
+      "findings": [
+        {
+          "severity": "critical",
+          "message": "Only 4/14 recent commits (29%) match the conventional-commit regex"
+        }
+      ]
+    },
+    {
+      "name": "Engineering Ownership",
+      "weight": 0.30,
+      "score": 10,
+      "findings": [
+        {
+          "severity": "critical",
+          "message": "7 commit(s) carry automated Co-Authored-By trailers"
+        },
+        {
+          "severity": "high",
+          "message": "3 commit(s) contain 'Generated with Claude Code' marker"
+        }
+      ]
+    },
+    {
+      "name": "Conventional Comments",
+      "weight": 0.20,
+      "score": 100,
+      "findings": [
+        {
+          "severity": "low",
+          "message": "Review-comment signal not sampled (network-free audit); category defaults to 100"
+        }
+      ]
+    }
+  ],
+  "composite_score": 43,
+  "letter_grade": "D",
+  "recommendations": [
+    {
+      "priority": "high",
+      "category": "conventional-commits",
+      "title": "Adopt conventional-commit subject-line format",
+      "impact_points": 35,
+      "command": "/commventional:commventional"
+    },
+    {
+      "priority": "high",
+      "category": "engineering-ownership",
+      "title": "Stop auto-trailers / Generated-with-Claude markers",
+      "impact_points": 65,
+      "command": "/commventional:commventional"
+    }
+  ]
+}
