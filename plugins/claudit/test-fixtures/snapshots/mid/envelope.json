@@ -1,0 +1,57 @@
+{
+  "plugin": "claudit",
+  "dimension": "claude-code-config",
+  "categories": [
+    {
+      "name": "Over-Engineering Detection",
+      "weight": 0.20,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "CLAUDE.md Quality",
+      "weight": 0.20,
+      "score": 95,
+      "findings": [
+        {
+          "severity": "low",
+          "message": "CLAUDE.md missing 1 arrival section(s)",
+          "file": "CLAUDE.md"
+        }
+      ]
+    },
+    {
+      "name": "Security Posture",
+      "weight": 0.15,
+      "score": 80,
+      "findings": [
+        {
+          "severity": "high",
+          "message": "permissions.defaultMode is 'missing'",
+          "file": ".claude/settings.json"
+        }
+      ]
+    },
+    {
+      "name": "MCP Configuration",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Plugin Health",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Context Efficiency",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    }
+  ],
+  "composite_score": 96,
+  "letter_grade": "A+",
+  "recommendations": []
+}

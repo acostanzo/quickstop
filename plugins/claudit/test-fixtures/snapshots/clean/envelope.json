@@ -1,0 +1,45 @@
+{
+  "plugin": "claudit",
+  "dimension": "claude-code-config",
+  "categories": [
+    {
+      "name": "Over-Engineering Detection",
+      "weight": 0.20,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "CLAUDE.md Quality",
+      "weight": 0.20,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Security Posture",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "MCP Configuration",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Plugin Health",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Context Efficiency",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    }
+  ],
+  "composite_score": 100,
+  "letter_grade": "A+",
+  "recommendations": []
+}

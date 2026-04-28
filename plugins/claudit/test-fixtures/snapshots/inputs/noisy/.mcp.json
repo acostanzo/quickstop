@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "a": { "command": "echo" },
+    "b": { "command": "echo" },
+    "c": { "command": "echo" },
+    "d": { "command": "echo" },
+    "e": { "command": "echo" },
+    "f": { "command": "echo" },
+    "g": { "command": "echo" }
+  }
+}
