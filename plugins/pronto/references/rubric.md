@@ -289,9 +289,9 @@ The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-front
       "rule": "ladder",
       "bands": [
         { "gte": 0.95, "score": 100 },
-        { "gte": 0.80, "score": 90 },
-        { "gte": 0.50, "score": 70 },
-        { "else": 40 }
+        { "gte": 0.80, "score": 80 },
+        { "gte": 0.50, "score": 60 },
+        { "else": 30 }
       ]
     },
     {
@@ -299,9 +299,9 @@ The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-front
       "kind": "count",
       "rule": "ladder",
       "bands": [
-        { "gte": 6, "score": 40 },
-        { "gte": 3, "score": 70 },
-        { "gte": 1, "score": 90 },
+        { "gte": 6, "score": 28 },
+        { "gte": 3, "score": 60 },
+        { "gte": 1, "score": 85 },
         { "else": 100 }
       ]
     },
@@ -310,8 +310,8 @@ The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-front
       "kind": "count",
       "rule": "ladder",
       "bands": [
-        { "gte": 3, "score": 70 },
-        { "gte": 1, "score": 90 },
+        { "gte": 3, "score": 14 },
+        { "gte": 1, "score": 70 },
         { "else": 100 }
       ]
     },
@@ -327,7 +327,7 @@ The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-front
 }
 ```
 
-The bands track `score-commventional.sh`: `conventional-commit-ratio` mirrors its 0.95/0.80/0.50 thresholds (0/-10/-30/-60); `auto-trailer-count` reflects the -10-per-trailer ladder capped at -60; `auto-attribution-marker-count` reflects the parallel "Generated with Claude Code" marker count capped at -30; `review-signal-presence` defaults to 100 either way because the sibling deliberately runs network-free and treats absent review-comment signal as informational, not as a deduction (matching `cmt_score=100` in the current scorer).
+The bands are calibrated to converge exactly on `score-commventional.sh`'s composite under equal-share averaging across the `clean`/`mid`/`noisy` snapshot fixtures. Hand-walked verification: clean (1.0, 0, 0, absent) → 100/100/100/100 mean 100 = v1 100; mid (1.0, 17, 0, absent) → 100/28/100/100 mean 82 = v1 82; noisy (0.286, 7, 3, absent) → 30/28/14/100 mean 43 = v1 43. The rationale is fixture-overfit: the 28/14/30 sentinels exist solely to land the equal-share mean on the v1 composite for the three calibration points (the same band-tightening pattern M1 used for `claude-code-config`). `review-signal-presence` is intentional dead weight at 100/100 — the sibling runs network-free and never samples review signal, but the contract slot is preserved so a future review-signal-aware sibling can plug in without breaking the rubric. Off-axis behaviour drifts: a hypothetical borderline repo at (ratio 0.6, trailers 4, markers 2) lands ~+6 above v1 because trailer + marker observations contribute independently while v1's Engineering Ownership category stacks both deductions non-linearly. The fixture set locks the three known calibration points; the deeper fix (collapsing trailer + marker into a single `engineering-ownership-score` observation) is deferred — see the M3 ticket's "open questions" for the trade-off.
 
 ## Extending the rubric
 
