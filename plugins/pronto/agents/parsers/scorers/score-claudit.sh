@@ -330,6 +330,32 @@ fi
 ce_score=$(clamp "$ce_score" 0 100)
 
 # ------------------------------------------------------------------------
+# Observation shaping (v2 sibling-audit contract)
+# ------------------------------------------------------------------------
+# Per ADR-005 §3 / sibling-audit-contract.md schema 2: emit a stable
+# observations[] array alongside the legacy categories[] payload. Each
+# observation's evidence is sourced from a measurement variable already
+# computed above; the rubric stanza in references/rubric.md applies the
+# scoring rule. Categories[] / composite_score / letter_grade /
+# recommendations / plugin / dimension are byte-identical to v1.
+#
+# Default-init any variable that's only set inside a conditional branch
+# above so the observation block is safe under set -u when CLAUDE.md or
+# .claude/settings.json is absent.
+: "${cq_missing_sections:=0}"
+: "${default_mode:=missing}"
+: "${broad_count:=0}"
+
+# Redundancy ratio — 4dp deterministic, awk-computed. Zero denominator
+# yields zero ratio (CLAUDE.md absent or empty).
+obs_redundancy_ratio=$(awk -v n="$oe_prose_matches" -v d="$claudemd_nb" \
+  'BEGIN { if (d > 0) printf "%.4f", n/d; else printf "0.0000" }')
+obs_default_mode_present=false
+if [[ "$default_mode" != "missing" && "$default_mode" != "bypassPermissions" ]]; then
+  obs_default_mode_present=true
+fi
+
+# ------------------------------------------------------------------------
 # Assemble output
 # ------------------------------------------------------------------------
 
@@ -365,9 +391,18 @@ jq -n \
   --argjson ph  "$ph_score"  --argjson ce  "$ce_score" \
   --argjson composite "$composite" \
   --arg grade "$grade" \
+  --argjson oe_prose_matches  "$oe_prose_matches" \
+  --argjson claudemd_nb       "$claudemd_nb" \
+  --argjson redundancy_ratio  "$obs_redundancy_ratio" \
+  --argjson mcp_server_count  "$mcp_server_count" \
+  --argjson default_mode_present "$obs_default_mode_present" \
+  --arg     default_mode      "$default_mode" \
+  --argjson broad_count       "$broad_count" \
+  --argjson cq_missing_sections "$cq_missing_sections" \
   --slurpfile findings "$FINDINGS_FILE" \
   --slurpfile recs     "$RECS_FILE" \
   '{
+    "$schema_version": 2,
     plugin: "claudit",
     dimension: "claude-code-config",
     categories: [
@@ -383,6 +418,51 @@ jq -n \
        findings: [$findings[] | select(.category=="plugin-health")      | del(.category)]},
       {name:"Context Efficiency",         weight:0.15, score:$ce,
        findings: [$findings[] | select(.category=="context-efficiency") | del(.category)]}
+    ],
+    observations: [
+      {
+        id: "claude-md-redundancy-ratio",
+        kind: "ratio",
+        evidence: {
+          numerator: $oe_prose_matches,
+          denominator: $claudemd_nb,
+          ratio: $redundancy_ratio
+        },
+        summary: "\($oe_prose_matches)/\($claudemd_nb) CLAUDE.md lines restate built-in tool behavior"
+      },
+      {
+        id: "mcp-server-count",
+        kind: "count",
+        evidence: { configured: $mcp_server_count },
+        summary: "\($mcp_server_count) MCP servers configured"
+      },
+      {
+        id: "claude-md-line-count",
+        kind: "count",
+        evidence: { count: $claudemd_nb },
+        summary: "\($claudemd_nb) non-blank lines in CLAUDE.md"
+      },
+      {
+        id: "settings-default-mode-explicit",
+        kind: "presence",
+        evidence: { present: $default_mode_present },
+        summary: (if $default_mode_present
+                    then "permissions.defaultMode is set"
+                    else "permissions.defaultMode is missing/bypass"
+                  end)
+      },
+      {
+        id: "broad-allow-glob-count",
+        kind: "count",
+        evidence: { count: $broad_count },
+        summary: "\($broad_count) broad Bash(*)/Write(*) allow entries"
+      },
+      {
+        id: "claude-md-arrival-section-missing-count",
+        kind: "count",
+        evidence: { count: $cq_missing_sections },
+        summary: "\($cq_missing_sections) CLAUDE.md arrival section(s) missing"
+      }
     ],
     composite_score: $composite,
     letter_grade:    $grade,
