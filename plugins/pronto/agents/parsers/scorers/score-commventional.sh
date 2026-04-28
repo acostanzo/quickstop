@@ -33,7 +33,10 @@ if ! command -v git >/dev/null 2>&1; then echo "Error: git required" >&2; exit 2
 
 if ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   # Non-git repo — emit neutral but honest scorecard rather than failing.
+  # Schema v2: empty observations[] tells the translator to fall through
+  # to the v1 composite_score passthrough rule.
   jq -n '{
+    "$schema_version": 2,
     plugin: "commventional",
     dimension: "commit-hygiene",
     categories: [
@@ -41,6 +44,7 @@ if ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
       {name:"Engineering Ownership",  weight:0.30, score:100, findings:[]},
       {name:"Conventional Comments",  weight:0.20, score:100, findings:[{severity:"low", message:"No review signal (no git history available)"}]}
     ],
+    observations: [],
     composite_score: 75,
     letter_grade: "B",
     recommendations: []
@@ -164,13 +168,47 @@ if (( cc_score  < 75 )); then emit_rec "high"   "conventional-commits"  "Adopt c
 if (( eo_score  < 75 )); then emit_rec "high"   "engineering-ownership" "Stop auto-trailers / Generated-with-Claude markers"   "$((75 - eo_score))"; fi
 if (( cmt_score < 75 )); then emit_rec "medium" "conventional-comments" "Adopt labeled review feedback"                        "$((75 - cmt_score))"; fi
 
+# ------------------------------------------------------------------------
+# Observation shaping (v2 sibling-audit contract)
+# ------------------------------------------------------------------------
+# Per ADR-005 §3 / sibling-audit-contract.md schema 2: emit a stable
+# observations[] array alongside the legacy categories[] payload. Each
+# observation's evidence is sourced from a measurement variable already
+# computed above; the rubric stanza in references/rubric.md applies the
+# scoring rule. Categories[] / composite_score / letter_grade /
+# recommendations / plugin / dimension are byte-identical to v1.
+#
+# Default-init any variable that's only set inside a conditional branch
+# above so the observation block is safe under set -u when the history
+# is too thin (total < 5) or the relevant grep finds nothing.
+: "${matches:=0}"
+: "${total:=0}"
+: "${auto_trailers:=0}"
+: "${auto_marker:=0}"
+
+# Conventional-commit ratio — 4dp deterministic, awk-computed. Zero
+# denominator yields zero ratio (history < 5 commits, ratio meaningless).
+obs_cc_ratio=$(awk -v n="$matches" -v d="$total" \
+  'BEGIN { if (d > 0) printf "%.4f", n/d; else printf "0.0000" }')
+
+# review-signal-presence is always false: the scorer is intentionally
+# network-free and never samples GitHub review comments.
+obs_review_present=false
+
 jq -n \
   --argjson cc "$cc_score" --argjson eo "$eo_score" --argjson cmt "$cmt_score" \
   --argjson composite "$composite" \
   --arg grade "$grade" \
+  --argjson cc_matches    "$matches" \
+  --argjson cc_total      "$total" \
+  --argjson cc_ratio      "$obs_cc_ratio" \
+  --argjson trailer_count "$auto_trailers" \
+  --argjson marker_count  "$auto_marker" \
+  --argjson review_present "$obs_review_present" \
   --slurpfile findings "$FINDINGS_FILE" \
   --slurpfile recs     "$RECS_FILE" \
   '{
+    "$schema_version": 2,
     plugin: "commventional",
     dimension: "commit-hygiene",
     categories: [
@@ -180,6 +218,36 @@ jq -n \
        findings: [$findings[] | select(.category=="engineering-ownership") | del(.category)]},
       {name:"Conventional Comments", weight:0.20, score:$cmt,
        findings: [$findings[] | select(.category=="conventional-comments") | del(.category)]}
+    ],
+    observations: [
+      {
+        id: "conventional-commit-ratio",
+        kind: "ratio",
+        evidence: {
+          numerator: $cc_matches,
+          denominator: $cc_total,
+          ratio: $cc_ratio
+        },
+        summary: "\($cc_matches)/\($cc_total) recent non-merge commits match the conventional-commit regex"
+      },
+      {
+        id: "auto-trailer-count",
+        kind: "count",
+        evidence: { count: $trailer_count },
+        summary: "\($trailer_count) commit(s) carry automated Co-Authored-By trailers"
+      },
+      {
+        id: "auto-attribution-marker-count",
+        kind: "count",
+        evidence: { count: $marker_count },
+        summary: "\($marker_count) commit(s) contain a Generated-with-Claude-Code marker"
+      },
+      {
+        id: "review-signal-presence",
+        kind: "presence",
+        evidence: { present: $review_present },
+        summary: "Review-comment signal not sampled (scorer is network-free)"
+      }
     ],
     composite_score: $composite,
     letter_grade:    $grade,
