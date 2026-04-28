@@ -1,0 +1,32 @@
+{
+  "plugin": "commventional",
+  "dimension": "commit-hygiene",
+  "categories": [
+    {
+      "name": "Conventional Commits",
+      "weight": 0.50,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Engineering Ownership",
+      "weight": 0.30,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Conventional Comments",
+      "weight": 0.20,
+      "score": 100,
+      "findings": [
+        {
+          "severity": "low",
+          "message": "Review-comment signal not sampled (network-free audit); category defaults to 100"
+        }
+      ]
+    }
+  ],
+  "composite_score": 100,
+  "letter_grade": "A+",
+  "recommendations": []
+}

@@ -1,0 +1,45 @@
+{
+  "plugin": "commventional",
+  "dimension": "commit-hygiene",
+  "categories": [
+    {
+      "name": "Conventional Commits",
+      "weight": 0.50,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Engineering Ownership",
+      "weight": 0.30,
+      "score": 40,
+      "findings": [
+        {
+          "severity": "critical",
+          "message": "17 commit(s) carry automated Co-Authored-By trailers"
+        }
+      ]
+    },
+    {
+      "name": "Conventional Comments",
+      "weight": 0.20,
+      "score": 100,
+      "findings": [
+        {
+          "severity": "low",
+          "message": "Review-comment signal not sampled (network-free audit); category defaults to 100"
+        }
+      ]
+    }
+  ],
+  "composite_score": 82,
+  "letter_grade": "B",
+  "recommendations": [
+    {
+      "priority": "high",
+      "category": "engineering-ownership",
+      "title": "Stop auto-trailers / Generated-with-Claude markers",
+      "impact_points": 35,
+      "command": "/commventional:commventional"
+    }
+  ]
+}
