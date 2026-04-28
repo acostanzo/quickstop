@@ -79,6 +79,14 @@ git -C "$REPO_ROOT" log --no-merges -n 50 --pretty=format:'%s' >"$subjects_file"
 
 total=$(wc -l <"$subjects_file")
 total=${total:-0}
+# `git log --pretty=format:'%s'` omits the trailing newline, so wc -l
+# undercounts by one whenever the file is non-empty. Preserve the
+# (slightly-buggy) `total` in the v1 path to keep `categories[]` and
+# the existing finding text byte-identical, but recompute an accurate
+# row count for the v2 observation block where the wire contract
+# requires `evidence.ratio ∈ [0,1]` (see PR #63 review).
+total_actual=$(awk 'END{print NR}' "$subjects_file")
+total_actual=${total_actual:-0}
 
 cc_score=100
 CC_RE='^(feat|fix|chore|docs|refactor|test|perf|build|ci|style)(\([a-zA-Z0-9_.-]+(,[a-zA-Z0-9_.-]+)*\))?!?: .+'
@@ -183,28 +191,40 @@ if (( cmt_score < 75 )); then emit_rec "medium" "conventional-comments" "Adopt l
 # is too thin (total < 5) or the relevant grep finds nothing.
 : "${matches:=0}"
 : "${total:=0}"
+: "${total_actual:=0}"
 : "${auto_trailers:=0}"
 : "${auto_marker:=0}"
 
-# Conventional-commit ratio — 4dp deterministic, awk-computed. Zero
-# denominator yields zero ratio (history < 5 commits, ratio meaningless).
-obs_cc_ratio=$(awk -v n="$matches" -v d="$total" \
+# Conventional-commit ratio — 4dp deterministic, awk-computed. Uses the
+# accurate `total_actual` (not the wc-l-buggy `total`) so the wire
+# contract's `ratio ∈ [0,1]` invariant holds.
+obs_cc_ratio=$(awk -v n="$matches" -v d="$total_actual" \
   'BEGIN { if (d > 0) printf "%.4f", n/d; else printf "0.0000" }')
 
 # review-signal-presence is always false: the scorer is intentionally
 # network-free and never samples GitHub review comments.
 obs_review_present=false
 
+# Thin-history gate: when the v1 path early-returned at cc_score=50
+# (total < 5), the observation block has no real signal to score. Emit
+# `observations: []` so the translator falls through to the v1
+# composite_score passthrough — same pattern as the non-git neutral
+# envelope above. Guards against the thin-history v1/v2 drift caught
+# in the PR #63 review (v1 cc=50, v2 cc-ratio=0.0000 → band else=30
+# would compose to a different composite).
+if (( total < 5 )); then thin_history=true; else thin_history=false; fi
+
 jq -n \
   --argjson cc "$cc_score" --argjson eo "$eo_score" --argjson cmt "$cmt_score" \
   --argjson composite "$composite" \
   --arg grade "$grade" \
   --argjson cc_matches    "$matches" \
-  --argjson cc_total      "$total" \
+  --argjson cc_total      "$total_actual" \
   --argjson cc_ratio      "$obs_cc_ratio" \
   --argjson trailer_count "$auto_trailers" \
   --argjson marker_count  "$auto_marker" \
   --argjson review_present "$obs_review_present" \
+  --argjson thin_history  "$thin_history" \
   --slurpfile findings "$FINDINGS_FILE" \
   --slurpfile recs     "$RECS_FILE" \
   '{
@@ -219,36 +239,38 @@ jq -n \
       {name:"Conventional Comments", weight:0.20, score:$cmt,
        findings: [$findings[] | select(.category=="conventional-comments") | del(.category)]}
     ],
-    observations: [
-      {
-        id: "conventional-commit-ratio",
-        kind: "ratio",
-        evidence: {
-          numerator: $cc_matches,
-          denominator: $cc_total,
-          ratio: $cc_ratio
+    observations: (
+      if $thin_history then [] else [
+        {
+          id: "conventional-commit-ratio",
+          kind: "ratio",
+          evidence: {
+            numerator: $cc_matches,
+            denominator: $cc_total,
+            ratio: $cc_ratio
+          },
+          summary: "\($cc_matches)/\($cc_total) recent non-merge commits match the conventional-commit regex"
         },
-        summary: "\($cc_matches)/\($cc_total) recent non-merge commits match the conventional-commit regex"
-      },
-      {
-        id: "auto-trailer-count",
-        kind: "count",
-        evidence: { count: $trailer_count },
-        summary: "\($trailer_count) commit(s) carry automated Co-Authored-By trailers"
-      },
-      {
-        id: "auto-attribution-marker-count",
-        kind: "count",
-        evidence: { count: $marker_count },
-        summary: "\($marker_count) commit(s) contain a Generated-with-Claude-Code marker"
-      },
-      {
-        id: "review-signal-presence",
-        kind: "presence",
-        evidence: { present: $review_present },
-        summary: "Review-comment signal not sampled (scorer is network-free)"
-      }
-    ],
+        {
+          id: "auto-trailer-count",
+          kind: "count",
+          evidence: { count: $trailer_count },
+          summary: "\($trailer_count) commit(s) carry automated Co-Authored-By trailers"
+        },
+        {
+          id: "auto-attribution-marker-count",
+          kind: "count",
+          evidence: { count: $marker_count },
+          summary: "\($marker_count) commit(s) contain a Generated-with-Claude-Code marker"
+        },
+        {
+          id: "review-signal-presence",
+          kind: "presence",
+          evidence: { present: $review_present },
+          summary: "Review-comment signal not sampled (scorer is network-free)"
+        }
+      ] end
+    ),
     composite_score: $composite,
     letter_grade:    $grade,
     recommendations: $recs
