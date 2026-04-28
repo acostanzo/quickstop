@@ -1,0 +1,45 @@
+{
+  "plugin": "skillet",
+  "dimension": "skills-quality",
+  "categories": [
+    {
+      "name": "Frontmatter",
+      "weight": 0.20,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Instruction Quality",
+      "weight": 0.20,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Agent Design",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Directory Structure",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Over-Engineering",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Reference & Tooling",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    }
+  ],
+  "composite_score": 100,
+  "letter_grade": "A+",
+  "recommendations": []
+}

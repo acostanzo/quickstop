@@ -1,0 +1,147 @@
+{
+  "plugin": "skillet",
+  "dimension": "skills-quality",
+  "categories": [
+    {
+      "name": "Frontmatter",
+      "weight": 0.20,
+      "score": 66,
+      "findings": [
+        {
+          "severity": "critical",
+          "message": "Missing 'name' in frontmatter (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "high",
+          "message": "Missing 'allowed-tools' in frontmatter (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "medium",
+          "message": "Missing 'disable-model-invocation' in frontmatter (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "high",
+          "message": "'allowed-tools: *' grants universal tool access (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        },
+        {
+          "severity": "medium",
+          "message": "Missing 'disable-model-invocation' in frontmatter (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "Instruction Quality",
+      "weight": 0.20,
+      "score": 46,
+      "findings": [
+        {
+          "severity": "critical",
+          "message": "Skeletal SKILL.md (12 non-blank lines <20) (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "high",
+          "message": "SKILL.md contains 3 TODO marker(s) (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "critical",
+          "message": "Skeletal SKILL.md (8 non-blank lines <20) (.claude/skills/b/SKILL.md)",
+          "file": ".claude/skills/b/SKILL.md"
+        },
+        {
+          "severity": "high",
+          "message": "Unstructured long doc (no Phase/Step headings, 122 lines) (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        },
+        {
+          "severity": "high",
+          "message": "SKILL.md contains 4 TODO marker(s) (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "Agent Design",
+      "weight": 0.15,
+      "score": 100,
+      "findings": []
+    },
+    {
+      "name": "Directory Structure",
+      "weight": 0.15,
+      "score": 96,
+      "findings": [
+        {
+          "severity": "medium",
+          "message": "2 stray file(s) in skill dir (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "Over-Engineering",
+      "weight": 0.15,
+      "score": 90,
+      "findings": [
+        {
+          "severity": "high",
+          "message": "SKILL.md restates built-in tool behavior (2 match(es)) (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "medium",
+          "message": "SKILL.md restates built-in tool behavior (1 match(es)) (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "Reference & Tooling",
+      "weight": 0.15,
+      "score": 73,
+      "findings": [
+        {
+          "severity": "critical",
+          "message": "2 broken references/ pointer(s) (.claude/skills/a/SKILL.md)",
+          "file": ".claude/skills/a/SKILL.md"
+        },
+        {
+          "severity": "critical",
+          "message": "2 broken references/ pointer(s) (.claude/skills/c/SKILL.md)",
+          "file": ".claude/skills/c/SKILL.md"
+        }
+      ]
+    }
+  ],
+  "composite_score": 76,
+  "letter_grade": "B",
+  "recommendations": [
+    {
+      "priority": "high",
+      "category": "frontmatter",
+      "title": "Fill missing frontmatter fields across skills",
+      "impact_points": 9,
+      "command": "/skillet:audit"
+    },
+    {
+      "priority": "high",
+      "category": "instruction-quality",
+      "title": "Expand or structure thin/unstructured SKILL.md files",
+      "impact_points": 29,
+      "command": "/skillet:audit"
+    },
+    {
+      "priority": "high",
+      "category": "reference-tooling",
+      "title": "Fix broken references/ pointers",
+      "impact_points": 2,
+      "command": "/skillet:audit"
+    }
+  ]
+}
