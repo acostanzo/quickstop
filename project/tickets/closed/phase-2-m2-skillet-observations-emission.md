@@ -1,8 +1,8 @@
 ---
 id: m2
 plan: phase-2-pronto
-status: open
-updated: 2026-04-27
+status: closed
+updated: 2026-04-28
 ---
 
 # M2 — Skillet observations[] emission
