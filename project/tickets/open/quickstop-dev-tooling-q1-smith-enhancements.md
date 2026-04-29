@@ -25,8 +25,15 @@ quickstop conventions:
    fetches Anthropic's plugin docs but never reads our own ADRs, the
    wire-contract reference, or the license rule. Smith ships expert on
    Claude Code and ignorant of quickstop's own conventions.
+4. **ADR-006 boundary awareness is missing.** Smith doesn't know that
+   plugins ship capabilities (skills, commands, agents, opinions) and
+   not automation; doesn't surface §3's pure-observability hook
+   carve-out when the user mentions hooks; doesn't scaffold a "Plugin
+   surface" README section per §1. The new boundary needs to be
+   present from scaffold time so authors don't import non-conformance
+   patterns by default.
 
-Q1 closes those three gaps. Smith remains a quickstop-internal dev
+Q1 closes those four gaps. Smith remains a quickstop-internal dev
 tool — not a marketplace plugin — used when building or updating
 plugins in this repo.
 
@@ -82,6 +89,60 @@ default. The decision tree from the rule file is shown inline so the
 user can override without reading the rule separately.
 
 ### Phase 3 — scaffolding additions
+
+#### 3.0 — Hook surface (ADR-006 boundary)
+
+Smith does **not** scaffold a `hooks/` directory by default. ADR-006
+§1 defines plugin surface as skills, commands, agents, hooks, and
+opinions; §3 carves out a narrow allowance for pure-observability
+hooks (no payload mutation via `hookSpecificOutput.updatedInput` /
+`updatedOutput` / `decision` / `behavior` / `permissionDecision`; no
+persistent host state established at hook time; no undeclared
+writes); §6 defers consumer-side automation organization to a future
+composer pattern. Most plugins don't ship hooks — claudit, skillet,
+avanti, smith itself, hone itself.
+
+The questionnaire does not currently ask about hooks. If a future
+enhancement adds a "scaffold pure-observability hooks" branch, it
+must:
+
+- Surface ADR-006 §3 invariants in the question prose verbatim.
+- Scaffold script skeletons that READ stdin, BUILD a JSON envelope,
+  DISPATCH to a consumer-configured transport, and EXIT 0 with no
+  stdout — never emit any of the five mutating
+  `hookSpecificOutput` fields.
+- Include a comment-block header on each generated hook script
+  reproducing the §3 invariants (the towncrier `bin/emit.sh` header
+  is the in-tree precedent: *"Always exits 0 and writes nothing to
+  stdout, so Claude's hook flow is never altered by this script."*).
+- Refuse to scaffold any hook whose described behaviour returns
+  any of ADR-006 §3 invariant 1's five fields
+  (`updatedInput`, `updatedOutput`, `decision`, `behavior`,
+  `permissionDecision`). Verbs the user might use that map to
+  these fields: intercepting, rewriting, mutating, blocking,
+  permitting, deciding, denying. The list isn't exhaustive — the
+  test is "does the described behaviour produce one of the five
+  fields", not "does the description match a verb on a list."
+
+For Q1, the explicit non-scaffolding of hooks is the load-bearing
+behaviour. Authors who need a §3-conformant hook surface follow
+towncrier's pattern by hand. Authors who want consumer-side
+automation (cross-plugin triggers, post-merge commit cleanup, etc.)
+compose it outside the plugin per §6.
+
+**User-facing migration note.** If the user mentions hooks at any
+point during the questionnaire — in the Description free-text, in
+the Components answer (e.g. typing "hooks" into a sub-options
+prompt), in any later free-text — smith surfaces a one-line note
+**inline** with the next prompt (not as a separate AskUserQuestion):
+
+> *Note: smith doesn't scaffold hooks. See ADR-006 §3 / towncrier
+> `bin/emit.sh` for the by-hand pattern.*
+
+The note is informational. It does not gate the questionnaire — the
+user proceeds with the rest of scaffold. The hook-by-hand workflow
+is a one-time author task that lives outside smith's scope until
+the future enhancement under §3.0 lands.
 
 #### 3.1 plugin.json — sibling block
 
@@ -172,7 +233,27 @@ verifies in production."
 
 #### 3.6 — README sibling-aware sections
 
-When sibling, the scaffolded README includes:
+When **any** plugin (sibling or tool), the scaffolded README opens
+with a **"Plugin surface"** section enumerating what the plugin
+ships per ADR-006 §1:
+
+```markdown
+## Plugin surface
+
+This plugin ships:
+- Skills: <list — pre-populated from Question Skills>
+- Commands: <list, or "none">
+- Agents: <list, or "none">
+- Hooks: <list with role per ADR-006 §3, or "none">
+- Opinions: <rules / reference docs, or "none">
+
+This plugin does not ship: cross-plugin automation, consumer config
+edits, or any flow that silently mutates artefacts the consumer
+owns. Consumers compose automation against this plugin's
+capabilities per ADR-006 §6.
+```
+
+When sibling, the scaffolded README also includes:
 
 - "What dimension does this sibling audit"
 - "How to invoke `/<name>:audit --json` standalone"
@@ -199,12 +280,13 @@ in-tree quickstop authority" before the Anthropic doc fetches. Reads:
 
 - `project/adrs/004-sibling-composition-contract.md` (when present)
 - `project/adrs/005-sibling-skill-conventions.md` (when present)
+- `project/adrs/006-plugin-responsibility-boundary.md` (when present)
 - `plugins/pronto/references/sibling-audit-contract.md` (when present)
 - `.claude/rules/license-selection.md` (when present)
 
 Each file is read with `Read` and surfaced into the agent's output
 under a "Quickstop Conventions" section, distinct from the
-Anthropic-docs section. Budget bump: +4 local file reads (inexpensive,
+Anthropic-docs section. Budget bump: +5 local file reads (inexpensive,
 cached after first run via `memory: user`).
 
 The change lives in the shared research agent, so hone benefits from
@@ -217,23 +299,45 @@ user-facing order is: Description → Plugin Role → License → Sibling
 Dimension (if sibling) → Components → Skills → Agents → ... per the
 architecture section.)
 
-1. **Add the Plugin Role question** to Phase 2 (after Description,
+1. **Remove smith's existing hook scaffolding paths.** Smith's
+   Phase 2 Components question (Question 2) lists "Hooks" as an
+   option, Question 6 (Hook Events) is conditional on it, and
+   Phase 3.4 scaffolds `hooks/hooks.json`. Q1 invariant D forbids
+   smith from emitting a `hooks/` directory, so all three must be
+   removed:
+   - Delete the "Hooks" option from Question 2 Components.
+   - Delete Question 6 (Hook Events) entirely.
+   - Delete Phase 3.4 (Hooks scaffolding) entirely.
+   - Replace those code paths with a Phase 3.0 narrative paragraph
+     pointing at ADR-006 §3 + the towncrier precedent for authors
+     who need hooks (the Phase 3.0 architecture text from this
+     ticket).
+   - **Wire in the user-mention surfacing** described in §3.0's
+     "User-facing migration note." Add a phase-2 helper that
+     pattern-matches the literal token `hook` (case-insensitive) in
+     any free-text user response and, when matched on first
+     occurrence, prepends the one-line note to the next prompt's
+     prose. Match-once-per-session — the note is informational,
+     not nagging.
+2. **Add the Plugin Role question** to Phase 2 (after Description,
    before Components). Wire role into a phase-2 `IS_SIBLING` flag.
-2. **Add the Sibling Dimension question** (conditional on role =
+3. **Add the Sibling Dimension question** (conditional on role =
    sibling). Read `recommendations.json` for options.
-3. **Add the License question** to Phase 2 (after Plugin Role, before
+4. **Add the License question** to Phase 2 (after Plugin Role, before
    Components). Wire its answer into Phase 3.
-4. **Add LICENSE / NOTICE file generation** in Phase 3 per the
+5. **Add LICENSE / NOTICE file generation** in Phase 3 per the
    license-rule mechanics.
-5. **Extend Phase 3.1** to scaffold the `pronto` block and the
+6. **Extend Phase 3.1** to scaffold the `pronto` block and the
    `license` field when applicable.
-6. **Add Phase 3.2a** — auto-create `skills/audit/SKILL.md` with the
+7. **Add Phase 3.2a** — auto-create `skills/audit/SKILL.md` with the
    wire-contract emission shape when sibling.
-7. **Add Phase 3.3a** — auto-create the transitional parser agent
+8. **Add Phase 3.3a** — auto-create the transitional parser agent
    when sibling.
-8. **Update Phase 3.6** — sibling-aware README sections.
-9. **Update `research-plugin-spec`** to read in-tree authority.
-10. **Add a smith dogfood note** to Phase 5 summary: "If you scaffolded
+9. **Update Phase 3.6** — "Plugin surface" README section per ADR-006
+   §1 for every plugin; sibling-aware README extras when sibling.
+10. **Update `research-plugin-spec`** to read in-tree authority
+    (ADR-004, ADR-005, ADR-006, sibling-audit-contract, license rule).
+11. **Add a smith dogfood note** to Phase 5 summary: "If you scaffolded
     a sibling, run `/hone <name>` to verify Pronto Compliance ≥85."
 
 ## Acceptance
@@ -246,21 +350,35 @@ architecture section.)
   object satisfying the wire contract: `$schema_version: 2`, correct
   `plugin`, correct `dimension`, empty `observations[]`,
   `composite_score: null`.
-- `jq -e '."$schema_version" == 2 and .plugin == "<name>" and .observations == []' <output>` passes against the scaffolded skill's
-  output.
+- `jq -e '."$schema_version" == 2 and .plugin == "<name>" and .observations == []' <output>` passes against the scaffolded
+  skill's output. (Single-quote the jq filter at the shell so the
+  `$schema_version` literal isn't expanded by the shell. This is
+  the **interim** acceptance gate for invariant A — see invariant
+  A's dependency note. Once H4 + 2a1 land, the full case-3
+  round-trip through
+  `plugins/pronto/agents/parsers/scorers/observations-to-score.sh`
+  becomes available and supersedes this `jq` schema check.)
 - `/smith` end-to-end with role = tool produces a plugin without a
   `pronto` block, no `:audit` auto-creation, no parser agent.
 - License selection produces the right artifact: MIT → standard MIT
   `LICENSE` with current year, Apache-2.0 → `LICENSE`+`NOTICE`, none
   → no LICENSE file. `plugin.json`'s `license` field is set
   consistently (or omitted when "no LICENSE").
-- `research-plugin-spec` reads ADR-004 and ADR-005 when they exist
-  (verified by inspecting the agent's output for a "Quickstop
-  Conventions" section).
+- `research-plugin-spec` reads ADR-004, ADR-005, and ADR-006 when
+  they exist (verified by inspecting the agent's output for a
+  "Quickstop Conventions" section).
+- Scaffolded README contains a "Plugin surface" section per ADR-006
+  §1, enumerating skills/commands/agents/hooks/opinions and an
+  explicit non-mutation declaration. Verified for both role = sibling
+  and role = tool.
+- Smith does not create a `hooks/` directory regardless of
+  questionnaire answers (ADR-006 §3 carve-out is opt-in by hand,
+  not by scaffold).
 - A smith-scaffolded sibling plugin passes `/hone <name>` at
   ≥80/100 overall. (Drops to a Q2 dependency: the Pronto Compliance
   score must be ≥85 — that part of the acceptance is verified after
-  Q2 ships.)
+  Q2 ships. Q2 also introduces the audit-boundary subagent which
+  smith-scaffolded plugins satisfy by construction.)
 
 ## Three load-bearing invariants
 
@@ -285,7 +403,18 @@ B. **License choice is explicit, not silent.** No code path in smith
 C. **Tool-plugin path stays simple.** When role = tool, no `pronto`
    block, no auto-created `:audit` skill, no parser agent — smith's
    tool-plugin scaffolding is unchanged from today, just with the
-   License question added.
+   License question added and the ADR-006 "Plugin surface" README
+   section.
+
+D. **Smith never scaffolds hooks.** No questionnaire path produces a
+   `hooks/` directory or `hooks/hooks.json` in the scaffolded plugin,
+   irrespective of role or other answers. Authors who need hooks
+   follow towncrier's pattern by hand per ADR-006 §3. Verified by
+   `find <scaffolded-plugin> \( -name 'hooks.json' -o -path '*/hooks/*.sh' \)`
+   returning empty (parens are load-bearing — without them
+   `find`'s default `-print` action only binds to the last clause
+   when `-o` is used, so a top-level `hooks.json` would be silently
+   missed).
 
 ## Out of scope
 
@@ -293,7 +422,13 @@ C. **Tool-plugin path stays simple.** When role = tool, no `pronto`
   pattern to scaffold yet.
 - **`:fix` skill scaffolding.** ADR-005 §4 reserves the name; no
   contract.
+- **Hook scaffolding.** Even pure-observability §3-conformant hooks
+  are not scaffolded by Q1. Adding a `hooks/` branch to smith's
+  questionnaire is a future enhancement, gated by the prerequisites
+  in §3.0 (refusal to scaffold any hook described as intercepting,
+  rewriting, blocking, or mutating).
 - **Audit-pronto subagent.** That's hone work — Q2.
+- **Audit-boundary subagent.** Also hone work — Q2.
 - **Migrating shipped plugins to use the new scaffolds.** Per-plugin
   work, not smith work.
 - **Multi-dimension siblings.** `pronto.audits[]` is plural in the
@@ -311,6 +446,7 @@ C. **Tool-plugin path stays simple.** When role = tool, no `pronto`
 - `.claude/agents/research-plugin-spec.md` — research agent extended here
 - `project/adrs/004-sibling-composition-contract.md` — handshake smith scaffolds
 - `project/adrs/005-sibling-skill-conventions.md` — `:audit` slot smith scaffolds
+- `project/adrs/006-plugin-responsibility-boundary.md` — capability/automation boundary smith respects (no hook scaffolding, "Plugin surface" README section)
 - `plugins/pronto/references/sibling-audit-contract.md` — wire contract
 - `plugins/pronto/references/recommendations.json` — canonical dimensions
 - `plugins/pronto/references/rubric.md` — weight hints per dimension
