@@ -50,11 +50,23 @@ plugins/inkwell/scorers/
 ├── score-doc-staleness.sh
 ├── score-link-health.sh
 └── tests/
+    ├── fixtures/             # per-scorer unit-test fixtures
+    │   ├── readme/{full,partial,bare}/
+    │   ├── docs-coverage/{python,...}/
+    │   ├── staleness/<git-init repo>/
+    │   └── link-health/<vendored-broken-link tree>/
     ├── readme-quality.test.sh
     ├── docs-coverage.test.sh
     ├── doc-staleness.test.sh
     └── link-health.test.sh
 ```
+
+These unit-test fixtures live alongside the scorers and are
+isolated to the scorer they exercise. They are **distinct from
+2a3's dimension-level `low/mid/high` calibration set** under
+`plugins/inkwell/tests/fixtures/`, which exercises the full
+audit envelope across all four scorers at once. Different
+purposes; both are needed.
 
 Scripts live under `plugins/inkwell/scorers/` (parallel to pronto's
 `plugins/pronto/agents/parsers/scorers/`). Each accepts a single
@@ -217,9 +229,12 @@ calibrate, if any signal proves dominant or dead.
      exit 1 with a stderr notice if absent (callers branch on
      this).
 2. **`plugins/inkwell/scorers/score-readme-quality.sh`** —
-   header presence with loose-match regex. Test fixture: a `clean`
-   README hitting all five questions, a `mid` README hitting 3, a
-   `low` README hitting 0. Test verifies ratio output.
+   header presence with loose-match regex. Unit-test fixtures
+   (distinct from 2a3's dimension-level calibration set; lives
+   under `plugins/inkwell/scorers/tests/fixtures/readme/`):
+   `full` README hitting all five arrival questions, `partial`
+   hitting three, `bare` hitting zero. Tests verify the
+   numerator/denominator/ratio evidence shape across each.
 3. **`plugins/inkwell/scorers/score-link-health.sh`** —
    lychee integration. Vendored fixture with three known broken
    links + one known broken anchor; verifies count.
