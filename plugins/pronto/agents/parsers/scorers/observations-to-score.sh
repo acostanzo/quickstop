@@ -22,12 +22,24 @@
 #     ]
 #   }
 #
-# When observations[] is absent, empty, or every entry drops out, the
-# helper falls through the v1 back-compat passthrough rule from
-# ADR-005 §3 — the v1 composite_score becomes the dimension score
-# directly. If no composite_score is present either, the helper
-# emits composite_score: null with passthrough_used: true so the
-# caller can degrade to presence-cap.
+# Contract: input must be a v2 envelope (`$schema_version: 2`).
+# v1-only payloads (no `$schema_version`) were deprecated post-M3 on
+# 2026-04-28; the helper now hard-errors on them rather than silently
+# passing the legacy `composite_score` through. See the
+# phase-2-passthrough-deprecation ticket for the deprecation rationale.
+#
+# The passthrough rule still applies in two cases — both v2-native:
+#  - **No stanza** for the requested dimension in rubric.md (a sibling
+#    emitted observations[] against an unregistered dimension; the
+#    helper degrades rather than fails so the audit still produces a
+#    score).
+#  - **Empty `observations: []`** on a v2 envelope (the sibling chose
+#    not to score this run, e.g. M2's empty-skills case or M3's
+#    thin-history gate; honour the no-scope signal).
+#
+# In both cases the helper emits the envelope's legacy `composite_score`
+# as the dimension score if present, or `composite_score: null` with
+# `passthrough_used: true` so the caller can degrade to presence-cap.
 #
 # All progress / diagnostic output goes to stderr; only the JSON
 # envelope lands on stdout.
@@ -35,6 +47,7 @@
 # Exit 0 on success. Exit 2 on argument or environment errors.
 # Exit 3 on stanza-loader errors (mixed-weight config, malformed JSON
 # in rubric.md, unknown kind in stanza).
+# Exit 4 on deprecated v1-only payload (no `$schema_version: 2`).
 
 set -euo pipefail
 
@@ -142,11 +155,32 @@ if [[ -n "$STANZA" ]]; then
 fi
 
 # ---- Input shape --------------------------------------------------------
+SCHEMA_VERSION="$(jq -r '."$schema_version" // empty' "$INPUT_JSON")"
 HAS_OBS="$(jq '(.observations // [] | length) > 0' "$INPUT_JSON")"
 HAS_COMPOSITE="$(jq 'has("composite_score") and (.composite_score | type == "number")' "$INPUT_JSON")"
 LEGACY_COMPOSITE="$(jq -r '.composite_score // empty' "$INPUT_JSON")"
 
+# ---- Schema gate (deprecation 2026-04-28) ------------------------------
+#
+# v1-only payloads (no `$schema_version: 2`) were valid input until M3
+# closed the migration on every in-repo sibling. The translator now
+# hard-errors on them rather than silently passing the legacy
+# composite_score through — see project/tickets/closed/phase-2-
+# passthrough-deprecation.md and ADR-005 §3 for the rationale.
+if [[ "$SCHEMA_VERSION" != "2" ]]; then
+  echo "Error: payload missing \$schema_version: 2 (got: ${SCHEMA_VERSION:-<absent>})" >&2
+  echo "v1 composite_score passthrough was deprecated 2026-04-28 (post-M3)." >&2
+  echo "Every sibling envelope must carry \$schema_version: 2 with an observations[] field." >&2
+  exit 4
+fi
+
 # ---- Passthrough emit helper -------------------------------------------
+#
+# Two surviving cases land here, both on a valid v2 envelope:
+#  1. No rubric stanza for the requested dimension (degrade rather than
+#     fail — the audit still produces a score for unknown dimensions).
+#  2. Empty `observations: []` — the sibling's v2-native "no scope"
+#     signal (M2's empty-skills, M3's thin-history). Honour it.
 emit_passthrough() {
   local note="$1"
   echo "Passthrough: $note" >&2
