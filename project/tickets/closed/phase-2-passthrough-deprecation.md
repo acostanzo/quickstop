@@ -1,8 +1,8 @@
 ---
 id: passthrough-deprecation
 plan: phase-2-pronto
-status: open
-updated: 2026-04-28
+status: closed
+updated: 2026-04-29
 ---
 
 # Back-compat passthrough deprecation (post-M3)
