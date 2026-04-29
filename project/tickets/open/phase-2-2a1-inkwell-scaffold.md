@@ -157,7 +157,29 @@ mechanics section.
    four signals it audits (README quality, docs coverage, staleness,
    internal link health), how to invoke `/inkwell:audit --json`
    standalone, and the MIT license pointer. Mirrors
-   `plugins/skillet/README.md`'s shape.
+   `plugins/skillet/README.md`'s shape, with one ADR-006 addition:
+   a **"Plugin surface"** section per ADR-006 §1 enumerating what
+   the plugin ships:
+
+   ```markdown
+   ## Plugin surface
+
+   This plugin ships:
+   - Skills: `audit`
+   - Commands: none
+   - Agents: `parse-inkwell` (transitional, deprecated — see ADR-005 §5)
+   - Hooks: none
+   - Opinions: none
+
+   This plugin does not ship: cross-plugin automation, consumer
+   config edits, or any flow that silently mutates artefacts the
+   consumer owns. Consumers compose automation against this
+   plugin's capabilities per ADR-006 §6.
+   ```
+
+   Inkwell is scaffolded post-ADR-006; landing the §1 surface
+   section now avoids the migration deduction the existing in-tree
+   plugins will incur until their follow-ups ship.
 3. **`plugins/inkwell/LICENSE`** — standard MIT text.
 4. **`plugins/inkwell/skills/audit/SKILL.md`** — frontmatter
    (`name: audit`, `description`, `disable-model-invocation: true`,
@@ -187,6 +209,10 @@ mechanics section.
 - `LICENSE` is standard MIT text with `Copyright (c) 2026 Anthony Costanzo`.
 - README line count ≥10 non-blank lines (the kernel's own presence
   check — inkwell satisfies its own dimension's floor on day one).
+- README contains a "Plugin surface" section per ADR-006 §1
+  enumerating skills, commands, agents, hooks, and opinions plus the
+  non-mutation declaration. Inkwell ships this from day one rather
+  than via a migration follow-up.
 - No changes to `plugins/pronto/`, `plugins/claudit/`,
   `plugins/skillet/`, `plugins/commventional/`, or
   `plugins/towncrier/` in this commit (verified via
@@ -243,6 +269,12 @@ audit path.
 ## References
 
 - `project/plans/active/phase-2-pronto.md` — PR 2a ticket roster
+- `project/adrs/004-sibling-composition-contract.md` — `compatible_pronto`,
+  `audits[]` shape inkwell declares
+- `project/adrs/005-sibling-skill-conventions.md` — `:audit` skill
+  conventions, observations vs scores, discovery order
+- `project/adrs/006-plugin-responsibility-boundary.md` — §1
+  Plugin surface README section inkwell ships from day one
   (2a1/2a2/2a3) and the position of 2a in the post-Hardening
   sequence.
 - `project/adrs/004-sibling-composition-contract.md` —
