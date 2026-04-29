@@ -361,23 +361,34 @@ expect_branch "prefers observations: passthrough_used false" test-ratio-dim \
   '{"$schema_version":2,"observations":[{"id":"ratio-obs","kind":"ratio","evidence":{"ratio":1.0},"summary":"x"}],"composite_score":42}' \
   '.passthrough_used' 'false'
 
-# ----- v1 payload: uses passthrough -----------------------------------
+# ----- v1 payload: hard-error (deprecated 2026-04-28) -----------------
+#
+# Pre-deprecation, a v1-only envelope (no $schema_version) silently
+# fell through to legacy `composite_score` passthrough. Post-deprecation,
+# the translator hard-errors with exit 4. See phase-2-passthrough-
+# deprecation.md for the rationale: every in-repo sibling shipped on
+# v2 with M1/M2/M3, so v1-only payloads can no longer reach the
+# translator from a current-build pronto path.
 
-expect_branch "v1 payload: passthrough used" test-ratio-dim \
+expect_exit "v1 payload: rejected (no \$schema_version)" test-ratio-dim \
   '{"plugin":"sib","dimension":"x","categories":[],"composite_score":78}' \
-  '.passthrough_used' 'true'
+  4
 
-expect_branch "v1 payload: composite preserved" test-ratio-dim \
-  '{"plugin":"sib","dimension":"x","categories":[],"composite_score":78}' \
-  '.composite_score' '78'
-
-expect_branch "v1 payload byte-equiv 0" test-ratio-dim \
+expect_exit "v1 payload: rejected even when composite=0" test-ratio-dim \
   '{"plugin":"sib","dimension":"x","categories":[],"composite_score":0}' \
-  '.composite_score' '0'
+  4
 
-expect_branch "v1 payload byte-equiv 100" test-ratio-dim \
+expect_exit "v1 payload: rejected even when composite=100" test-ratio-dim \
   '{"plugin":"sib","dimension":"x","categories":[],"composite_score":100}' \
-  '.composite_score' '100'
+  4
+
+expect_exit "v1 payload: rejected with no composite_score either" test-ratio-dim \
+  '{"plugin":"x","dimension":"y","categories":[]}' \
+  4
+
+expect_exit "schema_version present but != 2: rejected" test-ratio-dim \
+  '{"$schema_version":1,"composite_score":50}' \
+  4
 
 # ----- equal-weight default: 1/2/4 obs --------------------------------
 
@@ -423,14 +434,14 @@ expect_branch "empty observations[]: composite preserved" test-ratio-dim \
   '{"$schema_version":2,"observations":[],"composite_score":50}' \
   '.composite_score' '50'
 
-# ----- no composite_score either: null + passthrough_used ------------
+# ----- v2 envelope, no observations field, no composite: null + passthrough -
 
-expect_branch "no observations no composite: null score" test-ratio-dim \
-  '{"plugin":"x","dimension":"y","categories":[]}' \
+expect_branch "v2 no obs field no composite: null score" test-ratio-dim \
+  '{"$schema_version":2}' \
   '.composite_score' 'null'
 
-expect_branch "no observations no composite: passthrough_used" test-ratio-dim \
-  '{"plugin":"x","dimension":"y","categories":[]}' \
+expect_branch "v2 no obs field no composite: passthrough_used" test-ratio-dim \
+  '{"$schema_version":2}' \
   '.passthrough_used' 'true'
 
 # ----- output envelope shape ------------------------------------------
