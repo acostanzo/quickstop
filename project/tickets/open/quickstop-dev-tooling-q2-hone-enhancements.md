@@ -19,19 +19,25 @@ version handshake hygiene. Q2 measures that shape.
 
 Q2 adds:
 
-1. A new audit subagent — `audit-pronto`.
-2. A new rubric category — Pronto Compliance, weight 10%, scope-aware.
-3. A **share-based renormalization** that adds Pronto Compliance to
+1. A new audit subagent — `audit-pronto`. Sibling-conditional.
+2. A new audit subagent — `audit-boundary`. Plugin-wide, dispatched
+   unconditionally; audits ADR-006 §1/§2/§3 conformance.
+3. A new rubric category — Pronto Compliance, weight 10%,
+   scope-aware (sibling-only).
+4. ADR-006 deductions folded into existing Hook Quality and Security
+   categories (every plugin, no new category).
+5. A **share-based renormalization** that adds Pronto Compliance to
    the rubric without reducing any single existing category's stake.
    When a plugin is a sibling, the 9 categories share weight; when
    it's not, the existing 8 categories run unchanged.
-4. **Sibling detection via two paths:** plugin.json `pronto` block
+6. **Sibling detection via two paths:** plugin.json `pronto` block
    (contract-native siblings, post-migration) AND
    `plugins/pronto/references/recommendations.json` registry
    (legacy/transitional siblings like claudit and commventional
    today). Either match dispatches `audit-pronto`.
-5. The same in-tree authority research extension Q1 makes (shared
-   agent — when Q1 lands first, this is a no-op for Q2).
+7. The same in-tree authority research extension Q1 makes (shared
+   agent — when Q1 lands first, this is a no-op for Q2). Now also
+   reads ADR-006.
 
 ## Architecture
 
@@ -130,6 +136,188 @@ strings:
 - Pronto Compliance score impact: [deductions and bonuses]
 ```
 
+### New audit subagent: `.claude/agents/audit-boundary.md`
+
+ADR-006 plugin responsibility boundary applies to every plugin —
+sibling or tool, hook-shipping or not. Hone gets a dedicated
+boundary-audit subagent that runs unconditionally on every
+`/hone <plugin>` invocation. Mirrors `audit-design.md`'s shape.
+Read-only.
+
+```yaml
+---
+name: audit-boundary
+description: "Audits ADR-006 plugin responsibility boundary — §1 surface enumeration, §2 silent mutation of consumer artefacts, §3 hook invariants (no payload mutation, no persistent host state, no undeclared writes). Dispatched by /hone Phase 2 against every plugin, sibling or not."
+tools:
+  - Read
+  - Glob
+  - Grep
+model: inherit
+---
+```
+
+Body audits four surfaces:
+
+**1. Plugin surface declaration (§1)**
+
+- README contains a "Plugin surface" section enumerating skills,
+  commands, agents, hooks, opinions?
+- If hooks are declared in `hooks/hooks.json` but absent from the
+  README's surface enumeration, flag (§1 surface visibility).
+- Hook role declaration present in README ("pure observability"
+  per §3, or other)?
+
+**2. Consumer-artefact mutation (§2)**
+
+ADR-006 §2 prohibits *silent* mutation of consumer artefacts. The
+test is whether the plugin code runs without explicit user
+invocation — hook scripts run automatically; skills run only when
+the user dispatches them. Q2 distinguishes:
+
+- **Scope A — automatic execution paths.** Scripts under `hooks/`
+  (any `.sh` / `.py` / executable in that directory tree), **plus
+  any script invoked from a Scope A path.** Scope is transitive
+  along the call graph: if `hooks/emit.sh` runs `bin/dispatch.sh`,
+  then `bin/dispatch.sh` is Scope A even though it lives outside
+  `hooks/`, because it executes within the hook's
+  automatic-dispatch lifetime. Mutations in any Scope A script are
+  *silent* by definition — Critical deductions apply.
+- **Scope B — user-invoked capabilities.** Skill bodies under
+  `skills/<name>/SKILL.md` and any helper scripts they invoke
+  that aren't reachable from a Scope A path. Mutations here are
+  opt-in (the user explicitly invoked the skill), so they are NOT
+  §2 violations per the "silent" qualifier. Audit-boundary still
+  surfaces them as informational findings ("opt-in capability —
+  verify the skill's prose tells the user what it will mutate
+  before doing so") but applies no automatic deduction.
+
+**Call-graph resolution.** Audit-boundary builds the Scope A
+call-graph by `Grep`-ing every script under `hooks/` for invocations
+of files inside the plugin (`bin/`, `scripts/`, `lib/`, etc.) —
+literal filename or `${CLAUDE_PLUGIN_ROOT}/<path>` references
+suffice; full shell expansion is not required. Each transitively
+reachable script is added to Scope A. The walk is one pass deep —
+deeper transitive chains are listed in the output as "Scope A
+(transitive)" with the discovery path so a human can verify. This
+is bounded: in-tree plugins have at most a handful of helper
+scripts, and the agent only needs to classify, not execute.
+
+Search via `Grep` for invocations matching:
+
+- `gh pr edit --body-file` / `gh pr edit -F` / `gh pr edit -B`
+  (PR-body mutation)
+- `git config --global` (consumer config mutation)
+- `gh repo edit` (consumer repo settings mutation)
+- `gh release create` / `gh release edit` (release mutation)
+
+Each match in **Scope A** flags as a Critical §2 violation. Each
+match in **Scope B** flags as an informational note (no
+deduction). Output includes file path + line number + matched
+command + scope label.
+
+**Fenced-code-block guard.** Within any scanned file, matches that
+appear inside a triple-backtick fenced code block are treated as
+*documented examples*, not invocations. The agent reads each
+matching file in full (cheap — these files are short) and tracks
+fence state line-by-line. Fenced matches are listed under
+"documented examples" in the output and never deducted, even in
+Scope A. This guard primarily matters for skill bodies that
+demonstrate the command in prose (e.g. commventional's planned
+`:install-trailer-stripper` skill shows the user what hook it will
+install).
+
+**3. Hook §3 invariants** (skip if no `hooks/` directory)
+
+Static analysis of every script in `hooks/`.
+
+- §3 invariant 1 (payload mutation, Critical): search for any
+  literal occurrence of `updatedInput`, `updatedOutput`,
+  `"decision":`, `"behavior":`, `"permissionDecision":` in script
+  bodies. Each match flags as Critical.
+- §3 invariant 2 (persistent host state, High): search for
+  installation patterns — `npm install`, `brew install`,
+  `pip install`, `cargo install`, `go install`, `chmod +x` against
+  consumer paths, `sudo`, `systemctl enable`, `launchctl load`.
+  Each match flags as High.
+- §3 invariant 3 (undeclared writes): two tiers, depending on what
+  static analysis can decide.
+  - **Tier 1 (statically decidable, automatic deduction):** an
+    enumerated list of literal write paths whose presence is
+    unambiguous — no variable substitution, no command
+    interpolation. Match exactly:
+    - `> /etc/<anything>` / `>> /etc/<anything>` /
+      `tee /etc/<anything>`
+    - `> /usr/local/<anything>` / `>> /usr/local/<anything>` /
+      `tee /usr/local/<anything>`
+    - `> ~/.bashrc` / `>> ~/.bashrc` / `tee ~/.bashrc`
+    - `> ~/.zshrc` / `>> ~/.zshrc` / `tee ~/.zshrc`
+    - `> ~/.gitconfig` / `>> ~/.gitconfig` / `tee ~/.gitconfig`
+    - `> ~/.profile` / `>> ~/.profile` / `tee ~/.profile`
+
+    Each match flags High, deduct -15. The list is exhaustive on
+    purpose — anything not listed falls to Tier 2.
+  - **Tier 2 (variable-target writes, no automatic deduction):**
+    `>`, `>>`, `tee`, `cp`, `mv`, `mkdir` whose target is a shell
+    variable, command substitution, or any literal path not in the
+    Tier 1 list. Static analysis cannot resolve
+    `${TOWNCRIER_TRANSPORT}` without running the script, and a
+    literal path outside `~/.<plugin>/` may still be perfectly
+    legitimate (consumer-supplied output, scratch under
+    `${CLAUDE_PLUGIN_ROOT}`, etc.). The agent flags the call site
+    as "human-review required" and lists it in the output without
+    applying a deduction. The rationale: most hook-script writes
+    use consumer-configured transports (towncrier's pattern) and
+    are fully ADR-006 §3 invariant 3 conformant; auto-deducting on
+    every variable-target write would penalize the canonical
+    pattern. Tightening Tier 1 to an enumerated list keeps the
+    agent honest — automatic deductions only fire on bytes the
+    agent can prove are violations.
+
+**4. Manifest/script drift**
+
+- If `hooks/hooks.json` declares hooks for events the plugin
+  doesn't have a script for, flag (manifest/script drift). The
+  README/manifest cross-reference for §1 surface visibility lives
+  in surface 1 above; this surface is just script presence.
+
+**Output format:**
+
+```markdown
+## ADR-006 Boundary Audit
+
+### Plugin Surface (§1)
+- README plugin-surface section: present / missing
+- Hook role declaration: present / missing / N/A (no hooks)
+- Hooks declared but not enumerated: <list>
+
+### Consumer-Artefact Mutation (§2)
+- Violations: <count>
+  - <file:line> — <matched command>
+  - ...
+
+### Hook §3 Invariants (skipped if no hooks/)
+- §3.1 (payload mutation, Critical): <count>
+  - <file:line> — <field>
+- §3.2 (persistent host state, High): <count>
+  - <file:line> — <pattern>
+- §3.3 (undeclared writes, High): <count>
+  - <file:line> — <path>
+
+### Manifest/Script Drift
+- hooks.json declares events with no script: <list>
+
+### Estimated Impact
+- Hook Quality deductions: <total>
+- Security deductions: <total>
+- Documentation deductions: <total>
+```
+
+ADR-006 deductions are folded into existing categories rather than
+introducing a 10th category — the boundary is plugin-wide and
+already overlaps Hook Quality (§3 issues), Security (§2 issues), and
+Documentation (§1 issues). A separate "ADR-006 Compliance" category
+would create double-counting.
+
 ### Sibling detection
 
 Hone treats a plugin as a sibling — and dispatches `audit-pronto` —
@@ -149,6 +337,70 @@ findings are exactly the M-series migration work in
 When neither path matches, the plugin is non-sibling: skip
 `audit-pronto`, score over the existing 8 categories at their
 original weights (today's behaviour, byte-equivalent).
+
+### Rubric: ADR-006 boundary deductions (folded into existing categories)
+
+ADR-006 conformance applies to every plugin. Findings from
+`audit-boundary` flow into existing categories rather than a new
+one. Add to `.claude/skills/hone/references/scoring-rubric.md` as
+sub-tables under Hook Quality, Security, and Documentation:
+
+#### Hook Quality — ADR-006 §3 deductions
+
+| Issue | Points | Severity | Description |
+|---|---|---|---|
+| Hook returns any of the five `hookSpecificOutput` fields (`updatedInput`, `updatedOutput`, `decision`, `behavior`, `permissionDecision`) | -25 each (max -50) | Critical | ADR-006 §3 invariant 1 — payload/flow mutation |
+| Hook installs persistent host state (npm/brew/pip install, systemctl, launchctl, sudo) | -15 each (max -30) | High | ADR-006 §3 invariant 2 |
+| Hook writes outside consumer-configured channels | -15 each (max -30) | High | ADR-006 §3 invariant 3 |
+| `hooks/hooks.json` declares an event with no script | -5 each | Low | Manifest drift |
+
+These deductions stack with existing Hook Quality deductions. The
+existing rubric algorithm floors each category score at 0 (no
+separate per-category cap exists today); the same floor applies to
+the post-stack sum.
+
+#### Security — ADR-006 §2 deductions
+
+| Issue | Points | Severity | Description |
+|---|---|---|---|
+| Plugin code calls `gh pr edit --body-file/-F/-B` | -25 each | Critical | ADR-006 §2 — silent mutation of consumer artefact |
+| Plugin code calls `git config --global` | -25 each | Critical | ADR-006 §2 — consumer config mutation |
+| Plugin code calls `gh repo edit` or `gh release create/edit` | -25 each | Critical | ADR-006 §2 — consumer repo/release mutation |
+
+False-positive guard: matches inside README example code blocks
+(fenced) are noted but not deducted. The audit-boundary agent's
+Output format separates "violations" from "documented examples".
+
+#### Documentation — ADR-006 §1 deductions
+
+| Issue | Points | Severity | Description |
+|---|---|---|---|
+| README missing "Plugin surface" section | -5 | Low | ADR-006 §1 |
+| Hooks declared in `hooks/hooks.json` but absent from README's surface enumeration | -5 each (max -15) | Low | ADR-006 §1 visibility |
+
+**Calibration target.** A conformant plugin scores zero ADR-006
+§2 / §3 deductions. Pre-Q1-scaffolded plugins (claudit, skillet,
+avanti, towncrier) take a -5 §1 Documentation deduction for the
+missing "Plugin surface" README section until each is migrated
+under a small follow-up — the §1 README shape is a Q1 scaffold
+addition that the existing in-tree plugins don't yet emit. §2 and
+§3 invariant detections are zero on those plugins.
+
+Commventional today (per
+`project/tickets/open/phase-2-commventional-adr-006-conformance.md`)
+scores Critical findings of -25 each on `enforce-ownership.sh` (§3
+invariant 1) and `pr-ownership-check.sh` (§2). The exact total
+depends on how many `updatedInput` returns and `gh pr edit` calls
+the static analysis surfaces; the bar is that hone *flags both
+violations clearly*, not that the score lands at a specific number.
+
+**Note on grep against jq-constructed JSON.** Commventional's
+`enforce-ownership.sh` builds its return payload via `jq -n`, with
+the literal string `"updatedInput":` appearing inside the jq
+template. Grep operates on file bytes — it finds the literal
+regardless of whether the field is later emitted via `printf`,
+`echo`, or `jq`. The agent's static analysis works on whatever
+script construction style commventional or any future plugin uses.
 
 ### Rubric category: Pronto Compliance (10%)
 
@@ -251,8 +503,8 @@ file readable as "9 ten-point categories with two 20-point and two
 
 ### Hone Phase 2 update
 
-Add `audit-pronto` to the Phase 2 dispatch list, **conditional** on
-sibling detection. Mechanics:
+Add `audit-boundary` unconditionally and `audit-pronto`
+**conditionally** on sibling detection. Mechanics:
 
 1. Before dispatching agents, run sibling detection:
    a. Read `plugins/<name>/.claude-plugin/plugin.json`; check for a
@@ -260,22 +512,47 @@ sibling detection. Mechanics:
    b. Read `plugins/pronto/references/recommendations.json`; check
       whether `<name>` appears as a `recommended_plugin` for any
       dimension.
-2. If either path matches: dispatch 5 agents in parallel (existing 4
-   + `audit-pronto`). The dispatch prompt for `audit-pronto`
-   includes which detection path matched (so the agent can flag
-   "registry-only — should migrate to contract-native shape").
-3. If neither matches: dispatch 4 agents (today's behaviour);
-   `audit-pronto` is skipped; Pronto Compliance is excluded from
-   scoring; the rubric runs over the 8 existing categories at their
-   original weights (byte-equivalent to today).
+2. **Always** dispatch `audit-boundary` alongside the existing 4
+   agents. Boundary audit applies to every plugin per ADR-006.
+3. If either sibling-detection path matches: also dispatch
+   `audit-pronto` (6 agents total). The dispatch prompt for
+   `audit-pronto` includes which detection path matched (so the
+   agent can flag "registry-only — should migrate to contract-native
+   shape").
+4. If neither sibling-detection path matches: dispatch 5 agents
+   (existing 4 + `audit-boundary`); `audit-pronto` is skipped;
+   Pronto Compliance is excluded from scoring; the rubric runs over
+   the 8 existing categories at their original weights
+   (byte-equivalent to today on score, but with new ADR-006-shaped
+   deductions inside Hook Quality / Security / Documentation when
+   findings warrant).
+
+**Note on byte-equivalence.** A non-sibling, ADR-006-conformant
+plugin (e.g. claudit, skillet, avanti today, modulo the -5 §1
+README-surface deduction noted in the calibration target above)
+produces an overall score essentially byte-equivalent to today's
+`/hone <plugin>` — the rubric weights are unchanged and
+`audit-boundary` finds zero §2 / §3 violations to deduct. A
+non-sibling plugin **with** ADR-006 violations (e.g. commventional,
+until M3 ships) sees its score drop relative to today, reflecting
+the newly-detected non-conformance. This is intended.
+
+**Note on token cost.** The score-side byte-equivalence does not
+extend to token usage — `audit-boundary` adds one subagent's
+dispatch on every `/hone` invocation, sibling or not. That is the
+deliberate cost of moving the boundary check from "Anthony reads
+the diff" to "hone surfaces it automatically." The cost stays
+bounded because `audit-boundary` is read-only and short-running
+(static greps over a single plugin tree).
 
 ### Hone Phase 1 — research targets extended
 
-Same change as Q1: `research-plugin-spec` reads in-tree ADRs +
-sibling-audit-contract + license-selection. Already a shared agent —
-landing in Q1 makes it available to Q2 with no extra work in this
-ticket. If Q2 lands first (unlikely given dependency), Q2 carries the
-research-agent change.
+Same change as Q1: `research-plugin-spec` reads in-tree ADRs
+(ADR-004, ADR-005, **ADR-006**) + sibling-audit-contract +
+license-selection. Already a shared agent — landing in Q1 makes it
+available to Q2 with no extra work in this ticket. If Q2 lands
+first (unlikely given dependency), Q2 carries the research-agent
+change.
 
 ### Hone Phase 3 — scoring rubric update
 
@@ -315,22 +592,30 @@ larger scaffolding work (add a missing `:audit` skill).
 
 ## Implementation order
 
-1. **Create `.claude/agents/audit-pronto.md`** mirroring
-   `audit-design.md`'s shape.
-2. **Add the Pronto Compliance section** to
-   `.claude/skills/hone/references/scoring-rubric.md`.
-3. **Add scope-aware weight handling** to the same rubric file's
+1. **Create `.claude/agents/audit-boundary.md`** mirroring
+   `audit-design.md`'s shape — read-only, ADR-006 §1/§2/§3 audit.
+2. **Create `.claude/agents/audit-pronto.md`** mirroring
+   `audit-design.md`'s shape — read-only, sibling-shape audit.
+3. **Add the ADR-006 deduction sub-tables** to
+   `.claude/skills/hone/references/scoring-rubric.md` under existing
+   Hook Quality, Security, and Documentation categories.
+4. **Add the Pronto Compliance category** to the same rubric file
+   (sibling-conditional, share-based renormalization).
+5. **Add scope-aware weight handling** to the rubric file's
    "Scoring Algorithm" section.
-4. **Update `.claude/skills/hone/SKILL.md` Phase 2** — read plugin.json
-   for `pronto` key before dispatch; dispatch 4 or 5 agents
-   accordingly.
-5. **Update `.claude/skills/hone/SKILL.md` Phase 3** — Categories
+6. **Update `.claude/skills/hone/SKILL.md` Phase 2** — sibling
+   detection up front; dispatch 5 agents always (existing 4 +
+   `audit-boundary`), 6 agents when sibling detected (+
+   `audit-pronto`).
+7. **Update `.claude/skills/hone/SKILL.md` Phase 3** — Categories
    table reflects rebalance; "Compute Overall Score" reflects
    scope-aware weights.
-6. **Update Phase 4** — Pronto Compliance findings flow through
-   existing recommendation ranking; note the smith-overlap caveat.
-7. **Update `research-plugin-spec`** — same change as Q1, already
-   landed if Q1 ships first; otherwise carry it here.
+8. **Update Phase 4** — boundary and pronto findings flow through
+   existing recommendation ranking; note the smith-overlap caveat
+   for scaffolding-shaped fixes.
+9. **Update `research-plugin-spec`** — same change as Q1, already
+   landed if Q1 ships first; otherwise carry it here (ADR-004,
+   ADR-005, ADR-006, sibling-audit-contract, license rule).
 
 ## Acceptance
 
@@ -351,20 +636,41 @@ larger scaffolding work (add a missing `:audit` skill).
   that hone surfaces *what* needs to migrate, not *how far below
   85* the score lands.
 - `/hone towncrier` (today, pre-2c) does **not** dispatch
-  `audit-pronto`. Pronto Compliance is excluded from the scorecard.
-  The 8 categories run unchanged. The overall score is
-  byte-equivalent to today's `/hone towncrier` output.
+  `audit-pronto` — Pronto Compliance is excluded from the
+  scorecard. `audit-boundary` runs and produces the calibration
+  target's expected pattern: zero §2 / §3 violations (towncrier's
+  `bin/emit.sh` is the canonical §3-conformant precedent), and a
+  -5 §1 Documentation deduction for the missing "Plugin surface"
+  README section. Score is essentially byte-equivalent to today's
+  `/hone towncrier` modulo that single -5 nudge.
+- `/hone commventional` produces explicit `audit-boundary` Critical
+  findings — at minimum: §3 invariant 1 violation in
+  `hooks/enforce-ownership.sh` (the jq template constructs
+  `"updatedInput":` literal in the returned payload) and §2
+  violation in `hooks/pr-ownership-check.sh` (calls
+  `gh pr edit --body-file` from a hook script — Scope A, not
+  user-invoked). Findings are line-anchored to the source files and
+  match the migration scope in
+  `project/tickets/open/phase-2-commventional-adr-006-conformance.md`.
+  Both files live under `hooks/` and are explicitly in §2 / §3
+  detection scope (Scope A — automatic execution paths).
+- `/hone <conformant non-sibling>` (claudit, skillet, avanti)
+  produces zero §2 / §3 violations and a -5 §1 Documentation
+  finding for the missing surface section (until each is migrated).
 - The visual scorecard shows 8 bars for non-sibling plugins, 9 bars
   for sibling plugins (Pronto Compliance appended at the bottom).
 - `audit-pronto` produces structured output matching the agent's
   specified format (5 sections with the listed fields).
 - A sibling plugin missing `compatible_pronto` (and only
   `compatible_pronto` — i.e. has a `pronto` block, has `audits[]`,
-  has the `:audit` skill) produces a Critical/High finding with the
-  documented point impact (-20). Use skillet edited to drop
-  `compatible_pronto` as the test fixture; for registry-only
-  siblings like claudit, the -20 stacks with the missing-block and
-  missing-skill deductions and isn't separately verifiable.
+  has the `:audit` skill) produces a finding with the documented
+  -20 deduction. Use skillet edited to drop `compatible_pronto` as
+  the test fixture; for registry-only siblings like claudit, the
+  -20 stacks with the missing-block and missing-skill deductions
+  and isn't separately verifiable. (Missing `compatible_pronto` is
+  a manifest-level deduction, not a body-of-skill check, so it
+  stacks despite the presence-gated rule on the body-of-skill
+  deductions.)
 - The dispatch prompt for `audit-pronto` includes which detection
   path matched; the agent's "Plugin Manifest" output reflects this
   ("registry-only — recommend contract-native migration" when only
@@ -382,8 +688,11 @@ A. **Non-sibling plugins are byte-equivalent to today.** A plugin
    is mid-migration; pick towncrier today, pre-2c, as the test
    case.)
 
-B. **`audit-pronto` is read-only.** No `Edit` / `Write` / `Bash` in
-   the agent's `tools:` list. Verified by frontmatter inspection.
+B. **`audit-pronto` and `audit-boundary` are read-only.** No
+   `Edit` / `Write` / `Bash` in either agent's `tools:` list.
+   Verified by frontmatter inspection of both
+   `.claude/agents/audit-pronto.md` and
+   `.claude/agents/audit-boundary.md`.
 
 C. **Effective weights sum to 100% in both branches.** When sibling,
    `sum(share_i / 110) = 1.0` over 9 categories. When non-sibling,
@@ -392,11 +701,13 @@ C. **Effective weights sum to 100% in both branches.** When sibling,
 
 ## Out of scope
 
-- **Auto-fixing pronto compliance findings beyond simple field
-  additions.** Most fixes are scaffolding-shaped (smith's territory).
-  Hone surfaces; smith fixes. A future "/smith --upgrade <plugin>"
-  pattern is the right home for the larger scaffolding work — not
-  Q2's scope.
+- **Auto-fixing pronto compliance or ADR-006 findings beyond simple
+  field additions.** Most fixes are scaffolding-shaped (smith's
+  territory) or migration-shaped (commventional's per-plugin
+  ticket). Hone surfaces; smith fixes new plugins; per-plugin
+  remediation tickets fix shipped ones. A future "/smith --upgrade
+  <plugin>" pattern is the right home for the larger scaffolding
+  work — not Q2's scope.
 - **Migrating existing siblings to the new shape.** That's the
   M-series in `phase-2-pronto.md`. Q2 measures compliance — it's the
   diagnostic for the migration, not the migration itself.
@@ -414,16 +725,25 @@ C. **Effective weights sum to 100% in both branches.** When sibling,
   audits[], wire contract gates
 - `project/adrs/005-sibling-skill-conventions.md` — `:audit`,
   `:doctor`, `:fix`, observations vs scores, discovery order
+- `project/adrs/006-plugin-responsibility-boundary.md` — capability/automation
+  boundary `audit-boundary` enforces
 - `plugins/pronto/references/sibling-audit-contract.md` — wire
   contract specifics
 - `plugins/pronto/references/recommendations.json` — canonical
   dimension list
 - `plugins/pronto/references/rubric.md` — weight hints
-- `.claude/agents/audit-design.md` — shape precedent for `audit-pronto`
+- `.claude/agents/audit-design.md` — shape precedent for both
+  `audit-pronto` and `audit-boundary`
 - `.claude/skills/hone/SKILL.md` — current hone body
 - `.claude/skills/hone/references/scoring-rubric.md` — rubric file Q2
   extends
+- `plugins/towncrier/bin/emit.sh` — canonical §3-conformant
+  pure-observability hook (the calibration target for "zero
+  audit-boundary violations" on a hook-shipping plugin)
 - `project/tickets/open/quickstop-dev-tooling-q1-smith-enhancements.md`
   — research-agent change Q2 inherits
+- `project/tickets/open/phase-2-commventional-adr-006-conformance.md`
+  — concrete ADR-006 violations `audit-boundary` should detect on
+  commventional today
 - `project/plans/active/phase-2-pronto.md` — M-series migrations Q2
   diagnoses
