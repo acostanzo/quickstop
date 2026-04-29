@@ -1,7 +1,7 @@
 ---
 id: m3
 plan: phase-2-pronto
-status: open
+status: closed
 updated: 2026-04-28
 ---
 

@@ -1,8 +1,8 @@
 ---
 id: m1
 plan: phase-2-pronto
-status: open
-updated: 2026-04-27
+status: closed
+updated: 2026-04-28
 ---
 
 # M1 — Claudit observations[] emission
