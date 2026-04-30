@@ -14,10 +14,13 @@ or maintaining plugins in this repo, not shipped as marketplace plugins.
 They encode the design principles every plugin in the marketplace
 should follow.
 
-Both predate ADR-004 (sibling composition contract) and ADR-005 (sibling
-skill conventions). The result: smith scaffolds plugins that don't know
-about pronto siblings, and hone audits plugins without checking
-sibling-shape compliance. Smith also silently defaults to MIT against
+Both predate ADR-004 (sibling composition contract), ADR-005 (sibling
+skill conventions), and ADR-006 (plugin responsibility boundary). The
+result: smith scaffolds plugins that don't know about pronto siblings,
+don't carry an ADR-006 §1 README surface section, and offer no guard
+against ADR-006 §2/§3 silent-mutation patterns; hone audits plugins
+without checking sibling-shape compliance or hook-behavior boundaries.
+Smith also silently defaults to MIT against
 `.claude/rules/license-selection.md`'s "never default-pick" rule.
 
 Before continuing Phase 2 sibling rollouts (PR 2b lintguini, PR 2c
@@ -31,8 +34,8 @@ Two tickets, sequenced.
 
 | Ticket | Scope | Depends on |
 |---|---|---|
-| **Q1 — Smith enhancements** | License question; sibling-shape branch in questionnaire; `pronto` block + `:audit` skill auto-creation; transitional parser agent scaffolding; ADR-aware research targets | — |
-| **Q2 — Hone enhancements** | New Pronto Compliance audit category; new `audit-pronto` subagent; rubric rebalance; ADR-aware research targets | Q1 (shares the research-agent change) |
+| **Q1 — Smith enhancements** | License question; sibling-shape branch in questionnaire; `pronto` block + `:audit` skill auto-creation; transitional parser agent scaffolding; ADR-006 §1 README "Plugin surface" section scaffolded for every plugin; no hook scaffolding without an explicit user-facing migration prompt; ADR-aware research targets | — |
+| **Q2 — Hone enhancements** | New Pronto Compliance audit category; new `audit-pronto` subagent; new audit-boundary subagent that detects ADR-006 §1 surface omissions, §2 silent-mutation patterns (Scope A transitively along the call graph from hooks; Scope B without consumer opt-in), and §3 hook-invariant violations (Tier 1 enumerated paths only; Tier 2 variable targets emit human-review notes without auto-deduction); rubric rebalance; ADR-aware research targets | Q1 (shares the research-agent change) |
 
 Both tickets are quickstop-internal — they touch `.claude/skills/smith/`,
 `.claude/skills/hone/`, and `.claude/agents/research-*`. No marketplace
@@ -97,6 +100,7 @@ declare a `pronto` block in `plugin.json`).
 - Phase 2 plan: `project/plans/active/phase-2-pronto.md`
 - ADR-004: `project/adrs/004-sibling-composition-contract.md`
 - ADR-005: `project/adrs/005-sibling-skill-conventions.md`
+- ADR-006: `project/adrs/006-plugin-responsibility-boundary.md`
 - License rule: `.claude/rules/license-selection.md`
 - Wire contract: `plugins/pronto/references/sibling-audit-contract.md`
 - Sibling registry: `plugins/pronto/references/recommendations.json`
