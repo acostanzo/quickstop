@@ -13,6 +13,8 @@ Phase 1.5 closed with pronto producing reproducible scores. The constellation to
 
 Phase 2 ships those three missing siblings — and ships them against the convention ratified in ADR-005: `:audit` skills emitting `observations[]` for pronto's scorers to translate into rubric scores. The architectural commitments from ADR-005 land in the Hardening group (H3 expands the wire contract, H4 adds the observations-aware scoring path); the new siblings consume that foundation from day one.
 
+Every new sibling and every `:audit` extension landing in this phase also conforms to ADR-006 (plugin responsibility boundary) from day one: a Plugin surface section in the README enumerating skills/commands/agents/hooks/opinions per §1, no silent mutation of consumer artefacts per §2, and hook handlers that respect the §3 invariants (no payload-shaping `hookSpecificOutput` fields, no persistent host state, no undeclared writes). Inkwell, lintguini, and towncrier's `:audit` extension are all post-ADR-006 builds — no migration deduction is incurred at delivery.
+
 The third audit sibling — `event-emission` — is shipped as a **towncrier extension** rather than a separate plugin. Towncrier is already the in-house exemplar of good event-emission practice; ADR-005's doer-judges-itself architecture says the plugin doing the work is the natural auditor of that work. Earlier drafts of this plan proposed a separate `autopompa` sibling; ADR-005 retired that shape.
 
 Before adding siblings, foundation items need hardening. Phase 1.5's own plan flagged the principle: *"Phase 2 should not build on top of an orchestrator whose output is non-reproducible."* That lesson applies again — Phase 2 should not build on top of a composition model that's paper, a wire contract spec missing its own version, an orchestrator whose failure mode is still unmeasured at the point Phase 2 siblings would start dispatching through it, or a scoring path that can't yet consume what ADR-005 says siblings emit.
@@ -125,7 +127,7 @@ Current cap: presence-only 50/100 on a clean README, 0 on missing README. Full d
 
 ### Tickets
 
-- **2a1 — Plugin scaffold.** `plugins/inkwell/` with `plugin.json`, README, LICENSE (MIT per repo convention), `skills/audit/SKILL.md` per ADR-005 §1, stub parser agent (transitional — retired once mechanical scoring covers the dimension). `plugin.json` declares `pronto.compatible_pronto` (consuming H1) and a single `pronto.audits[]` entry: `{dimension: "code-documentation", command: "/inkwell:audit --json"}`.
+- **2a1 — Plugin scaffold.** `plugins/inkwell/` with `plugin.json`, README (including an ADR-006 §1 Plugin surface section enumerating skills/commands/agents/hooks/opinions and the §2 non-mutation declaration), LICENSE (MIT per repo convention), `skills/audit/SKILL.md` per ADR-005 §1, stub parser agent (transitional — retired once mechanical scoring covers the dimension). `plugin.json` declares `pronto.compatible_pronto` (consuming H1) and a single `pronto.audits[]` entry: `{dimension: "code-documentation", command: "/inkwell:audit --json"}`. No hooks, no consumer-mutation patterns — ADR-006 §3 invariants are vacuously satisfied.
 - **2a2 — Shell scorers.** Four deterministic scorers (one per category above), same mechanical pattern as Phase 1.5 PR 3b. Each emits a single `observations[]` entry consumed by H4's scoring path.
 - **2a3 — Contract compliance + fixture.** `:audit` skill emits pronto-compatible `--json` with `observations[]` per the H3 schema, ships a `low/mid/high` fixture set in `plugins/inkwell/tests/fixtures/`. Acceptance: eval harness shows per-dimension stddev ≤ 1.0 and grade-flip rate ≤ 5% over N=10 on each fixture.
 
@@ -143,7 +145,7 @@ Full depth: composite across (a) linter present + configured, (b) formatter pres
 
 ### Tickets
 
-- **2b1 — Plugin scaffold.** Same shape as 2a1: `plugin.json`, README, LICENSE, `skills/audit/SKILL.md`, `pronto.compatible_pronto`, single `pronto.audits[]` entry: `{dimension: "lint-posture", command: "/lintguini:audit --json"}`.
+- **2b1 — Plugin scaffold.** Same shape as 2a1: `plugin.json`, README (with the ADR-006 §1 Plugin surface section and §2 non-mutation declaration), LICENSE, `skills/audit/SKILL.md`, `pronto.compatible_pronto`, single `pronto.audits[]` entry: `{dimension: "lint-posture", command: "/lintguini:audit --json"}`. The 2b1 ticket is the first true smith dogfood per the Q1+Q2 dev-tooling plan — once `/smith` is current with ADR-005 + ADR-006, scaffold via `/smith lintguini` rather than hand-spec'ing the file tree. Ships no hooks and performs no consumer mutation, so §2/§3 are vacuously satisfied.
 - **2b2 — Language detection + shell scorers.** Dispatch by repo-language detection (check for `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, etc.); run the matching scorer. Deterministic. Each scorer emits an `observations[]` entry.
 - **2b3 — Contract compliance + fixtures.** `:audit` skill emits `observations[]` per the H3 schema; multi-language fixture set (at minimum: JS, Python, Go) to exercise the language dispatch. Acceptance: eval harness shows per-dimension stddev ≤ 1.0 and grade-flip rate ≤ 5% over N=10 on each fixture language.
 
@@ -163,7 +165,7 @@ Full depth: composite across (a) structured logging ratio, (b) metrics presence,
 
 ### Tickets
 
-- **2c1 — Add `:audit` skill to towncrier.** New `plugins/towncrier/skills/audit/SKILL.md` per ADR-005 §1. Updates `plugin.json`: bump version, declare `pronto.compatible_pronto` (consuming H1), and add a single `pronto.audits[]` entry: `{dimension: "event-emission", command: "/towncrier:audit --json"}`. The existing hook-event observability surface is preserved unchanged; the audit skill is a parallel entry point.
+- **2c1 — Add `:audit` skill to towncrier.** New `plugins/towncrier/skills/audit/SKILL.md` per ADR-005 §1. Updates `plugin.json`: bump version, declare `pronto.compatible_pronto` (consuming H1), and add a single `pronto.audits[]` entry: `{dimension: "event-emission", command: "/towncrier:audit --json"}`. The existing hook-event observability surface is preserved unchanged; the audit skill is a parallel entry point. Towncrier's `bin/emit.sh` is already ADR-006 §3-conformant — the `:audit` extension must preserve that posture (no `hookSpecificOutput` payload fields, no consumer state mutation at hook time, no undeclared writes outside the declared event sink). The README gains the ADR-006 §1 Plugin surface section as part of this PR, enumerating the now-two-skill surface (`emit`, `audit`) plus the existing hook handler.
 
   Sweeps the autopompa references retired by ADR-005:
   - `plugins/pronto/references/recommendations.json` event-emission row: `recommended_plugin: autopompa → towncrier`, set `install_command: /plugin install towncrier@quickstop` and `audit_command: /towncrier:audit --json`, populate `parser_agent` once 2c2/2c3 land.
@@ -185,6 +187,7 @@ Full depth: composite across (a) structured logging ratio, (b) metrics presence,
 - Pronto version bumped per sibling PR following the established convention.
 - Every new sibling declares `compatible_pronto` against shipping pronto version.
 - Every new sibling exposes `:audit` per ADR-005 §1 and emits `observations[]` per ADR-005 §3.
+- Every new sibling's README carries the ADR-006 §1 Plugin surface section and the §2 non-mutation declaration; any sibling shipping a hook handler honours the §3 invariants.
 - Eval harness re-run on the existing `mid` fixture shows composite stddev still ≤ 1.0 and grade-flip rate ≤ 5% with all new siblings installed.
 - `/pronto:audit --json` JSON-emission success rate ≥ 95% over N=20 (the H2 acceptance carries forward as a phase gate).
 
@@ -208,6 +211,8 @@ These migrations don't gate Phase 2 closure (they're closing-out commitments, no
 
 All three are structurally identical: replace the v1 emit with an `observations[]` emit whose IDs match the H4 rubric stanzas for that dimension. Each plugin's scorer logic is preserved; only the wire shape changes. Can land in any order, in parallel, in their own work cycles.
 
+**ADR-006 §1 surface sweep.** The same migration cycle is the natural moment to add the README "Plugin surface" section to the three legacy in-tree siblings (claudit, skillet, commventional) and to avanti once Phase 1b ships. This is not a separate ticket — fold the README addition into each M-ticket's diff so the migration leaves the plugin both observations-clean and surface-declared. Hone's Pronto Compliance category will deduct for the missing surface section once Q2 lands (per the dev-tooling plan), so picking it up alongside the wire-shape migration prevents a follow-up pass.
+
 ### Closing-out trigger — deprecate the passthrough rule
 
 Once M1+M2+M3 ship and the passthrough-count line reads `0/3`, file a follow-up ticket to deprecate the back-compat passthrough rule in pronto: stop accepting v1 payloads, fail loudly on `composite_score` without `observations[]`. That deprecation is a separate work cycle and its acceptance is *outside* Phase 2.
@@ -220,6 +225,7 @@ Once M1+M2+M3 ship and the passthrough-count line reads `0/3`, file a follow-up 
 - Avanti meta: `project/plans/active/phase-1-avanti.md`
 - Sibling composition contract: `project/adrs/004-sibling-composition-contract.md`
 - Sibling skill conventions: `project/adrs/005-sibling-skill-conventions.md`
+- Plugin responsibility boundary: `project/adrs/006-plugin-responsibility-boundary.md`
 - Wire contract spec: `plugins/pronto/references/sibling-audit-contract.md`
 - Sibling registry: `plugins/pronto/references/recommendations.json`
 - Rubric: `plugins/pronto/references/rubric.md`
