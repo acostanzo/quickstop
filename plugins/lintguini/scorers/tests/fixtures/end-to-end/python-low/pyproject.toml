@@ -1,0 +1,6 @@
+[project]
+name = "fixture-end-to-end-python-low"
+version = "0.1.0"
+
+[tool.ruff.lint]
+select = ["E", "F"]

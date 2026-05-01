@@ -1,0 +1,51 @@
+{
+  "$schema_version": 2,
+  "plugin": "lintguini",
+  "dimension": "lint-posture",
+  "categories": [],
+  "observations": [
+    {
+      "id": "linter-strictness-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "python",
+        "configured_rules": 4,
+        "baseline_rules": 8,
+        "ratio": 0.5000
+      },
+      "summary": "4/8 baseline lint rules configured (python)"
+    },
+    {
+      "id": "formatter-configured-count",
+      "kind": "count",
+      "evidence": {
+        "language": "python",
+        "configured": 1
+      },
+      "summary": "Formatter configured (python: ruff format)"
+    },
+    {
+      "id": "ci-lint-wired-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "ci_surfaces_detected": 1,
+        "ci_surfaces_with_lint": 1,
+        "ratio": 1.0000
+      },
+      "summary": "1/1 CI surfaces invoke a linter"
+    },
+    {
+      "id": "lint-suppression-count",
+      "kind": "count",
+      "evidence": {
+        "language": "python",
+        "suppressions": 2,
+        "files_scanned": 1,
+        "threshold_high": 50
+      },
+      "summary": "2 suppression marker(s) across 1 source file(s) (python)"
+    }
+  ],
+  "composite_score": null,
+  "recommendations": []
+}
