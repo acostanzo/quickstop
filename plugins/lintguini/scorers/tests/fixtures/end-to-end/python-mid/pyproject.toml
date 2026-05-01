@@ -1,0 +1,9 @@
+[project]
+name = "fixture-end-to-end-python-mid"
+version = "0.1.0"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N"]
+
+[tool.ruff.format]
+quote-style = "double"
