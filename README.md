@@ -80,13 +80,15 @@ The SDLC work layer — authors and maintains the records under `project/` (plan
 
 **Commands:** `/avanti:plan`, `/avanti:ticket`, `/avanti:adr`, `/avanti:promote`, `/avanti:pulse`, `/avanti:status`, `/avanti:audit`
 
-### Lintguini (v0.1.0)
+### Lintguini (v0.2.0)
 
 Audits lint-posture for Claude Code consumer repos: linter config strictness, formatter presence, CI lint enforcement, and rule-suppression count.
 
 - Pronto sibling — depth auditor for the `lint-posture` rubric dimension (weight 15)
 - Wire-contract v2 envelope on `/lintguini:audit --json` — observations consumed by pronto's rubric translator
-- Phase-2 scaffold: scorers and multi-language dispatch land in 2b2/2b3
+- Four deterministic shell scorers under `scorers/` — pure shell + grep + awk + jq, no language toolchain on PATH required
+- Per-language dispatch: python (ruff / black / flake8), js/ts (biome / eslint / prettier), rust (rustfmt / clippy via Cargo.toml), go (golangci-lint / gofmt)
+- Multi-language `low/mid/high` calibration fixture set lands in 2b3
 - Declares `compatible_pronto: ">=0.2.0"` per ADR-004 handshake
 
 **Commands:** `/lintguini:audit`
