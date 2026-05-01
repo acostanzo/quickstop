@@ -1,0 +1,6 @@
+[project]
+name = "fixture-python-formatted"
+version = "0.1.0"
+
+[tool.ruff.format]
+quote-style = "double"
