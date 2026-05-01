@@ -12,7 +12,7 @@ Total weight = 100. Weights are tunable but must sum to 100.
 | Skills quality | `skills-quality` | 10 | `skillet` | ≥1 skill exists under `.claude/skills/` or a plugin's `skills/` | Shipped |
 | Commit + review hygiene | `commit-hygiene` | 15 | `commventional` | Recent commits follow conventional-commit pattern | Shipped |
 | Code documentation | `code-documentation` | 15 | `inkwell` | README exists and is non-empty | Phase 2+ |
-| Lint / format / language rules | `lint-posture` | 15 | `lintguini` | Language-appropriate lint config file exists (e.g. `.eslintrc*`, `pyproject.toml` with `[tool.ruff]`, `rustfmt.toml`) | Phase 2+ |
+| Lint / format / language rules | `lint-posture` | 15 | `lintguini` | Linter strictness + formatter presence + CI lint wiring + suppression count | Shipped |
 | Event emission | `event-emission` | 5 | `autopompa` | Observability instrumentation detected (e.g. OpenTelemetry config, event-bus references, structured logging setup) | Phase 2+ |
 | AGENTS.md scaffold | `agents-md` | 10 | `pronto` kernel | Non-empty `AGENTS.md` at repo root | Shipped (this plugin) |
 | Project record | `project-record` | 5 | `avanti` | `project/` directory with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse/`) | Phase 1b |
@@ -43,7 +43,7 @@ Dimension scores **0**. The recommended action is either to install the sibling 
 
 ### Dimensions whose recommended sibling isn't yet shipped
 
-`inkwell`, `lintguini`, `autopompa` are Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score.
+`inkwell`, `autopompa` are Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below.)
 
 ## Letter grades
 
@@ -91,7 +91,7 @@ mechanical/judgment axis.
 | `skills-quality` | 10 | Deterministic shell scorer at `agents/parsers/scorers/score-skillet.sh` — per-skill frontmatter field presence, line-count thresholds, `TODO` counts, stray-file counts, broken `references/` pointers. | None. |
 | `commit-hygiene` | 15 | Deterministic shell scorer at `agents/parsers/scorers/score-commventional.sh` — `git log` regex match ratios plus trailer and auto-attribution counts. Conventional Comments defaults to 100 with a low-severity "no review signal" note; the audit stays network-free. | None. |
 | `code-documentation` | 15 | Kernel presence check: `README` ≥10 non-blank lines → 50 capped (sibling `inkwell` not yet shipped). | None. |
-| `lint-posture` | 15 | Deterministic presence check via `skills/audit/presence-check.sh lint-posture ${REPO_ROOT}` — fixed list of language-appropriate lint config files → 50 capped (sibling `lintguini` not yet shipped). | None. |
+| `lint-posture` | 15 | Sibling lintguini's `/lintguini:audit --json` emits a v2 wire-contract envelope with four observations (linter strictness, formatter presence, CI lint wiring, suppression count) consumed by the `lint-posture` translation rules below. | None. |
 | `event-emission` | 5 | Deterministic presence check via `skills/audit/presence-check.sh event-emission ${REPO_ROOT}` — `grep -rqE` with the documented pattern set and a fixed `--exclude-dir` list → 50 capped (sibling `autopompa` not yet shipped). | None. |
 | `agents-md` | 10 | Kernel binary: `AGENTS.md` exists and ≥5 non-blank lines → 100, else 0. No presence cap — this dimension is always kernel-driven. | None. |
 | `project-record` | 5 | Avanti's native `/avanti:audit --json` (declared in `plugins/avanti/.claude-plugin/plugin.json`) returns a deterministic composite. Falls back to kernel binary (capped at 50) only if the avanti dispatch itself fails. | None. |
@@ -328,6 +328,74 @@ The bands track `score-skillet.sh`'s per-skill averaged deductions: `skill-front
 ```
 
 The bands are calibrated to converge exactly on `score-commventional.sh`'s composite under equal-share averaging across the `clean`/`mid`/`noisy` snapshot fixtures. Hand-walked verification: clean (1.0, 0, 0, absent) → 100/100/100/100 mean 100 = v1 100; mid (1.0, 17, 0, absent) → 100/28/100/100 mean 82 = v1 82; noisy (0.286, 7, 3, absent) → 30/28/14/100 mean 43 = v1 43. The rationale is fixture-overfit: the 28/14/30 sentinels exist solely to land the equal-share mean on the v1 composite for the three calibration points (the same band-tightening pattern M1 used for `claude-code-config`). `review-signal-presence` is intentional dead weight at 100/100 — the sibling runs network-free and never samples review signal, but the contract slot is preserved so a future review-signal-aware sibling can plug in without breaking the rubric. Off-axis behaviour drifts: a hypothetical borderline repo at (ratio 0.6, trailers 4, markers 2) lands ~+6 above v1 because trailer + marker observations contribute independently while v1's Engineering Ownership category stacks both deductions non-linearly. The fixture set locks the three known calibration points; the deeper fix (collapsing trailer + marker into a single `engineering-ownership-score` observation) is deferred — see the M3 ticket's "open questions" for the trade-off.
+
+### `lint-posture` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "linter-strictness-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "formatter-configured-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1, "score": 100 },
+        { "else": 0 }
+      ]
+    },
+    {
+      "id": "ci-lint-wired-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "lint-suppression-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 101, "score": 25 },
+        { "gte": 51,  "score": 50 },
+        { "gte": 21,  "score": 70 },
+        { "gte": 6,   "score": 85 },
+        { "gte": 1,   "score": 95 },
+        { "else": 100 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
+The bands are calibrated against the nine-fixture set lintguini ships in 2b3 — `<lang>-{low,mid,high}` for python, ruby, typescript. Hand-walked verification table: python-low (0.25, 0, 0.00, 60) → 30/0/30/50 mean 28; python-mid (0.50, 1, 1.00, 2) → 50/100/100/95 mean 86; python-high (1.00, 1, 1.00, 0) → 100/100/100/100 mean 100; ruby-mid (0.60, 1, 1.00, 2) → 70/100/100/95 mean 91; typescript-mid (0.33, 1, 1.00, 2) → 30/100/100/95 mean 81. The remaining six (ruby-low, ruby-high, typescript-low, typescript-high) follow the same shape — low fixtures land at 28 (F band), high fixtures at 100 (A+ band).
+
+`linter-strictness-ratio` and `ci-lint-wired-ratio` share the five-band shape from inkwell's 2a3 stanza for `readme-arrival-coverage`: `gte 1.00 → 100` rewards meeting the language baseline (or the single-CI-surface fully wired), `gte 0.40 → 50` floors a half-baselined linter at presence-only territory, and the `else 30` band catches the genuinely-loose cases (typescript-mid's 1/6 strict-flag ratio of 0.33 lands here). The two ratios share a shape because they share a semantic — both ask "what fraction of the baseline is met?" against a per-language or per-CI-surface yardstick.
+
+`formatter-configured-count` is **a boolean dressed as a count**: `score-formatter-presence.sh` emits `configured: 0|1` only. Two-band ladder (`gte 1 → 100`, `else 0`) makes the boolean read cleanly through the `count` kind. The kind is documented as count rather than presence so the evidence shape stays consistent with the suppression-count observation; both carry an integer the translator can ladder against.
+
+`lint-suppression-count` mirrors the transitional ladder retired from `bin/build-envelope.sh`'s pre-2b3 inline math, anchored to `score-suppression-count.sh`'s documented `threshold_high: 50`. The bands read top-to-bottom: `>100 → 25` (rotted), `51-100 → 50` (heavy), `21-50 → 70` (concerning), `6-20 → 85` (manageable), `1-5 → 95` (occasional), `0 → 100` (clean). The `gte 101` band is the only one that needs an explicit upper bound — every other band is bounded above by the next-higher band's threshold.
+
+`default_rule: passthrough` — empty `observations[]` (every scorer empty-scoped) falls through to the envelope's `composite_score` (which is `null` post-2b3-excision) and then to the kernel presence check. The case-3 carve-out the orchestrator depends on for empty-scope fixtures is preserved.
+
+`lintguini` emits these observation IDs natively from 2b2 onward; 2b3 wires the rubric stanza so the translator path drives the dimension score and the orchestrator's transitional inline math is retired (see `phase-2-2b3-lintguini-contract-fixtures.md`).
 
 ## Extending the rubric
 
