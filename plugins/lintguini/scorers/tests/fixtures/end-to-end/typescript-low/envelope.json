@@ -1,0 +1,51 @@
+{
+  "$schema_version": 2,
+  "plugin": "lintguini",
+  "dimension": "lint-posture",
+  "categories": [],
+  "observations": [
+    {
+      "id": "linter-strictness-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "typescript",
+        "configured_rules": 1,
+        "baseline_rules": 6,
+        "ratio": 0.1667
+      },
+      "summary": "1/6 baseline lint rules configured (typescript)"
+    },
+    {
+      "id": "formatter-configured-count",
+      "kind": "count",
+      "evidence": {
+        "language": "typescript",
+        "configured": 0
+      },
+      "summary": "No formatter configured (typescript)"
+    },
+    {
+      "id": "ci-lint-wired-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "ci_surfaces_detected": 1,
+        "ci_surfaces_with_lint": 0,
+        "ratio": 0.0000
+      },
+      "summary": "0/1 CI surfaces invoke a linter"
+    },
+    {
+      "id": "lint-suppression-count",
+      "kind": "count",
+      "evidence": {
+        "language": "typescript",
+        "suppressions": 60,
+        "files_scanned": 5,
+        "threshold_high": 50
+      },
+      "summary": "60 suppression marker(s) across 5 source file(s) (typescript)"
+    }
+  ],
+  "composite_score": null,
+  "recommendations": []
+}

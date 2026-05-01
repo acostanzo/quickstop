@@ -1,0 +1,51 @@
+{
+  "$schema_version": 2,
+  "plugin": "lintguini",
+  "dimension": "lint-posture",
+  "categories": [],
+  "observations": [
+    {
+      "id": "linter-strictness-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "ruby",
+        "configured_rules": 1,
+        "baseline_rules": 5,
+        "ratio": 0.2000
+      },
+      "summary": "1/5 baseline lint rules configured (ruby)"
+    },
+    {
+      "id": "formatter-configured-count",
+      "kind": "count",
+      "evidence": {
+        "language": "ruby",
+        "configured": 0
+      },
+      "summary": "No formatter configured (ruby)"
+    },
+    {
+      "id": "ci-lint-wired-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "ci_surfaces_detected": 1,
+        "ci_surfaces_with_lint": 0,
+        "ratio": 0.0000
+      },
+      "summary": "0/1 CI surfaces invoke a linter"
+    },
+    {
+      "id": "lint-suppression-count",
+      "kind": "count",
+      "evidence": {
+        "language": "ruby",
+        "suppressions": 51,
+        "files_scanned": 6,
+        "threshold_high": 50
+      },
+      "summary": "51 suppression marker(s) across 6 source file(s) (ruby)"
+    }
+  ],
+  "composite_score": null,
+  "recommendations": []
+}

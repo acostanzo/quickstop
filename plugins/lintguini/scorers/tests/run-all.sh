@@ -12,7 +12,8 @@ for t in \
   formatter-presence.test.sh \
   ci-lint-wired.test.sh \
   suppression-count.test.sh \
-  end-to-end.test.sh
+  end-to-end.test.sh \
+  snapshots.test.sh
 do
   if ! bash "$HERE/$t"; then
     fail=1
