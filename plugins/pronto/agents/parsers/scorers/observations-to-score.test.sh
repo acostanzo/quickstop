@@ -197,6 +197,62 @@ cat > "$RUBRIC_FIXTURE" <<'RUBRIC_EOF'
 }
 ```
 
+### `lint-posture` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "linter-strictness-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "formatter-configured-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1, "score": 100 },
+        { "else": 0 }
+      ]
+    },
+    {
+      "id": "ci-lint-wired-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "lint-suppression-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 101, "score": 25 },
+        { "gte": 51,  "score": 50 },
+        { "gte": 21,  "score": 70 },
+        { "gte": 6,   "score": 85 },
+        { "gte": 1,   "score": 95 },
+        { "else": 100 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
 RUBRIC_EOF
 
 export PRONTO_RUBRIC_PATH="$RUBRIC_FIXTURE"
@@ -456,6 +512,118 @@ expect_branch "envelope has all keys" test-ratio-dim \
 expect_branch "kind mismatch: dropped" test-ratio-dim \
   '{"$schema_version":2,"observations":[{"id":"ratio-obs","kind":"count","evidence":{"count":3},"summary":"x"}],"composite_score":99}' \
   '.dropped[0].id' 'ratio-obs'
+
+# ----- lint-posture stanza coverage -----------------------------------
+#
+# The four-observation lint-posture shape lintguini emits in 2b3.
+# Stub stanza (above in RUBRIC_FIXTURE) is byte-identical to the real
+# stanza in plugins/pronto/references/rubric.md. If the two ever drift,
+# this test stays green (it's testing against its own stub) but the
+# lintguini snapshots.test.sh fails — surfacing the drift through the
+# locked envelope.json round-trip.
+#
+# Per-observation band coverage (each observation tested in isolation
+# against the lint-posture stanza), then four-observation composites
+# verifying the calibration table from the 2b3 ticket.
+
+# linter-strictness-ratio band edges
+expect_branch "lint-posture linter: top (1.00)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "lint-posture linter: edge 0.80" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "lint-posture linter: edge 0.60" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.60},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "lint-posture linter: edge 0.40" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.40},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "lint-posture linter: just below 0.40 (else)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.39},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# formatter-configured-count: boolean dressed as count
+expect_branch "lint-posture formatter: configured 1" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"formatter-configured-count","kind":"count","evidence":{"configured":1},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "lint-posture formatter: configured 0" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"formatter-configured-count","kind":"count","evidence":{"configured":0},"summary":"x"}]}' \
+  '.composite_score' '0'
+
+# ci-lint-wired-ratio mirrors linter ladder; spot-check one in-band + one else.
+expect_branch "lint-posture ci: 1.00" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "lint-posture ci: 0.00 (else)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# lint-suppression-count: six-band ladder from clean (0) to rotted (>100).
+expect_branch "lint-posture supp: 0 (clean)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":0},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "lint-posture supp: 1 (occasional)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":1},"summary":"x"}]}' \
+  '.composite_score' '95'
+
+expect_branch "lint-posture supp: 6 (manageable)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":6},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "lint-posture supp: 21 (concerning)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":21},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "lint-posture supp: 50 (still concerning, gte 21)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":50},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "lint-posture supp: 51 (heavy)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":51},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "lint-posture supp: 100 (still heavy, gte 51)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":100},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "lint-posture supp: 101 (rotted)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":101},"summary":"x"}]}' \
+  '.composite_score' '25'
+
+# Four-observation composites — calibration table from the 2b3 ticket.
+# python-mid: 0.50 / 1 / 1.00 / 2 -> 50, 100, 100, 95 -> mean 86.
+expect_branch "lint-posture composite: python-mid (86)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.50},"summary":"x"},{"id":"formatter-configured-count","kind":"count","evidence":{"configured":1},"summary":"x"},{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":2},"summary":"x"}]}' \
+  '.composite_score' '86'
+
+# ruby-mid: 0.60 / 1 / 1.00 / 2 -> 70, 100, 100, 95 -> mean 91.
+expect_branch "lint-posture composite: ruby-mid (91)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.60},"summary":"x"},{"id":"formatter-configured-count","kind":"count","evidence":{"configured":1},"summary":"x"},{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":2},"summary":"x"}]}' \
+  '.composite_score' '91'
+
+# typescript-mid: 0.33 / 1 / 1.00 / 2 -> 30, 100, 100, 95 -> mean 81.
+expect_branch "lint-posture composite: typescript-mid (81)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.33},"summary":"x"},{"id":"formatter-configured-count","kind":"count","evidence":{"configured":1},"summary":"x"},{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":2},"summary":"x"}]}' \
+  '.composite_score' '81'
+
+# python-low / ruby-low / typescript-low all land at 28 under the F-band shape.
+# Pick python-low (linter ratio 0.25, formatter 0, ci 0.00, supp 60 -> 30/0/30/50 -> 28).
+expect_branch "lint-posture composite: python-low (28)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":0.25},"summary":"x"},{"id":"formatter-configured-count","kind":"count","evidence":{"configured":0},"summary":"x"},{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"},{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":60},"summary":"x"}]}' \
+  '.composite_score' '28'
+
+# *-high: all signals at the top -> 100/100/100/100 -> 100.
+expect_branch "lint-posture composite: *-high (100)" lint-posture \
+  '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"formatter-configured-count","kind":"count","evidence":{"configured":1},"summary":"x"},{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":0},"summary":"x"}]}' \
+  '.composite_score' '100'
 
 # ----- summary --------------------------------------------------------
 
