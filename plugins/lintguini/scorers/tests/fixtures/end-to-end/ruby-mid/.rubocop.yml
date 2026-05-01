@@ -1,0 +1,11 @@
+AllCops:
+  NewCops: enable
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Layout/LineLength:
+  Max: 120
+
+Lint/MissingSuper:
+  Enabled: true
