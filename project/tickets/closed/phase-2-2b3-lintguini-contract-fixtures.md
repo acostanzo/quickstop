@@ -1,8 +1,8 @@
 ---
 id: 2b3
 plan: phase-2-pronto
-status: open
-updated: 2026-05-02
+status: closed
+updated: 2026-05-01
 ---
 
 # 2b3 — Lintguini contract compliance + locked fixtures + variance harness
