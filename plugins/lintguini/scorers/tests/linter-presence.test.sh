@@ -87,6 +87,20 @@ assert_eq "go configured" "6"      "$(echo "$out" | jq -r .evidence.configured_r
 assert_eq "go baseline"   "6"      "$(echo "$out" | jq -r .evidence.baseline_rules)"
 assert_eq "go ratio"      "1.0000" "$(echo "$out" | jq -r .evidence.ratio)"
 
+# ---- ruby-strict: Gemfile + .rubocop.yml mentioning all 5 cop departments
+# (Style, Layout, Lint, Metrics, Naming) → 5/5
+out=$(triple_run "$FIXTURES/ruby-strict")
+assert_eq "ruby-strict language"   "ruby"   "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ruby-strict configured" "5"      "$(echo "$out" | jq -r .evidence.configured_rules)"
+assert_eq "ruby-strict baseline"   "5"      "$(echo "$out" | jq -r .evidence.baseline_rules)"
+assert_eq "ruby-strict ratio"      "1.0000" "$(echo "$out" | jq -r .evidence.ratio)"
+
+# ---- ruby-loose: Gemfile + .rubocop.yml mentioning 1 department only → 1/5
+out=$(triple_run "$FIXTURES/ruby-loose")
+assert_eq "ruby-loose configured" "1"      "$(echo "$out" | jq -r .evidence.configured_rules)"
+assert_eq "ruby-loose baseline"   "5"      "$(echo "$out" | jq -r .evidence.baseline_rules)"
+assert_eq "ruby-loose ratio"      "0.2000" "$(echo "$out" | jq -r .evidence.ratio)"
+
 # ---- empty: no language config → empty stdout (observation omitted)
 out=$(triple_run "$FIXTURES/empty")
 assert_eq "empty no output" "" "$out"

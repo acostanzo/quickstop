@@ -96,6 +96,25 @@ case "$LANG_DETECTED" in
     CONFIGURED=1
     TOOL="gofmt"
     ;;
+  ruby)
+    # Most Ruby projects use rubocop's autocorrect rather than a
+    # separate formatter. standardrb / .rufo are the alternatives.
+    if [[ -f "$REPO_ROOT/standard.yml" ]]; then
+      CONFIGURED=1
+      TOOL="standardrb"
+    elif [[ -f "$REPO_ROOT/.rufo" ]]; then
+      CONFIGURED=1
+      TOOL="rufo"
+    elif [[ -f "$REPO_ROOT/.rubocop.yml" ]]; then
+      # Autocorrect-relevant departments: Layout/* (whitespace,
+      # indentation, line length) and Style/* (idioms). Either
+      # mentioned in the local config = formatter configured.
+      if grep -qE '^(Layout|Style)/' "$REPO_ROOT/.rubocop.yml" 2>/dev/null; then
+        CONFIGURED=1
+        TOOL="rubocop --autocorrect"
+      fi
+    fi
+    ;;
 esac
 
 SUMMARY=""

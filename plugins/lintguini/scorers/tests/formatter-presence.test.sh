@@ -79,6 +79,16 @@ out=$(triple_run "$FIXTURES/go")
 assert_eq "go language"   "go" "$(echo "$out" | jq -r .evidence.language)"
 assert_eq "go configured" "1"  "$(echo "$out" | jq -r .evidence.configured)"
 
+# ruby-formatted: Gemfile + .rubocop.yml with Layout/Style cops → configured=1
+out=$(triple_run "$FIXTURES/ruby-formatted")
+assert_eq "ruby-formatted language"   "ruby" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ruby-formatted configured" "1"    "$(echo "$out" | jq -r .evidence.configured)"
+
+# ruby-unformatted: Gemfile only (no .rubocop.yml, no standard.yml, no .rufo) → configured=0
+out=$(triple_run "$FIXTURES/ruby-unformatted")
+assert_eq "ruby-unformatted language"   "ruby" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ruby-unformatted configured" "0"    "$(echo "$out" | jq -r .evidence.configured)"
+
 # empty: no language → no observation
 out=$(triple_run "$FIXTURES/empty")
 assert_eq "empty no output" "" "$out"

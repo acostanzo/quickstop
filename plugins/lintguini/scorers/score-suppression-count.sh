@@ -91,6 +91,15 @@ case "$LANG_DETECTED" in
     SUPP_RE='(//[[:space:]]*nolint([[:space:]]|:|$)|//[[:space:]]*lint:ignore)'
     FIND_ARGS=(-type f -name '*.go' -not -path '*/vendor/*')
     ;;
+  ruby)
+    # Block-form openers (`# rubocop:disable Style/X`) and
+    # auto-generated todo entries (`# rubocop:todo Style/X`) and
+    # standardrb's equivalent (`# standard:disable`). Closers
+    # (`# rubocop:enable`) are intentionally not counted — the
+    # opener marks the suppression site.
+    SUPP_RE='(#[[:space:]]*rubocop:(disable|todo)|#[[:space:]]*standard:disable)'
+    FIND_ARGS=(-type f -name '*.rb' -not -path '*/vendor/bundle/*')
+    ;;
 esac
 
 FILES_LIST="$(mktemp -t lintguini-suppress-files.XXXXXX)"
