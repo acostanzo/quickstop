@@ -1,0 +1,27 @@
+{
+  "name": "inkwell",
+  "version": "0.1.0",
+  "description": "Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.",
+  "author": {
+    "name": "Anthony Costanzo",
+    "url": "https://github.com/acostanzo"
+  },
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "code-documentation",
+    "audit",
+    "sibling",
+    "pronto"
+  ],
+  "pronto": {
+    "compatible_pronto": ">=0.3.0",
+    "audits": [
+      {
+        "dimension": "code-documentation",
+        "command": "/inkwell:audit --json",
+        "weight_hint": 0.15
+      }
+    ]
+  }
+}
