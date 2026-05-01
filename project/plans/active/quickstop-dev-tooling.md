@@ -1,8 +1,8 @@
 ---
 plan: quickstop-dev-tooling
 status: active
-tickets: [q1, q2]
-updated: 2026-04-29
+tickets: [q1, q2, q3]
+updated: 2026-05-01
 ---
 
 # Quickstop Dev Tooling — Smith and Hone Optimization
@@ -30,14 +30,15 @@ our own conventions. This plan optimizes them.
 
 ## Scope
 
-Two tickets, sequenced.
+Three tickets, sequenced.
 
 | Ticket | Scope | Depends on |
 |---|---|---|
 | **Q1 — Smith enhancements** | License question; sibling-shape branch in questionnaire; `pronto` block + `:audit` skill auto-creation; transitional parser agent scaffolding; ADR-006 §1 README "Plugin surface" section scaffolded for every plugin; no hook scaffolding without an explicit user-facing migration prompt; ADR-aware research targets | — |
 | **Q2 — Hone enhancements** | New Pronto Compliance audit category; new `audit-pronto` subagent; new audit-boundary subagent that detects ADR-006 §1 surface omissions, §2 silent-mutation patterns (Scope A transitively along the call graph from hooks; Scope B without consumer opt-in), and §3 hook-invariant violations (Tier 1 enumerated paths only; Tier 2 variable targets emit human-review notes without auto-deduction); rubric rebalance; ADR-aware research targets | Q1 (shares the research-agent change) |
+| **Q3 — Smith dogfood fixes** | Six smith-side template fixes surfaced by the 2b1 lintguini dogfood: `observations[]` README copy (B1), `SIBLING_DIMENSION_LABEL` substitution rephrase (U3), `disable-model-invocation` decision + doc (U1), Phase 1 lazy-path proposal (U2), unambiguous Phase 4.2 placement instruction (U4), sibling-aware Q5 components (U5), structurally-anchored marketplace.json edit (U6) | Q1 (template surface)|
 
-Both tickets are quickstop-internal — they touch `.claude/skills/smith/`,
+All three tickets are quickstop-internal — they touch `.claude/skills/smith/`,
 `.claude/skills/hone/`, and `.claude/agents/research-*`. No marketplace
 plugin changes.
 
