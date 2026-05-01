@@ -268,7 +268,7 @@ argument-hint: --json
 
 Body (the skill emits this wire-contract-valid JSON envelope on stdout when invoked with `--json`):
 
-```markdown
+~~~markdown
 # <Name>:audit
 
 Audit the target codebase for <SIBLING_DIMENSION_LABEL> and emit a v2 wire-contract envelope.
@@ -294,7 +294,7 @@ the empty array exercises the translator's case-3 passthrough — the dimension 
 by presence-only fallback. Each observation needs: id (stable string), kind (ratio |
 count | presence | score), evidence (object), summary (string). See
 plugins/pronto/references/sibling-audit-contract.md for the full field reference. -->
-```
+~~~
 
 ### 3.3: Agents (user-listed)
 
@@ -335,7 +335,7 @@ model: haiku
 
 Body:
 
-```markdown
+~~~markdown
 # Parser Agent: <name> (transitional)
 
 <!-- Transitional. Satisfies ADR-005 §5 step-2 discovery while the audit ramps up;
@@ -372,7 +372,7 @@ from ADR-005 §5. -->
 
 Exactly one JSON object — whatever `/<name>:audit --json` emits. No prose, no
 markdown fences, no leading or trailing text.
-```
+~~~
 
 ### 3.4: MCP Config
 
@@ -396,7 +396,7 @@ Based on `LICENSE_CHOICE`:
 
 **MIT:**
 Create `plugins/<name>/LICENSE` (substitute `<YEAR>` with the output of `date +%Y` before writing):
-```
+~~~
 MIT License
 
 Copyright (c) <YEAR> Anthony Costanzo
@@ -418,19 +418,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~
 No NOTICE file.
 
 **Apache-2.0:**
 Create `plugins/<name>/LICENSE` with the canonical Apache 2.0 text (the full unmodified license text from apache.org).
 Create `plugins/<name>/NOTICE` (substitute `<YEAR>` with the output of `date +%Y` before writing):
-```
+~~~
 <Name>
 Copyright (c) <YEAR> Anthony Costanzo
 
 This product includes software developed by Anthony Costanzo
 (https://github.com/acostanzo).
-```
+~~~
 
 **No LICENSE:** Create neither file.
 
@@ -442,7 +442,7 @@ Use the current year from `date +%Y` in all copyright notices.
 
 Create `plugins/<name>/README.md`. Every plugin, whether tool or sibling, opens with a **"Plugin surface"** section per ADR-006 §1.
 
-```markdown
+~~~markdown
 # <Name>
 
 <description>
@@ -459,11 +459,11 @@ This plugin ships:
 This plugin does not ship: cross-plugin automation, consumer config edits, or any
 flow that silently mutates artefacts the consumer owns. Consumers compose automation
 against this plugin's capabilities per ADR-006 §6.
-```
+~~~
 
 **For sibling plugins**, append after the Plugin surface section:
 
-```markdown
+~~~markdown
 ## What this sibling audits
 
 This plugin audits the **<SIBLING_DIMENSION_LABEL>** dimension of pronto's readiness rubric.
@@ -482,11 +482,11 @@ observations pronto's rubric translates into a dimension score.
 This plugin declares `compatible_pronto: ">=<PRONTO_VERSION>"` in `plugin.json`.
 Pronto checks this at dispatch time — if the installed pronto is outside the declared
 range, pronto skips this sibling's audit and scores the dimension by presence only.
-```
+~~~
 
 Then for all plugins, add:
 
-```markdown
+~~~markdown
 ## Installation
 
 ### From marketplace
@@ -504,15 +504,15 @@ claude --plugin-dir /path/to/quickstop/plugins/<name>
 ## Architecture
 
 [Brief overview: N skills, N agents, etc. Fill in.]
-```
+~~~
 
 When `license != none`, end the README with:
 
-```markdown
+~~~markdown
 ## License
 
 <License name>. See [LICENSE](LICENSE).
-```
+~~~
 
 ---
 
