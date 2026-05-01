@@ -53,7 +53,7 @@
       "plugin_status": "shipped",
       "install_command": "/plugin install lintguini@quickstop",
       "audit_command": "/lintguini:audit --json",
-      "parser_agent": "parsers/lintguini",
+      "parser_agent": null,
       "roll_your_own_ref": "roll-your-own/lint-posture.md",
       "presence_check": "Language-appropriate lint config file exists"
     },

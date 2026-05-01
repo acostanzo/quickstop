@@ -12,7 +12,7 @@ updated: 2026-05-02
 The original 2b3 plan-line is broad (contract compliance + multi-language fixtures + variance harness), but 2b2 deviated from the inkwell-2a3 pattern by pulling the SKILL.md wiring, the orchestrator (`bin/build-envelope.sh`), and the three end-to-end fixtures (`python-mid`, `ruby-mid`, `typescript-mid`) forward to honour the lifted 2b1 smoke. So 2b3's actual remaining scope is narrower than the plan-line suggests — it is the **calibration layer + cleanup**:
 
 1. **Rubric stanza** — add `lint-posture` translation rules to `plugins/pronto/references/rubric.md`. Four observation entries with bands matching the four scorers shipped in 2b2. The stanza becomes the authority over composite scoring.
-2. **`recommendations.json` flip** — populate `install_command`, `audit_command`, `parser_agent` for the `lint-posture` row; `plugin_status` `phase-2-plus` → `shipped`. Discovery flips from step-2 (parser agent) to step-1 (canonical `:audit` skill) per ADR-005 §5.
+2. **`recommendations.json` flip** — populate `install_command`, `audit_command` for the `lint-posture` row; `plugin_status` `phase-2-plus` → `shipped`. Discovery is step-1 only (canonical `:audit` skill) per ADR-005 §5; `parser_agent` is left `null` for new-pattern-sibling reasons documented in the "Discovery posture" subsection below.
 3. **Transitional composite math excision** — drop the `# Transitional composite math (REPLACED IN 2b3 by the rubric stanza)` block from `bin/build-envelope.sh` (the literal anchor flagged in 2b2's commit `02d97d7`); replace `composite_score: $composite` with `composite_score: null`. The rubric path becomes the sole authority.
 4. **Locked envelopes** — capture the populated v2 envelope per fixture as `envelope.json`. Byte-equivalence anchors for invariant B.
 5. **Fixture-set extension to triples** — extend each language from `<lang>-mid` to `<lang>-{low,mid,high}` (nine fixtures total). The brief explicitly recommends triples per language; calibration is stronger with three points per language and the fixtures are small text-and-config trees.
@@ -125,13 +125,23 @@ The `lint-posture` row flips from stub to populated, mirroring the M1/M2/M3 shap
   "plugin_status": "shipped",
   "install_command": "/plugin install lintguini@quickstop",
   "audit_command": "/lintguini:audit --json",
-  "parser_agent": "parsers/lintguini",
+  "parser_agent": null,
   "roll_your_own_ref": "roll-your-own/lint-posture.md",
   "presence_check": "Language-appropriate lint config file exists"
 }
 ```
 
-`parser_agent` stays populated for one minor version per ADR-005 §5 (the documented step-2 fallback). The `parse-lintguini` agent shipped in 2b1 lives under `plugins/lintguini/agents/parse-lintguini.md`; its removal is filed as a follow-up after step-1 discovery is verified in production for one minor version (mirrors 2a3's `parse-inkwell` handling).
+`parser_agent` is set to `null` — see "Discovery posture" below for the rationale. The transitional `parse-lintguini` agent shipped in 2b1 lives under `plugins/lintguini/agents/parse-lintguini.md`; that's a sibling-side file, separate from the (non-existent) pronto-side `plugins/pronto/agents/parsers/lintguini.md` that a populated `parser_agent` would point at. The sibling-side file's removal is filed as a follow-up.
+
+### Discovery posture
+
+The `parser_agent` field is left **null** rather than pointing at `parsers/lintguini`. Three reasons:
+
+1. **Sub-path A wins.** Pronto's audit orchestrator (`plugins/pronto/skills/audit/SKILL.md` Phase 3 step 3) checks `plugin.json`'s `pronto.audits[]` declaration first; if present, it dispatches via slash command (`/lintguini:audit --json`) and **never consults `parser_agent`**. Lintguini declares `pronto.audits[]` natively from 2b1, so Sub-path A is the only dispatch path that fires today. A populated `parser_agent` would be dead code — the parser-agent path (Sub-path B / Phase 4.1) only triggers when Sub-path A is unavailable.
+2. **Phase 4.1's invocation pattern doesn't fit new-pattern siblings.** The literal Bash dispatch (`${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh`) resolves under pronto's tree, not the sibling's. Legacy siblings (claudit, skillet, commventional, avanti) have their scorer scripts bundled in pronto's tree because the M1/M2/M3 migration ported them in. New-pattern siblings (lintguini, inkwell, towncrier) own their orchestrator in their own plugin tree (`plugins/lintguini/bin/build-envelope.sh`) — a Phase 4.1 dispatch would require either a cross-plugin script-path hop (`${CLAUDE_PLUGIN_ROOT}/../lintguini/bin/build-envelope.sh`, brittle under installed-plugin layouts) or duplicating the orchestrator in pronto's tree (architecturally wrong — pronto stays the rubric/orchestration authority, the sibling owns its scoring logic).
+3. **ADR-005 §5 frames step-2 as a fallback, not a requirement.** Siblings that declare `pronto.audits[]` natively don't need step-2 to satisfy the discovery contract. The contract is honoured by step-1 alone.
+
+The trade-off: if `/lintguini:audit --json` ever fails to dispatch (sibling not installed, version-handshake out-of-range, runtime error), the dimension degrades to presence-cap (50 capped from kernel check) instead of falling back to a parser-agent path. That's the same posture every new-pattern sibling will have. Step-2 fallback for new-pattern siblings is a future-ticket concern — not 2b3's. If we add it later, the shape will be a proper cross-plugin discovery mechanism that ADR-005 §5 currently doesn't specify.
 
 ### `rubric.md` updates
 
@@ -223,7 +233,7 @@ This is the deviation the brief invites — calling it out per the "if anything 
 ## Implementation order
 
 1. **`plugins/pronto/references/rubric.md`** — add the `lint-posture` translation rules stanza; flip the table row description and phase column; remove `lintguini` from the Phase-2+ list; rewrite the mechanical-vs-judgment row.
-2. **`plugins/pronto/references/recommendations.json`** — flip the `lint-posture` row's four `null` fields and `plugin_status`.
+2. **`plugins/pronto/references/recommendations.json`** — populate `install_command` and `audit_command`, flip `plugin_status` to `shipped`. `parser_agent` stays `null` (see Discovery posture).
 3. **Pronto version bump** — `plugin.json`, `marketplace.json`, root README. v0.2.1 → v0.3.0 (minor — rubric stanza addition is a behavioural change to the scoring path).
 4. **`plugins/lintguini/bin/build-envelope.sh`** — excise the transitional composite math; emit `composite_score: null`. The orchestrator's job collapses to "run the four scorers, jq-s their outputs, emit the v2 envelope" with no scoring.
 5. **Lintguini version bump** — `plugin.json`, `marketplace.json`, root README. v0.3.0 → v0.4.0 (minor — sibling now consumes the rubric path; orchestrator behaviour changes).
@@ -240,7 +250,7 @@ This is the deviation the brief invites — calling it out per the "if anything 
 
 - `bin/build-envelope.sh` emits `composite_score: null` (no scoring inline). The transitional math anchor (`# Transitional composite math (REPLACED IN 2b3 by the rubric stanza)`) and its `COMPOSITE=$(jq -s ...)` block are gone.
 - `plugins/pronto/references/rubric.md` carries the `### lint-posture translation rules` section with the four-observation stanza above; the table row reads `Shipped` (not `Phase 2+`); the Phase-2+ list mid-document drops `lintguini`; the mechanical-vs-judgment row is rewritten.
-- `plugins/pronto/references/recommendations.json`'s `lint-posture` row reads `plugin_status: shipped`, all four previously-null fields populated.
+- `plugins/pronto/references/recommendations.json`'s `lint-posture` row reads `plugin_status: shipped`, with `install_command` and `audit_command` populated; `parser_agent` stays `null` per the Discovery posture rationale.
 - `pronto` bumps to v0.3.0 in `plugin.json` / `marketplace.json` / root README; `lintguini` bumps to v0.4.0 in the same three places. `./scripts/check-plugin-versions.sh` clean.
 - `bin/build-envelope.sh` against each of the nine fixtures emits the predicted populated envelope, byte-for-byte matching `envelope.json` across three runs (triple-run determinism per fixture).
 - Translator (`observations-to-score.sh lint-posture`) consumes each fixture's envelope and produces the predicted composite from the calibration table within ±1 (28 / 86 / 100 / 28 / 91 / 100 / 28 / 81 / 100 across low / mid / high × python / ruby / typescript).
