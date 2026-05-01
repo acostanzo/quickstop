@@ -288,8 +288,18 @@ Common fix types:
 - **Version sync**: Align versions across plugin.json, marketplace.json, README
 - **Structure cleanup**: Move files to correct directories, remove legacy patterns
 - **Instruction improvements**: Add phase structure, output formats, error handling
-- **Documentation**: Add missing README sections
+- **Documentation**: Add missing README sections, add "Plugin surface" section (ADR-006 §1)
 - **Security**: Remove hardcoded paths, scope tool lists
+
+**ADR-006 boundary findings (from audit-boundary):**
+- §1 missing README "Plugin surface" section — add the section listing declared capabilities.
+- §2 Scope A consumer-artefact mutation — surface the finding; do not auto-apply. These are architectural decisions requiring the plugin author's deliberate migration (ref. relevant per-plugin migration ticket if one exists).
+- §3 hook invariant violations — surface Critical findings clearly. For §3.1 payload mutation fields, flag the exact jq template or field construction. For §3.2 persistent host state, flag the installation call. Auto-apply is out of scope; recommend the author follow the migration ticket.
+
+**Pronto Compliance findings (from audit-pronto, sibling plugins only):**
+- Missing fields in `plugin.json` pronto block (e.g. `compatible_pronto`) — apply the field addition directly (low-risk, non-destructive edit).
+- Missing `skills/audit/SKILL.md` or frontmatter issues — surface the finding; recommend `/smith --upgrade <plugin>` for scaffolding-shaped work (future enhancement); do not auto-generate the skill body.
+- Registry-only detection finding ("migrate to contract-native shape") — surface as High recommendation; do not auto-apply.
 
 ### Re-Score and Show Delta
 
