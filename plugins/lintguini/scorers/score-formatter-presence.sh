@@ -3,15 +3,21 @@
 # observation for the lint-posture dimension.
 #
 # Per-language formatter detection:
-#   python  -> [tool.ruff.format] in pyproject.toml,
-#              or [tool.black] in pyproject.toml,
-#              or top-level .black.toml
-#   js/ts   -> biome.json formatter.enabled == true,
-#              or any .prettierrc* file at repo root
-#   rust    -> rustfmt.toml or .rustfmt.toml at repo root
-#   go      -> go.mod present (gofmt is the implicit Go default —
-#              there is no opt-out config; presence of go.mod is the
-#              sufficient signal)
+#   python      -> [tool.ruff.format] in pyproject.toml,
+#                  or [tool.black] in pyproject.toml,
+#                  or top-level .black.toml
+#   javascript  -> biome.json formatter.enabled == true,
+#                  or any .prettierrc* file at repo root
+#   typescript  -> same checks as javascript; the dispatch fork
+#                  only changes the `language` label in the
+#                  evidence object — TS and JS share prettier /
+#                  biome by convention
+#   rust        -> rustfmt.toml or .rustfmt.toml at repo root
+#   go          -> go.mod present (gofmt is the implicit Go default
+#                  — there is no opt-out config; presence of go.mod
+#                  is the sufficient signal)
+#   ruby        -> .rubocop.yml with autocorrect-relevant cop
+#                  departments, or standard.yml, or .rufo
 #
 # Configured: 0 or 1. Empty-scope short-circuit on language == none.
 #

@@ -6,10 +6,17 @@
 # config against the per-language baseline documented in
 # plugins/pronto/references/roll-your-own/lint-posture.md:
 #
-#   python  -> [tool.ruff.lint] select cardinality vs 8
-#   js/ts   -> biome.json linter.rules vs 1, or .eslintrc presence vs 1
-#   rust    -> [lints.{rust,clippy}] entry count vs 2
-#   go      -> .golangci.yml linters.enable cardinality vs 6
+#   python      -> [tool.ruff.lint] select cardinality vs 8
+#   javascript  -> biome.json linter.rules vs 1, or .eslintrc /
+#                  eslint.config.* presence vs 1
+#   typescript  -> tsconfig strict-bundle flags (cap 4)
+#                  + @typescript-eslint plugin presence (0/1)
+#                  + biome/eslint cardinality (0/1)
+#                  vs 6 (4 + 1 + 1)
+#   rust        -> [lints.{rust,clippy}] entry count vs 2
+#   go          -> .golangci.yml linters.enable cardinality vs 6
+#   ruby        -> .rubocop.yml cop departments enabled vs 5,
+#                  or standard.yml -> baseline-pass by convention
 #
 # Configured > baseline → ratio clamped to 1.0 (over-strictness isn't
 # rewarded). Configured == 0 (no linter detected even with language
@@ -98,7 +105,7 @@ case "$LANG_DETECTED" in
       CONFIGURED=1
     fi
     ;;
-  javascript|typescript)
+  javascript)
     BASELINE=1
     if [[ -f "$REPO_ROOT/biome.json" ]]; then
       RECOMMENDED=$(jq -r '(.linter.rules.recommended // false) | if . then 1 else 0 end' \
@@ -110,7 +117,71 @@ case "$LANG_DETECTED" in
       # ESLint deep-parse is out of scope (see 2b2 ticket); presence
       # alone passes the cardinality-1 baseline.
       CONFIGURED=1
+    else
+      for f in "$REPO_ROOT"/eslint.config.js "$REPO_ROOT"/eslint.config.mjs "$REPO_ROOT"/eslint.config.cjs "$REPO_ROOT"/eslint.config.ts; do
+        if [[ -f "$f" ]]; then
+          CONFIGURED=1
+          break
+        fi
+      done
     fi
+    ;;
+  typescript)
+    # TS strict-baseline: 4 strict-bundle tsconfig flags + 1
+    # @typescript-eslint plugin presence + 1 biome/eslint detection.
+    BASELINE=6
+    STRICT_FLAGS=0
+    TSCONFIG="$REPO_ROOT/tsconfig.json"
+    if [[ -f "$TSCONFIG" ]]; then
+      # `strict: true` is shorthand for the full strict bundle (4 flags).
+      STRICT_BUNDLE=$(jq -r '(.compilerOptions.strict // false) | tostring' \
+                         "$TSCONFIG" 2>/dev/null || echo false)
+      if [[ "$STRICT_BUNDLE" == "true" ]]; then
+        STRICT_FLAGS=4
+      else
+        for flag in noImplicitAny strictNullChecks noUncheckedIndexedAccess strictFunctionTypes strictBindCallApply strictPropertyInitialization alwaysStrict noImplicitThis useUnknownInCatchVariables; do
+          val=$(jq -r --arg f "$flag" '(.compilerOptions[$f] // false) | tostring' \
+                   "$TSCONFIG" 2>/dev/null || echo false)
+          [[ "$val" == "true" ]] && STRICT_FLAGS=$((STRICT_FLAGS + 1))
+        done
+        # Cap individual-flag count at the strict-bundle baseline of 4.
+        if (( STRICT_FLAGS > 4 )); then
+          STRICT_FLAGS=4
+        fi
+      fi
+    fi
+    # @typescript-eslint plugin reference in any eslint config form.
+    TS_ESLINT=0
+    for f in "$REPO_ROOT"/.eslintrc* "$REPO_ROOT"/eslint.config.js "$REPO_ROOT"/eslint.config.mjs "$REPO_ROOT"/eslint.config.cjs "$REPO_ROOT"/eslint.config.ts; do
+      [[ -f "$f" ]] || continue
+      if grep -q '@typescript-eslint' "$f" 2>/dev/null; then
+        TS_ESLINT=1
+        break
+      fi
+    done
+    # biome/eslint base detection — same shape as the javascript branch.
+    JS_BASE=0
+    if [[ -f "$REPO_ROOT/biome.json" ]]; then
+      RECOMMENDED=$(jq -r '(.linter.rules.recommended // false) | if . then 1 else 0 end' \
+                       "$REPO_ROOT/biome.json" 2>/dev/null || echo 0)
+      EXTRA=$(jq -r '((.linter.rules // {}) | keys | map(select(. != "recommended")) | length)' \
+                 "$REPO_ROOT/biome.json" 2>/dev/null || echo 0)
+      if (( RECOMMENDED + EXTRA > 0 )); then
+        JS_BASE=1
+      fi
+    fi
+    if (( JS_BASE == 0 )) && compgen -G "$REPO_ROOT/.eslintrc*" >/dev/null 2>&1; then
+      JS_BASE=1
+    fi
+    if (( JS_BASE == 0 )); then
+      for f in "$REPO_ROOT"/eslint.config.js "$REPO_ROOT"/eslint.config.mjs "$REPO_ROOT"/eslint.config.cjs "$REPO_ROOT"/eslint.config.ts; do
+        if [[ -f "$f" ]]; then
+          JS_BASE=1
+          break
+        fi
+      done
+    fi
+    CONFIGURED=$((STRICT_FLAGS + TS_ESLINT + JS_BASE))
     ;;
   rust)
     BASELINE=2

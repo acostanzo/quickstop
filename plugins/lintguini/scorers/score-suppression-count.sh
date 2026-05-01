@@ -3,14 +3,24 @@
 # observation for the lint-posture dimension.
 #
 # Per-language suppression-marker grep across source files:
-#   python  -> `# noqa`, `# type: ignore`, `# pylint: disable`
-#               in **/*.py (excludes .venv / venv / __pycache__)
-#   js/ts   -> `eslint-disable[-next-line|-line]?`, `// @ts-ignore`,
-#               `// @ts-expect-error` in **/*.{js,jsx,ts,tsx,mjs,cjs}
-#               (excludes node_modules / dist / build)
-#   rust    -> `#[allow(`, `#![allow(` in **/*.rs (excludes target)
-#   go      -> `//nolint[…]?`, `//lint:ignore` in **/*.go
-#               (excludes vendor)
+#   python      -> `# noqa`, `# type: ignore`, `# pylint: disable`
+#                   in **/*.py (excludes .venv / venv / __pycache__)
+#   javascript  -> `eslint-disable[-next-line|-line]?`
+#                   in **/*.{js,jsx,mjs,cjs}
+#                   (excludes node_modules / dist / build)
+#                   `@ts-*` markers are TS-only and live in the
+#                   typescript branch, not here.
+#   typescript  -> javascript markers PLUS `// @ts-ignore`,
+#                   `// @ts-expect-error`, `// @ts-nocheck`
+#                   in **/*.{ts,tsx}
+#                   (excludes node_modules / dist / build)
+#   rust        -> `#[allow(`, `#![allow(` in **/*.rs
+#                   (excludes target)
+#   go          -> `//nolint[…]?`, `//lint:ignore` in **/*.go
+#                   (excludes vendor)
+#   ruby        -> `# rubocop:disable`, `# rubocop:todo`,
+#                   `# standard:disable` in **/*.rb
+#                   (excludes vendor/bundle)
 #
 # threshold_high = 50 (documented; the rubric stanza in 2b3 will
 # lay the count-to-score ladder over it).
@@ -59,11 +69,17 @@ case "$LANG_DETECTED" in
     FIND_ARGS=(-type f -name '*.py'
                -not -path '*/.venv/*' -not -path '*/venv/*' -not -path '*/__pycache__/*')
     ;;
-  javascript|typescript)
-    SUPP_RE='(eslint-disable(-next-line|-line)?|//[[:space:]]*@ts-ignore|//[[:space:]]*@ts-expect-error)'
+  javascript)
+    SUPP_RE='(eslint-disable(-next-line|-line)?)'
     FIND_ARGS=(-type f \(
-               -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx'
-               -o -name '*.mjs' -o -name '*.cjs'
+               -name '*.js' -o -name '*.jsx' -o -name '*.mjs' -o -name '*.cjs'
+               \)
+               -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/build/*')
+    ;;
+  typescript)
+    SUPP_RE='(eslint-disable(-next-line|-line)?|//[[:space:]]*@ts-(ignore|expect-error|nocheck))'
+    FIND_ARGS=(-type f \(
+               -name '*.ts' -o -name '*.tsx'
                \)
                -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/build/*')
     ;;
