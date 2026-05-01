@@ -184,44 +184,51 @@ Dispatch all applicable agents simultaneously in a single message.
 
 ## Phase 3: Scoring
 
-Once all 4 audit agents return, read the scoring rubric:
+Once all audit agents return, read the scoring rubric:
 - Read `${SKILL_ROOT}/references/scoring-rubric.md`
 
 ### Score Each Category
 
-Apply the rubric to audit findings. For each of the 8 categories:
+Apply the rubric to audit findings. For each applicable category:
 
 1. Start at base score of **100**
 2. Apply matching **deductions** from the rubric
 3. Apply matching **bonuses** from the rubric
 4. Clamp to 0-100 range
 
-**Categories, weights, and audit sources:**
+**Categories, shares, and audit sources:**
 
-| Category | Weight | Audit Source |
-|----------|--------|-------------|
-| Skill Quality | 20% | audit-skills-agents |
-| Structure Compliance | 15% | audit-structure |
-| Agent Quality | 15% | audit-skills-agents |
-| Metadata Quality | 10% | audit-metadata-docs |
-| Hook Quality | 10% | audit-design |
-| Documentation | 10% | audit-metadata-docs |
-| Over-Engineering | 10% | audit-design |
-| Security | 10% | audit-metadata-docs |
+| Category | Share | Audit Source |
+|----------|-------|-------------|
+| Skill Quality | 20 | audit-skills-agents |
+| Structure Compliance | 15 | audit-structure |
+| Agent Quality | 15 | audit-skills-agents |
+| Metadata Quality | 10 | audit-metadata-docs |
+| Hook Quality | 10 | audit-design + audit-boundary |
+| Documentation | 10 | audit-metadata-docs + audit-boundary |
+| Over-Engineering | 10 | audit-design |
+| Security | 10 | audit-metadata-docs + audit-boundary |
+| Pronto Compliance | 10 | audit-pronto (sibling plugins only) |
 
-**Scope-aware scoring:** If a plugin has no component for a category (e.g., no hooks), that category scores 100 (neutral) unless the plugin clearly needs it.
+**Scope-aware scoring:** If a plugin has no component for a category (e.g., no hooks), that category scores 100 (neutral) unless the plugin clearly needs it. Pronto Compliance is excluded entirely for non-sibling plugins — it does not score 100 neutral.
 
 ### Compute Overall Score
 
 ```
-overall = sum(category_score * category_weight for all categories)
+total_share = sum(share_i for all applicable categories)
+effective_weight_i = share_i / total_share
+overall = sum(category_score_i * effective_weight_i for all applicable categories)
 ```
+
+Applicable categories:
+- **Non-sibling:** the original 8 categories, total_share = 100. Effective weights equal shares/100 — byte-equivalent to the pre-Q2 formula.
+- **Sibling:** all 9 categories including Pronto Compliance, total_share = 110. Each effective weight = share/110 (~9% less than original, with Pronto Compliance filling the slack).
 
 Look up letter grade from rubric's grade threshold table.
 
 ### Build Recommendations
 
-Compile ranked recommendations from all audit findings:
+Compile ranked recommendations from all audit findings (including boundary and pronto findings):
 
 1. **Critical** (> 20 point impact): Must fix — actively harming quality
 2. **High** (10-20 point impact): Should fix — significant improvement
@@ -244,9 +251,10 @@ Hook Quality         ███████████████████�
 Documentation        ████████████████████░░░░░  XX/100  X
 Over-Engineering     ████████████████████░░░░░  XX/100  X
 Security             ████████████████████░░░░░  XX/100  X
+[Pronto Compliance   ████████████████████░░░░░  XX/100  X]  ← sibling plugins only
 ```
 
-For visual bars: `█` for filled (score/100 * 25 chars), `░` for remaining. Append numeric score and letter grade.
+For visual bars: `█` for filled (score/100 * 25 chars), `░` for remaining. Append numeric score and letter grade. Show 8 bars for non-sibling plugins; append the Pronto Compliance bar (9th) for sibling plugins.
 
 After the scorecard, present:
 1. **Critical Issues** — anything scoring below 50
