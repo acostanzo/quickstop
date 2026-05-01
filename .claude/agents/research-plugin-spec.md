@@ -26,6 +26,18 @@ Before fetching anything, check if you have cached knowledge from a previous run
 Read the plugin specification baseline for additional context:
 - `.claude/skills/smith/references/plugin-spec.md` (relative to project root)
 
+### Step 2.5: Read In-Tree Quickstop Authority
+
+Read each of the following files **if they exist** (use `Read` — skip gracefully if not found). Surface their content under a **"Quickstop Conventions"** section in your output, distinct from the Anthropic-docs section.
+
+- `project/adrs/004-sibling-composition-contract.md` — version handshake, graceful degradation ladder, `compatible_pronto` field
+- `project/adrs/005-sibling-skill-conventions.md` — `:audit` skill convention, `observations[]` contract, discovery order
+- `project/adrs/006-plugin-responsibility-boundary.md` — capability vs automation boundary, hook carve-out (§3), "Plugin surface" README convention (§1)
+- `plugins/pronto/references/sibling-audit-contract.md` — wire contract shape (`$schema_version`, `observations[]`, `categories[]`, `recommendations[]`)
+- `.claude/rules/license-selection.md` — license decision tree, defaults, never-default-pick rule
+
+Budget note: these are 5 local file reads. Each is fast and cached after first read via `memory: user`. Read all present; omit absent with a brief note.
+
 ### Step 3: Fetch Official Documentation
 
 Anthropic's docs are the source of truth. Fetch these pages:
@@ -65,7 +77,8 @@ Save key findings for future runs:
 
 ## Budget
 
-- **1 local file read** (Read)
+- **1 local file read** for plugin-spec.md baseline (Read)
+- **Up to 5 local file reads** for in-tree authority (Step 2.5 — inexpensive, cached)
 - **3 official doc fetches** (WebFetch)
 - **1 supplementary search** (WebSearch)
 
@@ -106,6 +119,13 @@ Return your findings as structured markdown:
 ### New/Updated Features
 - [Any features not in the local baseline]
 - [Recently changed behavior]
+
+### Quickstop Conventions
+- [ADR-004: version handshake, compatible_pronto field, degradation ladder — if present]
+- [ADR-005: :audit skill convention, observations[] contract, discovery order — if present]
+- [ADR-006: capability vs automation boundary, §3 hook carve-out, "Plugin surface" README section — if present]
+- [Wire contract: $schema_version, observations[], categories[], recommendations[] shape — if present]
+- [License rule: decision tree, defaults, never-default-pick directive — if present]
 ```
 
 ## Critical Rules
