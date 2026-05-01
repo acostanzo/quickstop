@@ -62,7 +62,7 @@
     },
     {
       "name": "pronto",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins",
       "source": "./plugins/pronto",
       "keywords": [
