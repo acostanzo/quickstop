@@ -2,7 +2,7 @@
 id: 2b2
 plan: phase-2-pronto
 status: open
-updated: 2026-05-01
+updated: 2026-05-02
 ---
 
 # 2b2 — Lintguini language detection + shell scorers
@@ -26,9 +26,31 @@ rubric category in the `lint-posture` dimension:
    invocations. One boolean per detected CI surface; emit a ratio
    over surfaces-with-lint / surfaces-detected.
 4. **Suppression count** — count `eslint-disable*` / `# noqa` /
-   `// nolint` / `#[allow(...)]` / `# type: ignore` markers across
-   source files. Per-language dispatch. Emit a count observation
-   with a documented threshold ladder for "high suppression".
+   `// nolint` / `#[allow(...)]` / `# type: ignore` /
+   `# rubocop:disable` markers across source files. Per-language
+   dispatch. Emit a count observation with a documented threshold
+   ladder for "high suppression".
+
+### First-class languages
+
+The four scorers dispatch across **six first-class languages**:
+
+| Language | Detection signal | Notes |
+|---|---|---|
+| python | `pyproject.toml` or `setup.py` | Highest precedence |
+| rust | `Cargo.toml` | |
+| go | `go.mod` | |
+| ruby | `Gemfile` or `*.gemspec` or `.rubocop.yml` | Placed before tsconfig.json so Rails-with-TS-asset-pipeline classifies as ruby (the brief's "small JS asset pipeline" rule from the addendum) |
+| typescript | `tsconfig.json` | Split from javascript — TS-only signals (tsconfig strict flags, `@typescript-eslint` plugin, `@ts-*` suppression markers) get their own dispatch path |
+| javascript | `package.json` | Lowest precedence; pure-JS path strips `@ts-*` markers (those are TS-only by definition) |
+
+Languages outside this set (Crystal, Elixir, PHP, C#, Swift, etc.)
+are explicitly deferred — see "Out of scope". The scope expansion
+that introduced ruby and first-class typescript is tracked in
+PR #74's addendum thread; ruby was genuinely new (no detection,
+no dispatch, no fixtures), and typescript was half-there
+(`_common.sh` returned `typescript` as a label since 2b1 but all
+three scorers folded `javascript|typescript` into one case).
 
 Mechanical pattern matches Phase 1.5 PR 3b (`score-claudit.sh`,
 `score-skillet.sh`, `score-commventional.sh`) and the Phase 2 2a2
@@ -57,10 +79,10 @@ plugins/lintguini/scorers/
 ├── score-suppression-count.sh
 └── tests/
     ├── fixtures/                 # per-scorer unit-test fixtures
-    │   ├── linter-presence/{python-strict,python-loose,js-biome,rust,go,empty}/
-    │   ├── formatter-presence/{python,js,go,rust,absent,empty}/
+    │   ├── linter-presence/{python-strict,python-loose,js-biome,ts-strict,ts-loose,rust,go,ruby-strict,ruby-loose,empty}/
+    │   ├── formatter-presence/{python-formatted,python-unformatted,js-biome-formatted,js-prettier,js-unformatted,ts-formatted,ts-unformatted,go,rust-formatted,rust-unformatted,ruby-formatted,ruby-unformatted,empty}/
     │   ├── ci-lint-wired/{github-wired,github-bare,multi-surface,no-ci,empty}/
-    │   └── suppression-count/{python-clean,python-noisy,js-bait,go,empty}/
+    │   └── suppression-count/{python-clean,python-noisy,js-bait,ts-bait,go,ruby-clean,ruby-noisy,empty}/
     ├── linter-presence.test.sh
     ├── formatter-presence.test.sh
     ├── ci-lint-wired.test.sh
@@ -107,16 +129,17 @@ case-3 passthrough.
 
 ### `score-linter-presence.sh`
 
-Detects the repo's primary language (by config-file presence:
-`pyproject.toml` → python, `package.json` → js/ts, `Cargo.toml` →
-rust, `go.mod` → go) and dispatches:
+Detects the repo's primary language (per the precedence chain in
+the "First-class languages" subsection above) and dispatches:
 
 | Language | Linter detected via | Configured rules counted from |
 |---|---|---|
 | python | `[tool.ruff.lint]` table in `pyproject.toml`, OR `.flake8`, OR `[tool.flake8]` | `select` array length (ruff) or fallthrough to `1` for flake8 presence |
-| js / ts | `biome.json` `linter.rules` block, OR `.eslintrc*` `rules` block | count of rule keys |
-| rust | `[lints.clippy]` table in `Cargo.toml` | count of rule keys |
+| javascript | `biome.json` `linter.rules` block, OR `.eslintrc*` `rules` block | count of rule keys |
+| typescript | tsconfig strict-bundle flags + `@typescript-eslint/*` plugin reference + biome/eslint detection (a TS repo strict-baselines higher than a JS repo) | strict-flags count (capped at 4) + `@typescript-eslint` plugin presence (0/1) + biome/eslint cardinality (0/1) |
+| rust | `[lints.clippy]` and `[lints.rust]` tables in `Cargo.toml` | count of rule keys |
 | go | `.golangci.yml` `linters.enable` array | array length |
+| ruby | `.rubocop.yml` cop departments (`Style/`, `Layout/`, `Lint/`, `Metrics/`, `Naming/`), OR `standard.yml` (standardrb) | count of distinct cop departments enabled; standard.yml = baseline-pass by convention |
 
 Baseline counts come from `roll-your-own/lint-posture.md` "Minimum
 viable setup by language":
@@ -124,9 +147,11 @@ viable setup by language":
 | Language | Baseline |
 |---|---|
 | python | 8 (ruff `["E","F","I","N","UP","B","SIM","RUF"]`) |
-| js / ts | 1 (biome `recommended: true`) |
+| javascript | 1 (biome `recommended: true`) |
+| typescript | 6 (4 tsconfig strict-bundle flags + 1 `@typescript-eslint` plugin + 1 biome/eslint) |
 | rust | 2 (`unsafe_code`, `pedantic`) |
 | go | 6 (errcheck, gosimple, govet, ineffassign, staticcheck, unused) |
+| ruby | 5 (5 cop departments enabled — Style, Layout, Lint, Metrics, Naming); standardrb pins to baseline by convention |
 
 Ratio = configured / baseline, clamped to [0.0, 1.0]. A repo whose
 config exceeds the baseline gets 1.0 (over-strictness isn't penalised
@@ -150,9 +175,11 @@ checks for the language's conventional formatter config:
 | Language | Formatter check |
 |---|---|
 | python | `[tool.ruff.format]` block in `pyproject.toml`, OR `[tool.black]` block, OR top-level `.black.toml` |
-| js / ts | `biome.json` `formatter.enabled: true`, OR `.prettierrc*` |
+| javascript | `biome.json` `formatter.enabled: true`, OR `.prettierrc*` |
+| typescript | same checks as javascript; the dispatch fork only changes the `language` label in the evidence object — TS and JS share prettier/biome by convention |
 | rust | `rustfmt.toml`, OR `.rustfmt.toml`, OR `[tool.rustfmt]` block in `Cargo.toml` |
 | go | `gofmt` is implicit in Go toolchain — pass if `go.mod` exists (gofmt is the default; no opt-out config required) |
+| ruby | `.rubocop.yml` with autocorrect-relevant departments enabled (any `Layout/*` or `Style/*` cop), OR `standard.yml`, OR `.rufo`. Most Ruby projects use rubocop's autocorrect rather than a separate formatter. |
 
 Configured = 1 if any check passes, 0 otherwise. Empty-scope
 short-circuit applies if no language detected.
@@ -213,9 +240,21 @@ Per-language suppression-marker grep across source files:
 | Language | Suppression markers | Source-file glob |
 |---|---|---|
 | python | `# noqa` (with or without rule code), `# type: ignore`, `# pylint: disable` | `**/*.py` (excludes `**/.venv/`, `**/venv/`, `**/__pycache__/`) |
-| js / ts | `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, `// @ts-ignore`, `// @ts-expect-error` | `**/*.{js,jsx,ts,tsx,mjs,cjs}` (excludes `**/node_modules/`, `**/dist/`, `**/build/`) |
+| javascript | `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line` | `**/*.{js,jsx,mjs,cjs}` (excludes `**/node_modules/`, `**/dist/`, `**/build/`) |
+| typescript | javascript markers PLUS `// @ts-ignore`, `// @ts-expect-error`, `// @ts-nocheck` | `**/*.{ts,tsx}` (excludes `**/node_modules/`, `**/dist/`, `**/build/`) |
 | rust | `#[allow(`, `#![allow(` | `**/*.rs` (excludes `**/target/`) |
 | go | `//nolint` (with or without rule code), `//lint:ignore` | `**/*.go` (excludes `**/vendor/`) |
+| ruby | `# rubocop:disable`, `# rubocop:todo`, `# standard:disable` (per-line and block forms; same regex shape as the JS branch) | `**/*.rb` (excludes `**/vendor/bundle/`) |
+
+Note on the JS/TS dispatch split: as of the PR #74 addendum, `@ts-*`
+markers are TS-only by definition. The js-bait fixture's c.js / e.js
+files (which exercised `@ts-ignore` / `@ts-expect-error`) move out
+of `js-bait/` to a fresh `ts-bait/` fixture under tsconfig.json
+dispatch. The `js-bait` fixture's marker count drops from 60 to 36
+(three .js files × 12 markers); the new `ts-bait` fixture lands at
+60 markers across five .ts files. This keeps the determinism story
+clean: each language path's fixture exercises that language's
+distinct suppression shapes.
 
 `files_scanned` = total source files matched by the language glob
 (post-exclude). `suppressions` = `grep -c` summed across those files.
@@ -299,9 +338,11 @@ forward.
    - `format_ratio numerator denominator` — emit `0.0000`-format
      ratio or `null` on `denominator == 0`.
    - `detect_primary_language <REPO_ROOT>` — return
-     `python|javascript|typescript|rust|go|none` by config-file
+     `python|rust|go|ruby|typescript|javascript|none` by config-file
      precedence (`pyproject.toml` > `Cargo.toml` > `go.mod` >
-     `tsconfig.json` > `package.json` > none).
+     `Gemfile`/`*.gemspec`/`.rubocop.yml` > `tsconfig.json` >
+     `package.json` > none). Ruby placed before tsconfig per the
+     "First-class languages" rationale above.
    - `clamp_ratio` — bound `[0.0, 1.0]` for over-baseline cases.
 2. **`plugins/lintguini/scorers/score-linter-presence.sh`** —
    per-language config inspection. Unit-test fixtures (distinct from
@@ -426,6 +467,17 @@ This scorer-level non-mutation posture is documented at the top of
   but missing `E`"). 2b2 counts configured-rule cardinality only.
   Per-rule depth is a follow-up if 2b3 fixtures show the cardinality
   signal undershoots.
+- **Languages outside the first-class set.** Crystal, Elixir, PHP,
+  C#, Swift, Kotlin, Scala, Haskell, etc. — none have detection,
+  dispatch, or fixtures in 2b2. Adding any of them is its own
+  scoped decision sequenced with the 2b3 calibration harness if
+  the need is real, not a 2b2 follow-up.
+- **TS type-coverage scoring.** `tsc --noEmit` exit code is a
+  candidate strictness signal but is out of scope; tsconfig.json
+  strict-flags inspection is the strictness signal for 2b2.
+- **rubocop binary execution.** Pure config-file inspection only,
+  matching the rest of the scorers — no language toolchain on PATH
+  required.
 - **Strictness scoring for ESLint legacy / non-Biome configs.** ESLint
   config can live in `.eslintrc.{js,json,yml}` or `package.json`
   `eslintConfig` block; 2b2 detects presence (single rule = baseline
