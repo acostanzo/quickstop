@@ -70,7 +70,6 @@ Search for installation patterns:
 - `pip install`
 - `cargo install`
 - `go install`
-- `chmod +x` (followed by a path not inside `${CLAUDE_PLUGIN_ROOT}`)
 - `sudo`
 - `systemctl enable`
 - `launchctl load`
