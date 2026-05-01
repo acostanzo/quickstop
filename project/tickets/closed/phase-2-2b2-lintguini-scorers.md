@@ -1,8 +1,8 @@
 ---
 id: 2b2
 plan: phase-2-pronto
-status: open
-updated: 2026-05-02
+status: closed
+updated: 2026-05-01
 ---
 
 # 2b2 — Lintguini language detection + shell scorers
