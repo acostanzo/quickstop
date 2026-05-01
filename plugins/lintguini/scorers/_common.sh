@@ -33,10 +33,13 @@ clamp_ratio() {
 }
 
 # detect_primary_language <REPO_ROOT>
-#   Print one of: python | typescript | javascript | rust | go | none
+#   Print one of: python | rust | go | ruby | typescript | javascript | none
 #   Precedence: pyproject.toml / setup.py > Cargo.toml > go.mod >
-#   tsconfig.json > package.json. The first match wins; polyglot
-#   repos report against the highest-precedence language only.
+#   Gemfile / *.gemspec / .rubocop.yml > tsconfig.json > package.json.
+#   Ruby is placed before tsconfig.json so a Ruby app with a small
+#   JS asset pipeline (Rails + Vite, etc.) doesn't misclassify as
+#   typescript or javascript. The first match wins; polyglot repos
+#   report against the highest-precedence language only.
 detect_primary_language() {
   local root="$1"
   if [[ -f "$root/pyproject.toml" || -f "$root/setup.py" ]]; then
@@ -45,6 +48,8 @@ detect_primary_language() {
     echo "rust"
   elif [[ -f "$root/go.mod" ]]; then
     echo "go"
+  elif [[ -f "$root/Gemfile" ]] || compgen -G "$root/*.gemspec" >/dev/null 2>&1 || [[ -f "$root/.rubocop.yml" ]]; then
+    echo "ruby"
   elif [[ -f "$root/tsconfig.json" ]]; then
     echo "typescript"
   elif [[ -f "$root/package.json" ]]; then
