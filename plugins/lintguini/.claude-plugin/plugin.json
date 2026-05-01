@@ -1,0 +1,28 @@
+{
+  "name": "lintguini",
+  "version": "0.1.0",
+  "description": "Audits lint-posture for Claude Code consumer repos: linter config strictness, formatter presence, CI lint enforcement, and rule-suppression count.",
+  "author": {
+    "name": "Anthony Costanzo",
+    "url": "https://github.com/acostanzo"
+  },
+  "license": "MIT",
+  "keywords": [
+    "lint",
+    "posture",
+    "formatter",
+    "audit",
+    "sibling",
+    "pronto"
+  ],
+  "pronto": {
+    "compatible_pronto": ">=0.2.0",
+    "audits": [
+      {
+        "dimension": "lint-posture",
+        "command": "/lintguini:audit --json",
+        "weight_hint": 0.15
+      }
+    ]
+  }
+}
