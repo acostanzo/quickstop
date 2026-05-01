@@ -126,15 +126,29 @@ Phase 2: Analyzing plugin against expert knowledge...
 
 ## Phase 2: Audit
 
-Dispatch **4 audit agents in parallel** using the Task tool. Each receives Expert Context plus its relevant file slice.
+### Step 1: Sibling Detection
 
-### Build Agent Prompts
+Before dispatching any audit agents, determine whether the plugin is a pronto sibling. Either of the following paths marks it as a sibling:
+
+**Path 1 — contract-native:** Read `plugins/<name>/.claude-plugin/plugin.json`. Check whether a `pronto` key exists at the top level.
+
+**Path 2 — registry:** Read `plugins/pronto/references/recommendations.json`. Check whether `<name>` appears as a `recommended_plugin` value for any dimension entry.
+
+Record which path(s) matched: `pronto-block`, `registry-only`, `both`, or `none`.
+
+### Step 2: Build Agent Prompts
 
 Read all plugin files before dispatching. Each agent needs:
 1. The full Expert Context from Phase 1
 2. Its specific file contents (read and include them in the prompt)
 
-### Dispatch All Four Simultaneously
+### Step 3: Dispatch Audit Agents
+
+**Non-sibling (detection = none):** dispatch 5 agents in parallel — the existing 4 plus `audit-boundary`.
+
+**Sibling (detection = pronto-block / registry-only / both):** dispatch 6 agents in parallel — the existing 4 plus `audit-boundary` plus `audit-pronto`.
+
+Dispatch all applicable agents simultaneously in a single message.
 
 **audit-structure:**
 - `description`: "Audit plugin structure"
@@ -155,6 +169,16 @@ Read all plugin files before dispatching. Each agent needs:
 - `description`: "Audit design quality"
 - `subagent_type`: "audit-design"
 - `prompt`: Include Expert Context + contents of all plugin files (skills, agents, hooks). The agent assesses over-engineering, hook quality, and design patterns.
+
+**audit-boundary (always):**
+- `description`: "Audit ADR-006 boundary compliance"
+- `subagent_type`: "audit-boundary"
+- `prompt`: Include Expert Context + plugin name and root path (`plugins/<name>/`). The agent audits §1 surface declaration, §2 silent consumer-artefact mutation, §3 hook invariants, and manifest/script drift.
+
+**audit-pronto (sibling only):**
+- `description`: "Audit pronto sibling compliance"
+- `subagent_type`: "audit-pronto"
+- `prompt`: Include Expert Context + plugin name + `detection: <pronto-block|registry-only|both>`. The agent audits pronto block, `:audit` skill, wire contract emission, parser agent state, and version handshake hygiene.
 
 ---
 
