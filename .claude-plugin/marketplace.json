@@ -102,6 +102,19 @@
         "sibling",
         "pronto"
       ]
+    },
+    {
+      "name": "inkwell",
+      "version": "0.1.0",
+      "description": "Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.",
+      "source": "./plugins/inkwell",
+      "keywords": [
+        "documentation",
+        "code-documentation",
+        "audit",
+        "sibling",
+        "pronto"
+      ]
     }
   ]
 }
