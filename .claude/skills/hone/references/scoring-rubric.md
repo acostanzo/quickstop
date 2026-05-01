@@ -4,18 +4,21 @@
 
 Each category starts at a base score of **100** and has deductions applied for issues found. Bonuses are awarded for quality that goes beyond baseline. The overall quality score is a weighted average of all categories.
 
-## Categories & Weights
+## Categories & Shares
 
-| Category | Weight | What It Measures |
-|----------|--------|------------------|
-| Skill Quality | 20% | Frontmatter, instructions, phases, argument handling |
-| Structure Compliance | 15% | Directory layout, required files, naming conventions |
-| Agent Quality | 15% | Frontmatter, tool lists, model selection, instruction clarity |
-| Metadata Quality | 10% | plugin.json, marketplace.json, version consistency |
-| Hook Quality | 10% | Event types, timeouts, matchers, no duplication |
-| Documentation | 10% | README quality, inline docs, usage examples |
-| Over-Engineering | 10% | Agent sprawl, verbose instructions, unnecessary complexity |
-| Security | 10% | Secrets scan, tool restrictions, permission scope |
+Shares are stored here; effective weights are computed at scoring time via share-based renormalization (see Scoring Algorithm). Non-sibling total share = 100 (Pronto Compliance excluded). Sibling total share = 110 (Pronto Compliance included).
+
+| Category | Share | What It Measures |
+|----------|-------|------------------|
+| Skill Quality | 20 | Frontmatter, instructions, phases, argument handling |
+| Structure Compliance | 15 | Directory layout, required files, naming conventions |
+| Agent Quality | 15 | Frontmatter, tool lists, model selection, instruction clarity |
+| Metadata Quality | 10 | plugin.json, marketplace.json, version consistency |
+| Hook Quality | 10 | Event types, timeouts, matchers, no duplication, ADR-006 §3 |
+| Documentation | 10 | README quality, inline docs, usage examples, ADR-006 §1 |
+| Over-Engineering | 10 | Agent sprawl, verbose instructions, unnecessary complexity |
+| Security | 10 | Secrets scan, tool restrictions, permission scope, ADR-006 §2 |
+| Pronto Compliance | 10 | Sibling-shape compliance — ADR-004/005 wire contract, :audit skill (sibling-only) |
 
 ## Grade Thresholds
 
@@ -154,7 +157,7 @@ Category Name        ███████████████████�
 
 ## Category: Hook Quality (10%)
 
-**What:** Hook definitions — event types, timeouts, matchers, no duplication of built-in behavior.
+**What:** Hook definitions — event types, timeouts, matchers, no duplication of built-in behavior, ADR-006 §3 invariants.
 
 ### Deductions
 
@@ -169,6 +172,17 @@ Category Name        ███████████████████�
 | Hook command not found | -15 | Command binary doesn't exist |
 | No hooks when plugin has complex behavior | -5 | May benefit from hooks |
 
+#### ADR-006 §3 Hook Invariant Deductions
+
+| Issue | Points | Severity | Description |
+|-------|--------|----------|-------------|
+| Hook returns `updatedInput`, `updatedOutput`, `decision`, `behavior`, or `permissionDecision` | -25 each (max -50) | Critical | ADR-006 §3 invariant 1 — payload/flow mutation |
+| Hook installs persistent host state (`npm install`, `brew install`, `pip install`, `cargo install`, `go install`, `systemctl enable`, `launchctl load`, `sudo`) | -15 each (max -30) | High | ADR-006 §3 invariant 2 |
+| Hook writes to Tier 1 literal paths (`/etc/`, `/usr/local/`, `~/.bashrc`, `~/.zshrc`, `~/.gitconfig`, `~/.profile`) | -15 each (max -30) | High | ADR-006 §3 invariant 3 — undeclared write |
+| `hooks/hooks.json` declares an event with no corresponding script | -5 each | Low | Manifest drift |
+
+ADR-006 §3 deductions stack with existing Hook Quality deductions. Category score is floored at 0 after stacking.
+
 ### Bonuses
 
 | Optimization | Points | Description |
@@ -177,11 +191,11 @@ Category Name        ███████████████████�
 | Precise matchers | +5 | Narrow, well-targeted matchers |
 | Hooks serve unique purposes | +5 | No overlap with built-in behavior |
 
-**No hooks = neutral (100):** If a plugin has no hooks and doesn't need them, score stays at 100. Deduction for "No hooks when plugin has complex behavior" only applies when hooks would clearly add value.
+**No hooks = neutral (100):** If a plugin has no hooks and doesn't need them, score stays at 100. ADR-006 §3 deductions and manifest-drift deduction are skipped when no `hooks/` directory is present.
 
 ## Category: Documentation (10%)
 
-**What:** README quality, usage examples, installation instructions.
+**What:** README quality, usage examples, installation instructions, ADR-006 §1 surface declaration.
 
 ### Deductions
 
@@ -194,6 +208,13 @@ Category Name        ███████████████████�
 | No command/skill listing | -10 | What commands are available? |
 | Stale version in README | -10 | Doesn't match plugin.json |
 | README > 500 lines | -5 | Over-documented |
+
+#### ADR-006 §1 Surface Declaration Deductions
+
+| Issue | Points | Severity | Description |
+|-------|--------|----------|-------------|
+| README missing "Plugin surface" section | -5 | Low | ADR-006 §1 — capability enumeration |
+| Hooks declared in `hooks/hooks.json` but absent from README's surface enumeration | -5 each (max -15) | Low | ADR-006 §1 visibility |
 
 ### Bonuses
 
@@ -231,7 +252,7 @@ Category Name        ███████████████████�
 
 ## Category: Security (10%)
 
-**What:** Secrets in files, tool restrictions, permission scope.
+**What:** Secrets in files, tool restrictions, permission scope, ADR-006 §2 silent consumer-artefact mutation.
 
 ### Deductions
 
@@ -244,6 +265,19 @@ Category Name        ███████████████████�
 | Environment variables with secrets in hooks | -10 | Secrets in hook commands |
 | Write/Edit tools on agents that should be read-only | -10 | Audit agents shouldn't modify files |
 
+#### ADR-006 §2 Consumer-Artefact Mutation Deductions
+
+These deductions apply to **Scope A (automatic execution paths)** only. Scope B matches (user-invoked skills) are informational — no deduction.
+
+| Issue | Points | Severity | Description |
+|-------|--------|----------|-------------|
+| Plugin code (Scope A) calls `gh pr edit --body-file/-F/-B` | -25 each | Critical | ADR-006 §2 — silent PR-body mutation |
+| Plugin code (Scope A) calls `git config --global` | -25 each | Critical | ADR-006 §2 — consumer config mutation |
+| Plugin code (Scope A) calls `gh repo edit` | -25 each | Critical | ADR-006 §2 — consumer repo mutation |
+| Plugin code (Scope A) calls `gh release create` or `gh release edit` | -25 each | Critical | ADR-006 §2 — consumer release mutation |
+
+False-positive guard: matches inside README fenced code blocks (documented examples) are noted but never deducted.
+
 ### Bonuses
 
 | Optimization | Points | Description |
@@ -252,18 +286,81 @@ Category Name        ███████████████████�
 | Appropriate tool restrictions | +5 | Each agent has minimal needed tools |
 | Read-only audit agents | +5 | Audit agents can't modify files |
 
+## Category: Pronto Compliance (share: 10, sibling-only)
+
+**What:** Sibling-shape compliance with ADR-004 / ADR-005 — wire contract, `:audit` skill, parser agent state, version handshake.
+
+**When applicable:** Plugin is detected as a sibling (pronto block in `plugin.json` OR listed as `recommended_plugin` in `recommendations.json`). Non-sibling plugins skip this category entirely — it does not score 100 neutral; it is excluded from the rubric for those plugins.
+
+Findings come from `audit-pronto`. Source: `audit-pronto`.
+
+### Deductions
+
+| Issue | Points | Description |
+|-------|--------|-------------|
+| Missing `compatible_pronto` | -20 | ADR-004 §2 soft finding |
+| Missing `audits[]` | -30 | No rubric participation declaration |
+| Off-canonical dimension | -15 each | Dimension not in `recommendations.json` |
+| Missing `skills/audit/SKILL.md` | -25 | Step-1 discovery broken |
+| `:audit` frontmatter incomplete | -5 each (max -15) | Missing required field (name, disable-model-invocation, argument-hint) |
+| `$ARGUMENTS` not parsed | -10 | Skill ignores invocation flags (presence-gated: skip if audit skill absent) |
+| stdout contains human-readable text | -15 | Wire contract violation (presence-gated: skip if audit skill absent) |
+| No `$schema_version: 2` marker | -10 | Pre-H3 emission (presence-gated: skip if audit skill absent) |
+| No `observations[]` emission | -15 | Legacy `score`-only emission (presence-gated: skip if audit skill absent) |
+| Hardcoded `composite_score` | -10 | Should be null or computed (presence-gated: skip if audit skill absent) |
+| Parser agent not deprecated when step-1 active | -5 | Discovery ambiguity |
+| `compatible_pronto` floor >2 minor versions stale | -10 | Skew risk |
+
+**Presence-gated deductions:** When `skills/audit/SKILL.md` is absent (the -25 deduction fires), deductions that check the skill body (`$ARGUMENTS` not parsed, stdout mix, `$schema_version`, `observations[]`, `composite_score`) are **not stacked** — the missing-skill finding subsumes them.
+
+### Bonuses
+
+| Optimization | Points | Description |
+|-------------|--------|-------------|
+| Clean wire-contract emission | +10 | All schema-2 fields emitted correctly |
+| `:doctor` skill present | +5 | Optional self-health surface |
+| All audit dimensions in canonical list | +5 | Plays well with the registry |
+
+## Categories Reference Table
+
+| Category | Share | Effective weight (sibling) | Effective weight (non-sibling) |
+|----------|-------|----------------------------|-------------------------------|
+| Skill Quality | 20 | 18.2% | 20% |
+| Structure Compliance | 15 | 13.6% | 15% |
+| Agent Quality | 15 | 13.6% | 15% |
+| Metadata Quality | 10 | 9.1% | 10% |
+| Hook Quality | 10 | 9.1% | 10% |
+| Documentation | 10 | 9.1% | 10% |
+| Over-Engineering | 10 | 9.1% | 10% |
+| Security | 10 | 9.1% | 10% |
+| **Pronto Compliance** | **10** | **9.1%** | — (excluded) |
+| **Total** | **110 / 100** | **100%** | **100%** |
+
 ## Scoring Algorithm
 
 ```
-For each category:
+For each applicable category:
   1. Start at 100
   2. Apply all matching deductions (sum cannot go below 0)
   3. Apply all matching bonuses (sum cannot exceed 100)
   4. category_score = max(0, min(100, 100 - deductions + bonuses))
 
-Overall score:
-  weighted_sum = sum(category_score * category_weight for all categories)
+Overall score (share-based renormalization):
+  total_share = sum(share_i for all applicable categories)
+  effective_weight_i = share_i / total_share
+  overall = sum(category_score_i * effective_weight_i for all applicable categories)
   overall_grade = lookup grade threshold table
+
+where applicable categories are:
+  - all 9 (including Pronto Compliance, total_share = 110) when sibling detected
+  - the original 8 (excluding Pronto Compliance, total_share = 100) when non-sibling
+
+For non-sibling plugins total_share = 100, so effective_weight_i = share_i / 100,
+which is identical to today's weights. Non-sibling scoring is byte-equivalent.
+
+For sibling plugins total_share = 110, so each effective_weight = share_i / 110 —
+approximately 9% less than its original percentage, with Pronto Compliance filling
+the slack.
 ```
 
 ## Report Format
@@ -282,7 +379,10 @@ Hook Quality         ███████████████████�
 Documentation        ████████████████████░░░░░  XX/100  X
 Over-Engineering     ████████████████████░░░░░  XX/100  X
 Security             ████████████████████░░░░░  XX/100  X
+[Pronto Compliance   ████████████████████░░░░░  XX/100  X  ← sibling plugins only]
 ```
+
+Show 8 bars for non-sibling plugins; 9 bars (Pronto Compliance appended at bottom) for sibling plugins.
 
 ## Recommendation Ranking
 
