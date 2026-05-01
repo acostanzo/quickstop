@@ -1,0 +1,10 @@
+[package]
+name = "fixture-rust"
+version = "0.1.0"
+edition = "2021"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = "warn"
