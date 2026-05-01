@@ -80,6 +80,45 @@ linters:
 
 `golangci-lint run` in CI; `gofmt -w .` locally.
 
+### Ruby
+
+```yaml
+# .rubocop.yml
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Layout/LineLength:
+  Max: 120
+
+Lint/MissingSuper:
+  Enabled: true
+
+Metrics/MethodLength:
+  Max: 20
+
+Naming/AccessorMethodName:
+  Enabled: true
+```
+
+Run `rubocop --autocorrect` in CI and locally — rubocop's
+autocorrect is the dominant convention; a separate formatter is
+unusual.
+
+Standardrb is the opinionated alternative — `standardrb` wraps
+rubocop with a fixed config so there are no rule-by-rule debates:
+
+```yaml
+# standard.yml
+ruby_version: 3.3
+fix: true
+```
+
+Either path counts as configured. Pick one.
+
 ## Editor / pre-commit hookup
 
 ```yaml
@@ -87,7 +126,7 @@ linters:
 pre-commit:
   commands:
     format:
-      glob: "*.{py,ts,tsx,rs,go}"
+      glob: "*.{py,ts,tsx,rs,go,rb}"
       run: <formatter> {staged_files}
 ```
 
@@ -108,7 +147,7 @@ pre-commit:
 
 ## Presence check pronto uses
 
-Pronto's kernel presence check for this dimension passes if any of these exist: `.eslintrc*`, `.prettierrc*`, `pyproject.toml` containing a `[tool.*]` lint block, `.flake8`, `rustfmt.toml`, `Cargo.toml` containing `[lints]`, `.golangci.yml`, `biome.json`, `dprint.json`. Presence-cap is 50 until a depth auditor runs.
+Pronto's kernel presence check for this dimension passes if any of these exist: `.eslintrc*`, `.prettierrc*`, `pyproject.toml` containing a `[tool.*]` lint block, `.flake8`, `rustfmt.toml`, `Cargo.toml` containing `[lints]`, `.golangci.yml`, `biome.json`, `dprint.json`, `.rubocop.yml`, `Gemfile`, `standard.yml`. Presence-cap is 50 until a depth auditor runs.
 
 ## Concrete first step
 

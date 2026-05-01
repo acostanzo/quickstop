@@ -70,7 +70,7 @@ The kernel presence checks are deliberately **coarse** — they answer "does the
 | `skills-quality` | At least one `SKILL.md` under `.claude/skills/*/SKILL.md` OR `plugins/*/skills/*/SKILL.md` OR `~/.claude/skills/*/SKILL.md` (scoped to project if in a project) |
 | `commit-hygiene` | The 20 most-recent commits are ≥80% conventional-commit-shaped (`^(feat\|fix\|chore\|docs\|refactor\|test\|perf\|build\|ci\|style)(\(.+\))?!?:`) |
 | `code-documentation` | `README.md` exists at repo root and is >=10 lines non-whitespace |
-| `lint-posture` | Any of: `.eslintrc*`, `.prettierrc*`, `pyproject.toml` (containing `[tool.ruff]` or `[tool.black]` or `[tool.flake8]`), `.flake8`, `rustfmt.toml`, `Cargo.toml` containing `[lints]`, `.golangci.yml`, `biome.json`, `dprint.json` |
+| `lint-posture` | Any of: `.eslintrc*`, `.prettierrc*`, `pyproject.toml` (containing `[tool.ruff]` or `[tool.black]` or `[tool.flake8]`), `.flake8`, `rustfmt.toml`, `Cargo.toml` containing `[lints]`, `.golangci.yml`, `biome.json`, `dprint.json`, `.rubocop.yml`, `Gemfile`, `standard.yml` |
 | `event-emission` | grep for any of: `opentelemetry`, `OTEL_`, `tracer`, `metric`, `event_bus`, `eventbus`, `emit(`, `structlog`, `pino`, `winston`, `logrus` in source files |
 | `agents-md` | `AGENTS.md` exists at repo root and is >=5 lines non-whitespace |
 | `project-record` | `project/` directory exists AND contains all of: `plans/`, `tickets/`, `adrs/`, `pulse/` |
