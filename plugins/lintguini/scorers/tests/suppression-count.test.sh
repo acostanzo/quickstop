@@ -75,6 +75,23 @@ assert_eq "go language"     "go" "$(echo "$out" | jq -r .evidence.language)"
 assert_eq "go suppressions" "1"  "$(echo "$out" | jq -r .evidence.suppressions)"
 assert_eq "go scanned"      "2"  "$(echo "$out" | jq -r .evidence.files_scanned)"
 
+# ruby-clean: 2 .rb files, zero markers → emit count=0
+out=$(triple_run "$FIXTURES/ruby-clean")
+assert_eq "ruby-clean language"     "ruby" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ruby-clean suppressions" "0"    "$(echo "$out" | jq -r .evidence.suppressions)"
+assert_eq "ruby-clean scanned"      "2"    "$(echo "$out" | jq -r .evidence.files_scanned)"
+
+# ruby-noisy: 4 .rb files with mix of marker shapes
+#   a.rb: 4 # rubocop:disable openers (3 inline + 1 block-start)
+#   b.rb: 6 # rubocop:todo markers
+#   c.rb: 6 # standard:disable markers
+#   d.rb: 6 # rubocop:disable Layout/* inline markers
+# Total: 22 markers across 4 files
+out=$(triple_run "$FIXTURES/ruby-noisy")
+assert_eq "ruby-noisy language"     "ruby" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ruby-noisy suppressions" "22"   "$(echo "$out" | jq -r .evidence.suppressions)"
+assert_eq "ruby-noisy scanned"      "4"    "$(echo "$out" | jq -r .evidence.files_scanned)"
+
 # empty: no language → omit
 out=$(triple_run "$FIXTURES/empty")
 assert_eq "empty no output" "" "$out"

@@ -214,6 +214,26 @@ case "$LANG_DETECTED" in
       ' "$GLF")
     fi
     ;;
+  ruby)
+    # Baseline: 5 cop departments (Style, Layout, Lint, Metrics,
+    # Naming). standardrb is opinionated — its presence pins to the
+    # baseline by convention (the whole point of standardrb is no
+    # rule-by-rule debates).
+    BASELINE=5
+    if [[ -f "$REPO_ROOT/standard.yml" ]]; then
+      CONFIGURED=5
+    elif [[ -f "$REPO_ROOT/.rubocop.yml" ]]; then
+      # Count distinct department prefixes mentioned in the local
+      # config. Departments outside the canonical 5 (Bundler, Gemspec,
+      # Security, Performance, Rails, etc.) don't count toward the
+      # strict-baseline of 5 — they're domain-specific add-ons rather
+      # than the universal-codebase strictness signal.
+      CONFIGURED=$(grep -oE '^(Style|Layout|Lint|Metrics|Naming)/' \
+                     "$REPO_ROOT/.rubocop.yml" 2>/dev/null \
+                     | sort -u | wc -l | tr -d ' ')
+      CONFIGURED=${CONFIGURED:-0}
+    fi
+    ;;
 esac
 
 # Empty-scope short-circuit: language detected but no linter config → omit.

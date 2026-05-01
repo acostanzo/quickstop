@@ -49,7 +49,7 @@ fi
 # by tool name so additions are easy to audit. Word-boundary semantics
 # are approximated by leading whitespace / line-start and trailing
 # whitespace / EOL — `grep -iE` against shell-y CI YAML.
-LINT_RE='(^|[[:space:]])(black([[:space:]]|--check)|biome[[:space:]]+(check|format|lint)|cargo[[:space:]]+(fmt|clippy)|clippy|eslint([[:space:]]|$)|flake8|gofmt|golangci-lint|prettier([[:space:]]|--check|--write)|ruff[[:space:]]+(check|format))'
+LINT_RE='(^|[[:space:]])(black([[:space:]]|--check)|biome[[:space:]]+(check|format|lint)|cargo[[:space:]]+(fmt|clippy)|clippy|eslint([[:space:]]|$)|flake8|gofmt|golangci-lint|prettier([[:space:]]|--check|--write)|rubocop([[:space:]]|--|$)|ruff[[:space:]]+(check|format)|standardrb([[:space:]]|--|$))'
 
 # Collect surfaces deterministically: sorted file list.
 SURFACES_FILE="$(mktemp -t lintguini-ci-surfaces.XXXXXX)"
