@@ -56,6 +56,23 @@ assert_eq "js-biome configured"  "1"          "$(echo "$out" | jq -r .evidence.c
 assert_eq "js-biome baseline"    "1"          "$(echo "$out" | jq -r .evidence.baseline_rules)"
 assert_eq "js-biome ratio"       "1.0000"     "$(echo "$out" | jq -r .evidence.ratio)"
 
+# ---- ts-strict: tsconfig.json (strict bundle + noUncheckedIndexedAccess)
+#                 + eslint.config.js (with @typescript-eslint plugin) → 6/6
+# strict-bundle = 4 strict-flags (capped at 4); + 1 @typescript-eslint plugin
+# + 1 eslint config detected via the JS_BASE branch.
+out=$(triple_run "$FIXTURES/ts-strict")
+assert_eq "ts-strict language"    "typescript" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ts-strict configured"  "6"          "$(echo "$out" | jq -r .evidence.configured_rules)"
+assert_eq "ts-strict baseline"    "6"          "$(echo "$out" | jq -r .evidence.baseline_rules)"
+assert_eq "ts-strict ratio"       "1.0000"     "$(echo "$out" | jq -r .evidence.ratio)"
+
+# ---- ts-loose: tsconfig.json with one strict flag, no eslint, no biome → 1/6
+out=$(triple_run "$FIXTURES/ts-loose")
+assert_eq "ts-loose language"    "typescript" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ts-loose configured"  "1"          "$(echo "$out" | jq -r .evidence.configured_rules)"
+assert_eq "ts-loose baseline"    "6"          "$(echo "$out" | jq -r .evidence.baseline_rules)"
+assert_eq "ts-loose ratio"       "0.1667"     "$(echo "$out" | jq -r .evidence.ratio)"
+
 # ---- rust: Cargo.toml with [lints.rust] + [lints.clippy] each one entry → 2/2
 out=$(triple_run "$FIXTURES/rust")
 assert_eq "rust language"   "rust"   "$(echo "$out" | jq -r .evidence.language)"

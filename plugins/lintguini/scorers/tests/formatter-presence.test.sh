@@ -55,6 +55,17 @@ assert_eq "js-prettier configured" "1" "$(echo "$out" | jq -r .evidence.configur
 out=$(triple_run "$FIXTURES/js-unformatted")
 assert_eq "js-unformatted configured" "0" "$(echo "$out" | jq -r .evidence.configured)"
 
+# ts-formatted: tsconfig.json + biome.json with formatter.enabled=true → configured=1
+# Verifies the JS/TS dispatch split surfaces language=typescript correctly.
+out=$(triple_run "$FIXTURES/ts-formatted")
+assert_eq "ts-formatted language"   "typescript" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ts-formatted configured" "1"          "$(echo "$out" | jq -r .evidence.configured)"
+
+# ts-unformatted: tsconfig.json + package.json (no biome, no prettier) → configured=0
+out=$(triple_run "$FIXTURES/ts-unformatted")
+assert_eq "ts-unformatted language"   "typescript" "$(echo "$out" | jq -r .evidence.language)"
+assert_eq "ts-unformatted configured" "0"          "$(echo "$out" | jq -r .evidence.configured)"
+
 # rust-formatted: rustfmt.toml present
 out=$(triple_run "$FIXTURES/rust-formatted")
 assert_eq "rust-formatted configured" "1" "$(echo "$out" | jq -r .evidence.configured)"
