@@ -395,11 +395,11 @@ If MCP was selected, create `plugins/<name>/.mcp.json`:
 Based on `LICENSE_CHOICE`:
 
 **MIT:**
-Create `plugins/<name>/LICENSE`:
+Create `plugins/<name>/LICENSE` (substitute `<YEAR>` with the output of `date +%Y` before writing):
 ```
 MIT License
 
-Copyright (c) 2026 Anthony Costanzo
+Copyright (c) <YEAR> Anthony Costanzo
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -423,10 +423,10 @@ No NOTICE file.
 
 **Apache-2.0:**
 Create `plugins/<name>/LICENSE` with the canonical Apache 2.0 text (the full unmodified license text from apache.org).
-Create `plugins/<name>/NOTICE`:
+Create `plugins/<name>/NOTICE` (substitute `<YEAR>` with the output of `date +%Y` before writing):
 ```
 <Name>
-Copyright (c) 2026 Anthony Costanzo
+Copyright (c) <YEAR> Anthony Costanzo
 
 This product includes software developed by Anthony Costanzo
 (https://github.com/acostanzo).
