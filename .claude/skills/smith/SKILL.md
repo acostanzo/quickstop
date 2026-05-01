@@ -573,11 +573,14 @@ Next steps:
   5. Test: claude --plugin-dir plugins/<name>
   6. Run ./scripts/check-plugin-versions.sh to verify versions
   7. Bump to v1.0.0 when ready for release
-  <if user mentioned hooks>
+=== END ===
+
+If the user mentioned hooks during the questions, append this note to the report:
+
   Note: hooks were mentioned during scaffolding but are not scaffolded.
         See ADR-006 §3 and towncrier bin/emit.sh for the by-hand pattern.
-  </if>
-=== END ===
+
+Otherwise omit the note entirely.
 ```
 
 ---
