@@ -91,7 +91,7 @@
     },
     {
       "name": "lintguini",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "description": "Audits lint-posture for Claude Code consumer repos: linter config strictness, formatter presence, CI lint enforcement, and rule-suppression count.",
       "source": "./plugins/lintguini",
       "keywords": [

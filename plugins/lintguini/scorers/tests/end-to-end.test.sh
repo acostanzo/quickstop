@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# end-to-end.test.sh — the lifted 2b1 deferred smoke, now exercising
-# all three first-class language paths shipped by 2b2.
+# end-to-end.test.sh — exercises lintguini's full audit pipeline
+# (orchestrator → translator) across the three first-class language
+# paths shipped by 2b2 + 2b3.
 #
 # Runs build-envelope.sh against three fixtures:
 #   - python-mid     (4 of 8 ruff rules + ruff format + wired CI + 2 # noqa)
@@ -10,17 +11,23 @@
 #                     wired CI + 2 @ts-ignore)
 #
 # Each envelope pipes through pronto's observations-to-score.sh helper
-# for the lint-posture dimension. The helper's output asserts:
+# for the lint-posture dimension. The helper applies the rubric stanza
+# (added in 2b3) and emits the dimension score. Asserts:
 #   - exits 0 (helper accepts the envelope shape)
-#   - passthrough_used: true (no rubric stanza for lint-posture yet —
-#     that lands in 2b3)
-#   - composite_score equals the envelope's composite_score (case-3
-#     passthrough behaviour)
+#   - passthrough_used: false (rubric stanza now present; case-3 only
+#     fires for empty observations[] which none of the mids have)
+#   - composite_score matches the predicted value from the calibration
+#     verification table in phase-2-2b3-lintguini-contract-fixtures.md
 #
-# Per-fixture composite_score is hard-asserted to lock the
-# transitional math (replaced in 2b3 by the rubric stanza). python-mid
-# is the regression bar — its 86 must hold across the JS/TS dispatch
-# split and the ruby branch addition.
+# Predicted composites (post-rubric-stanza):
+#   python-mid     -> 86 (50 + 100 + 100 + 95) / 4
+#   ruby-mid       -> 91 (70 + 100 + 100 + 95) / 4
+#   typescript-mid -> 81 (30 + 100 + 100 + 95) / 4
+#
+# These are the three rubric-derived composites — different from the
+# pre-2b3 transitional inline-math composites (86 / 89 / 82) because
+# the ladder is non-linear at the band boundaries. None cross a
+# letter-grade boundary on the calibration set.
 
 set -euo pipefail
 
@@ -65,13 +72,15 @@ run_fixture() {
   # Populated observations[]: 4 entries (linter, formatter, ci, suppression)
   assert_eq "$name observations count" "4" "$(echo "$envelope" | jq -r '.observations | length')"
 
-  # Hard-asserted composite (locks the transitional math)
-  local composite
-  composite=$(echo "$envelope" | jq -r '.composite_score')
-  assert_eq "$name composite_score" "$expected_composite" "$composite"
+  # composite_score in the envelope is null — the orchestrator delegates
+  # scoring to the rubric stanza. Asserting null here locks the
+  # post-2b3-excision contract; if the orchestrator ever re-introduces
+  # inline scoring math, this assertion catches it.
+  assert_eq "$name envelope composite_score" "null" "$(echo "$envelope" | jq -r '.composite_score')"
 
-  # Pipe through the pronto helper — case-3 passthrough (no rubric
-  # stanza for lint-posture yet) → passthrough_used: true.
+  # Pipe through the pronto helper. Rubric stanza is now in place, so
+  # case-3 passthrough does NOT fire — the helper computes the
+  # composite from observations[] against the lint-posture stanza.
   echo "$envelope" > "$ENV_FILE"
   local helper_out helper_exit
   helper_out="$("$HELPER" lint-posture "$ENV_FILE" 2>/dev/null)" && helper_exit=$? || helper_exit=$?
@@ -79,21 +88,20 @@ run_fixture() {
     echo "FAIL [$name helper exit]: expected 0, got $helper_exit" >&2
     fail=1
   fi
-  assert_eq "$name passthrough_used"  "true"       "$(echo "$helper_out" | jq -r .passthrough_used)"
-  assert_eq "$name helper composite"  "$composite" "$(echo "$helper_out" | jq -r .composite_score)"
+  assert_eq "$name passthrough_used" "false"               "$(echo "$helper_out" | jq -r .passthrough_used)"
+  assert_eq "$name helper composite" "$expected_composite" "$(echo "$helper_out" | jq -r .composite_score)"
 
-  echo "  $name: composite_score=$composite, passthrough_used=true"
+  echo "  $name: rubric composite_score=$expected_composite, passthrough_used=false"
 }
 
-# python-mid: regression bar. (50 + 100 + 100 + 95) / 4 = 86.
+# python-mid: ratio 0.50 -> band gte 0.40 = 50; (50 + 100 + 100 + 95) / 4 = 86.
 run_fixture python-mid     86
 
-# ruby-mid: 3/5 cop departments * 100 = 60, then (60 + 100 + 100 + 95) / 4 = 88.75 → 89.
-run_fixture ruby-mid       89
+# ruby-mid: ratio 0.60 -> band gte 0.60 = 70; (70 + 100 + 100 + 95) / 4 = 91.
+run_fixture ruby-mid       91
 
-# typescript-mid: 2/6 (1 strict-flag + 1 biome) * 100 ≈ 33.33,
-# then (33.33 + 100 + 100 + 95) / 4 ≈ 82.08 → 82.
-run_fixture typescript-mid 82
+# typescript-mid: ratio 0.33 -> else band 30; (30 + 100 + 100 + 95) / 4 = 81.
+run_fixture typescript-mid 81
 
 if (( fail == 0 )); then
   echo "end-to-end.test.sh: PASS (3 fixtures: python/ruby/typescript)"
