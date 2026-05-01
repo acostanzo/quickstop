@@ -25,8 +25,8 @@ This plugin audits the **Lint / format / language rules** dimension of pronto's 
 /lintguini:audit --json
 ```
 
-Emits a v2 wire-contract JSON envelope to stdout. The `data` field contains
-observations pronto's rubric translates into a dimension score.
+Emits a v2 wire-contract JSON envelope to stdout. The `observations[]` field
+carries entries pronto's rubric translates into a dimension score.
 
 ## Pronto handshake
 
