@@ -380,7 +380,16 @@ Unchanged — towncrier already ships MIT under
    towncrier on line 115.
 10. **`plugins/pronto/skills/status/SKILL.md`** — autopompa →
     towncrier on line 101.
-11. **`./scripts/check-plugin-versions.sh`** — run, must exit 0.
+11. **`plugins/pronto/.claude-plugin/plugin.json`** — patch bump
+    `version` to `0.4.1` for the references sweep above. Per the
+    PR #80 review resolution, the patch bump keeps the version-check
+    script exit 0 without claiming the rubric-stanza surface change
+    that drives the minor bump in 2c3.
+12. **`.claude-plugin/marketplace.json`** — match the pronto patch
+    bump per CLAUDE.md's marketplace-management rule.
+13. **Root README.md** — update the displayed pronto version to
+    v0.4.1 per CLAUDE.md's marketplace-management rule.
+14. **`./scripts/check-plugin-versions.sh`** — run, must exit 0.
 
 ## Acceptance
 
@@ -395,7 +404,12 @@ Unchanged — towncrier already ships MIT under
 - Towncrier version bumped to `0.2.0` consistently across
   `plugins/towncrier/.claude-plugin/plugin.json`,
   `.claude-plugin/marketplace.json`, and root `README.md`.
-  `./scripts/check-plugin-versions.sh` exits 0.
+- Pronto patch-bumped to `0.4.1` consistently across
+  `plugins/pronto/.claude-plugin/plugin.json`,
+  `.claude-plugin/marketplace.json`, and root `README.md` (covers
+  the references sweep — see Out of scope's Pronto version bump
+  bullet for the minor-vs-patch rationale).
+- `./scripts/check-plugin-versions.sh` exits 0.
 - README contains a "Plugin surface" section per ADR-006 §1
   enumerating skills, commands, agents, hooks (26 — listed in the
   existing "What it covers" section, referenced by count here),
@@ -427,8 +441,10 @@ Unchanged — towncrier already ships MIT under
   `plugins/commventional/`, `plugins/inkwell/`, `plugins/lintguini/`,
   or `plugins/avanti/` (verified via
   `git diff main..2c1-towncrier-audit-extension -- 'plugins/'`
-  showing only `plugins/towncrier/` and `plugins/pronto/references/`
-  + `plugins/pronto/skills/status/SKILL.md` paths).
+  showing only `plugins/towncrier/`, `plugins/pronto/references/`,
+  `plugins/pronto/skills/status/SKILL.md`, and
+  `plugins/pronto/.claude-plugin/plugin.json` paths — the last for
+  the patch bump only).
 
 ## Three load-bearing invariants
 
@@ -468,11 +484,24 @@ sweeps the references, 2c3 lights up the audit path.
   and `audit_command` and flip `plugin_status` to `shipped`. Filed
   as 2c3 — happens alongside the rubric stanza so the discovery
   path lights up atomically with the rubric translation rules.
-- **Pronto version bump.** Filed as 2c3 — minor bump alongside
-  the rubric stanza addition, mirroring 2a3 / 2b3 (lintguini's PR
-  bumped pronto to v0.3.0; inkwell's PR bumped pronto to v0.4.0).
-  Don't pin the value here — 2c3 reads the version-check
-  convention to determine it.
+- **Pronto *minor* version bump.** Filed as 2c3 — the minor bump
+  driven by the `event-emission` rubric stanza addition lands in
+  2c3, mirroring 2a3 / 2b3 (lintguini's PR bumped pronto to v0.3.0;
+  inkwell's PR bumped pronto to v0.4.0). Don't pin the value here —
+  2c3 reads the version-check convention to determine it.
+
+  A *patch* bump for the pronto-side autopompa references sweep
+  **does** land in 2c1 (`v0.4.0 → v0.4.1`) to keep
+  `./scripts/check-plugin-versions.sh` exit 0 — earlier drafts of
+  this ticket framed the pronto bump as wholly out of scope, which
+  conflicted with the script's mechanics (it flags any change under
+  `plugins/pronto/` other than `README.md`). Resolution per PR #80
+  review: a patch bump signals "we touched the references" without
+  claiming new translation-rules surface; the minor bump still
+  lands in 2c3 with the rubric stanza. Future siblings touching
+  pronto-side references in their scaffold/extension ticket follow
+  the same posture — patch bump in the references-touching PR,
+  minor bump deferred to the rubric-stanza PR.
 - **Transitional parser agent** under `plugins/towncrier/agents/`.
   Skipped per the rationale in the File tree section — new-pattern
   siblings built post-2a3/2b3 don't need a step-2 fallback file
