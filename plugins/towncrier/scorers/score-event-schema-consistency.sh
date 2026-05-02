@@ -125,7 +125,11 @@ if (( TOTAL_EVENTS == 0 )); then
   exit 0
 fi
 
-DISTINCT_SCHEMAS=$(sort -u "$SCHEMAS_FILE" | grep -c . 2>/dev/null || echo 0)
+# `grep -c .` prints "0" then exits 1 on empty input; using `|| echo 0`
+# would compound that with another "0", producing "0\n0" which
+# jq --argjson rejects. `wc -l` is the cleaner zero-safe count and
+# tr strips macOS's leading whitespace.
+DISTINCT_SCHEMAS=$(sort -u "$SCHEMAS_FILE" | wc -l | tr -d ' ')
 DISTINCT_SCHEMAS=${DISTINCT_SCHEMAS:-0}
 
 RATIO=$(format_ratio "$WELL_SHAPED" "$TOTAL_EVENTS")

@@ -42,6 +42,14 @@
 #   - configured == 1, metrics_sites == 0      -> emit (the
 #       "imported but unused" signal — infra exists but isn't used)
 #
+# Evidence shape: emits both `metrics_sites` (the canonical domain
+# field, kept for downstream introspection) and `count` (a duplicate
+# of `metrics_sites` consumed by the H4 translator's count-extractor).
+# The translator's lookup chain is `count` → `configured` → `value` →
+# first-numeric, and `configured` is a boolean we don't want
+# laddered, so the explicit `count` field disambiguates which integer
+# the rubric stanza scores against.
+#
 # Usage:
 #   score-metrics-presence.sh <REPO_ROOT>
 #
@@ -146,7 +154,8 @@ jq -nc \
     evidence: {
       language: $lang,
       configured: $configured,
-      metrics_sites: $sites
+      metrics_sites: $sites,
+      count: $sites
     },
     summary: $summary
   }'
