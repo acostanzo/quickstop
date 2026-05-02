@@ -48,7 +48,7 @@
     },
     {
       "name": "towncrier",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "description": "Emit a structured JSON event for every Claude Code hook to a configurable transport (file, fifo, or HTTP).",
       "source": "./plugins/towncrier",
       "keywords": [
