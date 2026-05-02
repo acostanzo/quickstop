@@ -65,11 +65,12 @@ case "$LANG_DETECTED" in
     if ! tool_available interrogate; then
       exit 0
     fi
-    # interrogate's default text output ends with a TOTAL row in a
-    # markdown-style table; --fail-under 0 keeps exit code at 0
-    # regardless of coverage. The TOTAL row format is:
+    # interrogate's verbose-level-1 output prints a Markdown summary
+    # table that ends with a TOTAL row; --fail-under 0 keeps exit
+    # code at 0 regardless of coverage. The TOTAL row format is:
     #   | TOTAL              | <total> | <miss> | <pct>% |
-    OUT=$(interrogate -q --fail-under 0 "$REPO_ROOT" 2>&1 || true)
+    # `-v` (not `-q`) is required — `-q` suppresses all output.
+    OUT=$(interrogate -v --fail-under 0 "$REPO_ROOT" 2>&1 || true)
     TOTAL_ROW=$(echo "$OUT" | grep -E '\| *TOTAL *\|' | tail -1)
     if [[ -n "$TOTAL_ROW" ]]; then
       # Extract the three numeric columns by splitting on `|`.
