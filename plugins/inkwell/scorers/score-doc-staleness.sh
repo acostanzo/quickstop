@@ -97,10 +97,14 @@ fi
 SRC_LIST="$(mktemp -t inkwell-doc-staleness.XXXXXX)"
 trap 'rm -f "$SRC_LIST"' EXIT
 
+# `grep -E '...' || true` — grep returns exit 1 when there are no
+# matches, which under `set -o pipefail` would propagate up and trip
+# `set -e`. The empty-result is a normal outcome (repo with no source
+# files in scope), not a scorer error.
 {
   git -C "$REPO_ROOT" ls-files src/ lib/ 2>/dev/null
-  git -C "$REPO_ROOT" ls-files 2>/dev/null | grep -vE '/'
-} | grep -E '\.(py|js|jsx|ts|tsx|mjs|cjs|go|rs)$' \
+  git -C "$REPO_ROOT" ls-files 2>/dev/null | { grep -vE '/' || true; }
+} | { grep -E '\.(py|js|jsx|ts|tsx|mjs|cjs|go|rs)$' || true; } \
   | sort -u > "$SRC_LIST"
 
 TOTAL=$(wc -l < "$SRC_LIST" | tr -d ' ')
