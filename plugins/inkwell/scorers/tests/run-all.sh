@@ -27,6 +27,16 @@ do
   fi
 done
 
+# End-to-end snapshots regression — different fixture tree
+# (plugins/inkwell/tests/fixtures/) because the staleness scorer
+# requires real git history that the per-scorer fixtures don't carry.
+SNAPSHOTS="$HERE/../../tests/fixtures/snapshots.test.sh"
+if [[ -x "$SNAPSHOTS" ]]; then
+  if ! bash "$SNAPSHOTS"; then
+    fail=1
+  fi
+fi
+
 if (( fail == 0 )); then
   echo "run-all.sh: ALL PASS"
   exit 0
