@@ -1,0 +1,55 @@
+{
+  "$schema_version": 2,
+  "plugin": "towncrier",
+  "dimension": "event-emission",
+  "categories": [],
+  "observations": [
+    {
+      "id": "structured-logging-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "python",
+        "structured_sites": 2,
+        "total_sites": 10,
+        "ratio": 0.2000
+      },
+      "summary": "2/10 emission sites use a structured logger (python)"
+    },
+    {
+      "id": "metrics-instrumentation-count",
+      "kind": "count",
+      "evidence": {
+        "language": "python",
+        "configured": 1,
+        "metrics_sites": 0,
+        "count": 0
+      },
+      "summary": "0 metrics-defining call sites (python, library imported but unused)"
+    },
+    {
+      "id": "trace-propagation-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "python",
+        "handlers_with_trace": 0,
+        "handlers_total": 3,
+        "ratio": 0.0000
+      },
+      "summary": "0/3 request-handler files reference trace context (python)"
+    },
+    {
+      "id": "event-schema-consistency-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "python",
+        "well_shaped_events": 0,
+        "total_events": 2,
+        "ratio": 0.0000,
+        "distinct_schemas": 0
+      },
+      "summary": "0/2 structured emissions carry an event-anchor field (python; 0 distinct schemas)"
+    }
+  ],
+  "composite_score": null,
+  "recommendations": []
+}
