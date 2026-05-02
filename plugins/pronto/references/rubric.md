@@ -13,7 +13,7 @@ Total weight = 100. Weights are tunable but must sum to 100.
 | Commit + review hygiene | `commit-hygiene` | 15 | `commventional` | Recent commits follow conventional-commit pattern | Shipped |
 | Code documentation | `code-documentation` | 15 | `inkwell` | README arrival coverage + docs coverage + staleness + link health | Shipped |
 | Lint / format / language rules | `lint-posture` | 15 | `lintguini` | Linter strictness + formatter presence + CI lint wiring + suppression count | Shipped |
-| Event emission | `event-emission` | 5 | `towncrier` | Observability instrumentation detected (e.g. OpenTelemetry config, event-bus references, structured logging setup) | Phase 2+ |
+| Event emission | `event-emission` | 5 | `towncrier` | Structured logging ratio + metrics instrumentation + trace propagation + event schema consistency | Shipped |
 | AGENTS.md scaffold | `agents-md` | 10 | `pronto` kernel | Non-empty `AGENTS.md` at repo root | Shipped (this plugin) |
 | Project record | `project-record` | 5 | `avanti` | `project/` directory with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse/`) | Phase 1b |
 
@@ -43,7 +43,7 @@ Dimension scores **0**. The recommended action is either to install the sibling 
 
 ### Dimensions whose recommended sibling isn't yet shipped
 
-`towncrier`'s `:audit` extension is Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below. `inkwell` shipped in Phase 2 PR 2a — see the `code-documentation` translation rules below.)
+`avanti` is Phase 1b. Until its sibling ships, the dimension scores under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below. `inkwell` shipped in Phase 2 PR 2a — see the `code-documentation` translation rules below. `towncrier`'s `:audit` extension shipped in Phase 2 PR 2c — see the `event-emission` translation rules below.)
 
 ## Letter grades
 
@@ -92,7 +92,7 @@ mechanical/judgment axis.
 | `commit-hygiene` | 15 | Deterministic shell scorer at `agents/parsers/scorers/score-commventional.sh` — `git log` regex match ratios plus trailer and auto-attribution counts. Conventional Comments defaults to 100 with a low-severity "no review signal" note; the audit stays network-free. | None. |
 | `code-documentation` | 15 | Sibling inkwell's `/inkwell:audit --json` emits a v2 wire-contract envelope with four observations (README arrival coverage, docs coverage, doc staleness, internal link health) consumed by the `code-documentation` translation rules below. | None. |
 | `lint-posture` | 15 | Sibling lintguini's `/lintguini:audit --json` emits a v2 wire-contract envelope with four observations (linter strictness, formatter presence, CI lint wiring, suppression count) consumed by the `lint-posture` translation rules below. | None. |
-| `event-emission` | 5 | Deterministic presence check via `skills/audit/presence-check.sh event-emission ${REPO_ROOT}` — `grep -rqE` with the documented pattern set and a fixed `--exclude-dir` list → 50 capped (sibling `towncrier`'s `:audit` extension not yet shipped). | None. |
+| `event-emission` | 5 | Sibling towncrier's `/towncrier:audit --json` emits a v2 wire-contract envelope with four observations (structured-logging ratio, metrics instrumentation count, trace-propagation ratio, event-schema-consistency ratio) consumed by the `event-emission` translation rules below. | None. |
 | `agents-md` | 10 | Kernel binary: `AGENTS.md` exists and ≥5 non-blank lines → 100, else 0. No presence cap — this dimension is always kernel-driven. | None. |
 | `project-record` | 5 | Avanti's native `/avanti:audit --json` (declared in `plugins/avanti/.claude-plugin/plugin.json`) returns a deterministic composite. Falls back to kernel binary (capped at 50) only if the avanti dispatch itself fails. | None. |
 
@@ -466,6 +466,77 @@ The bands are calibrated against the three-fixture set inkwell ships in 2a3 — 
 `default_rule: passthrough` — empty `observations[]` (every scorer empty-scoped: missing tools, no language detected, not a git repo) falls through to the envelope's `composite_score` (which is `null` post-2a3) and then to the kernel presence check. The case-3 carve-out the orchestrator depends on for empty-scope fixtures is preserved.
 
 `inkwell` emits these observation IDs natively from 2a2 onward; 2a3 wires the rubric stanza so the translator path drives the dimension score (see `phase-2-2a3-inkwell-contract-fixtures.md`).
+
+### `event-emission` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "structured-logging-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "metrics-instrumentation-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 10, "score": 100 },
+        { "gte": 3,  "score": 85  },
+        { "gte": 1,  "score": 70  },
+        { "else": 50 }
+      ]
+    },
+    {
+      "id": "trace-propagation-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "event-schema-consistency-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.95, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.30, "score": 50  },
+        { "else": 30 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
+The bands are calibrated against the three-fixture set towncrier ships in 2c3 — single-language python `low/mid/high`. Hand-walked verification table: python-low (0.20, 0/cfg=1, 0.00, 0.00) → 30/50/30/30 mean 35 (F); python-mid (0.83, 5, 0.67, 0.80) → 85/85/70/85 mean 81 (B); python-high (1.00, 12, 1.00, 1.00) → 100/100/100/100 mean 100 (A+).
+
+`structured-logging-ratio` mirrors the lintguini `linter-strictness-ratio` and inkwell `readme-arrival-coverage` shape — five-band ladder bottoming out at 30. The `gte 0.40 → 50` floor puts a half-structured codebase at presence-only territory; below 0.40 the codebase is free-form-dominant and lands at 30. The `gte 1.00 → 100` peak rewards an all-structured emission surface. The python-low fixture's 0.20 ratio (2 structlog calls vs 8 free-form `print()` calls) is exactly the bait-and-switch case the kernel presence check would otherwise inflate to a 50 cap on `structlog` import alone.
+
+`metrics-instrumentation-count` is anchored against `score-metrics-presence.sh`'s observation shape: the scorer emits an observation **only if** the language has at least a metrics library imported (`configured: 1`) or call sites detected. The `else 50` band catches the "library imported but zero sites" case (configured=1, metrics_sites=0) — half-credit for having the infra without using it. `gte 1 → 70` is the just-instrumented floor; `gte 3 → 85` is "instruments more than the obvious"; `gte 10 → 100` is "metrics-mature codebase". If neither library nor sites detected, the scorer empty-scopes upstream and the observation never reaches the rubric — the composite divisor drops to 3 rather than scoring 0. The scorer emits an explicit `evidence.count` field carrying `metrics_sites` so the translator's primary count-extractor (`evidence.count` precedes `evidence.configured` per the helper's lookup chain) lands on the laddered value rather than the boolean configured flag.
+
+`trace-propagation-ratio` mirrors the structured-logging ladder shape — same five-band ramp. A repo with one handler-shaped file fully instrumented = 1.00 → 100; a repo with half its handlers carrying trace context = 0.50 → 50 (presence-cap territory). The scorer's empty-scope rule (no handler-shaped files detected → observation omitted) means CLI tools and library packages aren't faulted for lacking trace propagation they wouldn't sensibly carry.
+
+`event-schema-consistency-ratio` uses a slightly different ladder (`gte 0.95` instead of `gte 1.00`) recognising that "every emission carries a domain anchor" is a steeper bar than "every emission is structured" — a few free-form structured emits are a normal gradient, not a binary failure mode. Anchored against `score-event-schema-consistency.sh`'s heuristic (well-shaped events / total events).
+
+`default_rule: passthrough` — empty `observations[]` (every scorer empty-scoped: language not detected, no emission sites, no handler-shaped files, no metrics infra) falls through to the envelope's `composite_score` (which is `null` post-2c3) and then to the kernel presence check. The case-3 carve-out the orchestrator depends on for empty-scope fixtures is preserved.
+
+`towncrier` emits these observation IDs natively from 2c2 onward; 2c3 wires the rubric stanza so the translator path drives the dimension score (see `phase-2-2c3-towncrier-contract-fixtures.md`).
 
 ## Extending the rubric
 
