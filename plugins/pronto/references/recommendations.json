@@ -61,9 +61,9 @@
       "dimension": "event-emission",
       "dimension_label": "Event emission",
       "recommended_plugin": "towncrier",
-      "plugin_status": "phase-2-plus",
-      "install_command": null,
-      "audit_command": null,
+      "plugin_status": "shipped",
+      "install_command": "/plugin install towncrier@quickstop",
+      "audit_command": "/towncrier:audit --json",
       "parser_agent": null,
       "roll_your_own_ref": "roll-your-own/event-emission.md",
       "presence_check": "Observability instrumentation grep matches"
