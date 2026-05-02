@@ -11,7 +11,7 @@ Total weight = 100. Weights are tunable but must sum to 100.
 | Claude Code config health | `claude-code-config` | 25 | `claudit` | `.claude/` exists | Shipped |
 | Skills quality | `skills-quality` | 10 | `skillet` | ≥1 skill exists under `.claude/skills/` or a plugin's `skills/` | Shipped |
 | Commit + review hygiene | `commit-hygiene` | 15 | `commventional` | Recent commits follow conventional-commit pattern | Shipped |
-| Code documentation | `code-documentation` | 15 | `inkwell` | README exists and is non-empty | Phase 2+ |
+| Code documentation | `code-documentation` | 15 | `inkwell` | README arrival coverage + docs coverage + staleness + link health | Shipped |
 | Lint / format / language rules | `lint-posture` | 15 | `lintguini` | Linter strictness + formatter presence + CI lint wiring + suppression count | Shipped |
 | Event emission | `event-emission` | 5 | `autopompa` | Observability instrumentation detected (e.g. OpenTelemetry config, event-bus references, structured logging setup) | Phase 2+ |
 | AGENTS.md scaffold | `agents-md` | 10 | `pronto` kernel | Non-empty `AGENTS.md` at repo root | Shipped (this plugin) |
@@ -43,7 +43,7 @@ Dimension scores **0**. The recommended action is either to install the sibling 
 
 ### Dimensions whose recommended sibling isn't yet shipped
 
-`inkwell`, `autopompa` are Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below.)
+`autopompa` is Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below. `inkwell` shipped in Phase 2 PR 2a — see the `code-documentation` translation rules below.)
 
 ## Letter grades
 
@@ -90,7 +90,7 @@ mechanical/judgment axis.
 | `claude-code-config` | 25 | Deterministic shell scorer at `agents/parsers/scorers/score-claudit.sh` — counts non-blank lines, regex matches, hook entries, MCP servers, broad allow-list globs, aggregate instruction lines, broken `@import`s. | None. |
 | `skills-quality` | 10 | Deterministic shell scorer at `agents/parsers/scorers/score-skillet.sh` — per-skill frontmatter field presence, line-count thresholds, `TODO` counts, stray-file counts, broken `references/` pointers. | None. |
 | `commit-hygiene` | 15 | Deterministic shell scorer at `agents/parsers/scorers/score-commventional.sh` — `git log` regex match ratios plus trailer and auto-attribution counts. Conventional Comments defaults to 100 with a low-severity "no review signal" note; the audit stays network-free. | None. |
-| `code-documentation` | 15 | Kernel presence check: `README` ≥10 non-blank lines → 50 capped (sibling `inkwell` not yet shipped). | None. |
+| `code-documentation` | 15 | Sibling inkwell's `/inkwell:audit --json` emits a v2 wire-contract envelope with four observations (README arrival coverage, docs coverage, doc staleness, internal link health) consumed by the `code-documentation` translation rules below. | None. |
 | `lint-posture` | 15 | Sibling lintguini's `/lintguini:audit --json` emits a v2 wire-contract envelope with four observations (linter strictness, formatter presence, CI lint wiring, suppression count) consumed by the `lint-posture` translation rules below. | None. |
 | `event-emission` | 5 | Deterministic presence check via `skills/audit/presence-check.sh event-emission ${REPO_ROOT}` — `grep -rqE` with the documented pattern set and a fixed `--exclude-dir` list → 50 capped (sibling `autopompa` not yet shipped). | None. |
 | `agents-md` | 10 | Kernel binary: `AGENTS.md` exists and ≥5 non-blank lines → 100, else 0. No presence cap — this dimension is always kernel-driven. | None. |
@@ -396,6 +396,76 @@ The bands are calibrated against the nine-fixture set lintguini ships in 2b3 —
 `default_rule: passthrough` — empty `observations[]` (every scorer empty-scoped) falls through to the envelope's `composite_score` (which is `null` post-2b3-excision) and then to the kernel presence check. The case-3 carve-out the orchestrator depends on for empty-scope fixtures is preserved.
 
 `lintguini` emits these observation IDs natively from 2b2 onward; 2b3 wires the rubric stanza so the translator path drives the dimension score and the orchestrator's transitional inline math is retired (see `phase-2-2b3-lintguini-contract-fixtures.md`).
+
+### `code-documentation` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "readme-arrival-coverage",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "docs-coverage-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.95, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.30, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "docs-staleness-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 30, "score": 30 },
+        { "gte": 10, "score": 60 },
+        { "gte": 3,  "score": 85 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "broken-internal-links-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 5, "score": 30 },
+        { "gte": 2, "score": 60 },
+        { "gte": 1, "score": 85 },
+        { "else": 100 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
+The bands are calibrated against the three-fixture set inkwell ships in 2a3 — `low/mid/high`. Hand-walked verification table: low (0.20, 0.067, 18, 4) → 30/30/60/60 mean 45 (F); mid (0.80, 0.720, 6, 1) → 85/70/85/85 mean 81 (B); high (1.00, 0.950, 0, 0) → 100/100/100/100 mean 100 (A+).
+
+`readme-arrival-coverage` mirrors `roll-your-own/code-documentation.md`'s five-question floor. The `gte 1.00 → 100` band rewards a fully-arrived README; the `gte 0.40 → 50` band caps a half-answered README at presence-only territory; below 0.40 the README is treated as missing-in-spirit and lands at 30. This shape echoes the lint-posture five-band ladder for `linter-strictness-ratio` — both ratios ask "what fraction of the baseline is met?" against a per-context yardstick.
+
+`docs-coverage-ratio` anchors at `interrogate`'s 80% gate default: `gte 0.80 → 85` puts the dominant Python convention at the high end of the rubric without claiming perfection. `gte 0.95 → 100` is reserved for projects that document close to every public API. The lower threshold (`gte 0.30 → 50`) is intentionally looser than the readme-arrival ladder because the "raw API count" denominator can be inflated by trivial helpers and dunder methods that the per-language tools don't filter — a 0.30 ratio still represents real coverage of the substantive surface, not vapor.
+
+`docs-staleness-count` is the novel signal — there's no upstream convention to anchor against, so the bands were fixture-led. A single-digit count of stale files is forgivable (`gte 3 → 85`); double digits is concerning (`gte 10 → 60`); triple digits is a documentation-rotted repo (`gte 30 → 30`). The `else 100` floor (zero stale files) is the only way to land in the A+ band on this observation.
+
+`broken-internal-links-count` mirrors the staleness shape: any broken link is a problem (`gte 1 → 85`) but isolated; multiple broken links is a maintenance signal (`gte 2 → 60`); five-plus is a rotted-tree signal (`gte 5 → 30`). lychee's typical false-positive rate against well-formed repos under `--offline` is near-zero, so band tightness is justified — every broken link is a real broken link.
+
+`default_rule: passthrough` — empty `observations[]` (every scorer empty-scoped: missing tools, no language detected, not a git repo) falls through to the envelope's `composite_score` (which is `null` post-2a3) and then to the kernel presence check. The case-3 carve-out the orchestrator depends on for empty-scope fixtures is preserved.
+
+`inkwell` emits these observation IDs natively from 2a2 onward; 2a3 wires the rubric stanza so the translator path drives the dimension score (see `phase-2-2a3-inkwell-contract-fixtures.md`).
 
 ## Extending the rubric
 
