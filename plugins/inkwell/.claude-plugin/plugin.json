@@ -1,6 +1,6 @@
 {
   "name": "inkwell",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.",
   "author": {
     "name": "Anthony Costanzo",
