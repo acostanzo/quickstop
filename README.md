@@ -93,12 +93,14 @@ Audits lint-posture for Claude Code consumer repos: linter config strictness, fo
 
 **Commands:** `/lintguini:audit`
 
-### Inkwell (v0.1.0)
+### Inkwell (v0.2.0)
 
 Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.
 
 - Pronto sibling — depth auditor for the `code-documentation` rubric dimension (weight 15)
-- 2a1 scaffold ships the structural slot — `:audit` skill emits an empty `observations[]` envelope today; the four deterministic shell scorers + rubric stanza + locked fixtures land in 2a2 / 2a3
+- Four deterministic shell scorers under `scorers/` — `score-readme-quality.sh` (arrival-question coverage), `score-link-health.sh` (lychee `--offline` over README + docs/), `score-doc-staleness.sh` (git-log mtimes vs threshold), `score-docs-coverage.sh` (per-language tool dispatch — interrogate / eslint-jsdoc / revive / cargo doc)
+- Tool-absent branches degrade gracefully — missing interrogate / lychee / revive / cargo omit the observation rather than fail the audit
+- `:audit` skill emits an empty `observations[]` envelope today; envelope wiring + rubric stanza + locked fixtures land in 2a3
 - Wire-contract v2 envelope on `/inkwell:audit --json` — observations consumed by pronto's rubric translator
 - Declares `compatible_pronto: ">=0.3.0"` per ADR-004 handshake
 
