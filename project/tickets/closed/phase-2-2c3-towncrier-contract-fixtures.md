@@ -1,7 +1,7 @@
 ---
 id: 2c3
 plan: phase-2-pronto
-status: open
+status: closed
 updated: 2026-05-02
 ---
 
