@@ -1,0 +1,51 @@
+{
+  "$schema_version": 2,
+  "plugin": "inkwell",
+  "dimension": "code-documentation",
+  "categories": [],
+  "observations": [
+    {
+      "id": "readme-arrival-coverage",
+      "kind": "ratio",
+      "evidence": {
+        "matched": 5,
+        "expected": 5,
+        "ratio": 1.0000
+      },
+      "summary": "5/5 README arrival questions covered"
+    },
+    {
+      "id": "docs-coverage-ratio",
+      "kind": "ratio",
+      "evidence": {
+        "language": "python",
+        "documented": 38,
+        "total": 40,
+        "ratio": 0.9500
+      },
+      "summary": "38/40 public python APIs documented"
+    },
+    {
+      "id": "docs-staleness-count",
+      "kind": "count",
+      "evidence": {
+        "stale_files": 0,
+        "threshold_days": 90,
+        "total_source_files": 20
+      },
+      "summary": "0/20 source files modified more than 90 days after last docs touch"
+    },
+    {
+      "id": "broken-internal-links-count",
+      "kind": "count",
+      "evidence": {
+        "broken": 0,
+        "scanned": 24,
+        "anchors_broken": 0
+      },
+      "summary": "0 broken internal link(s) + 0 broken anchor(s) across 24 scanned"
+    }
+  ],
+  "composite_score": null,
+  "recommendations": []
+}
