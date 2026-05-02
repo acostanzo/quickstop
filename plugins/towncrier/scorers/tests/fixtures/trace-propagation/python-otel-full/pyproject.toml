@@ -1,0 +1,3 @@
+[project]
+name = "otel-full-fixture"
+version = "0.0.1"
