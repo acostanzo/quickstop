@@ -2,7 +2,7 @@
 id: 2a3
 plan: phase-2-pronto
 status: open
-updated: 2026-04-28
+updated: 2026-05-02
 ---
 
 # 2a3 — Inkwell contract compliance + fixtures
@@ -27,9 +27,12 @@ ships the calibration artefacts:
   `plugins/inkwell/tests/fixtures/`, mirroring the M3-shaped
   pattern of locked envelopes per fixture.
 - Updates to `plugins/pronto/references/recommendations.json`
-  populating `install_command`, `audit_command`, and `parser_agent`
-  for the `code-documentation` row — flipping discovery from
-  step-2 (parser agent) to step-1 (canonical `:audit` skill).
+  populating `install_command` and `audit_command` for the
+  `code-documentation` row, flipping `plugin_status` from
+  `phase-2-plus` to `shipped`. `parser_agent` stays `null` for
+  new-pattern-sibling reasons documented in the "Discovery
+  posture" subsection below — discovery is step-1 only via the
+  canonical `:audit` skill.
 - An update to `rubric.md`'s `code-documentation` row (line 14 +
   the dimension-level notes) reflecting that the dimension is now
   parser-driven via inkwell rather than presence-cap-only.
@@ -38,43 +41,62 @@ ships the calibration artefacts:
 
 ### Audit envelope assembly
 
-`plugins/inkwell/skills/audit/SKILL.md` is updated to drive the
-four scorers and slot their JSON outputs into a single envelope:
+The envelope assembly is extracted into a dedicated orchestrator
+script `plugins/inkwell/bin/build-envelope.sh` (mirroring
+lintguini's 2b1/2b2/2b3 pattern). The script runs the four
+scorers in fixed order, slurps their non-empty stdouts into the
+envelope's `observations[]` array, and emits the v2 envelope on
+stdout.
 
 ```bash
-README_OBS=$(scorers/score-readme-quality.sh "$REPO_ROOT" 2>/dev/null || echo "")
-DOCS_OBS=$(scorers/score-docs-coverage.sh "$REPO_ROOT" 2>/dev/null || echo "")
-STALE_OBS=$(scorers/score-doc-staleness.sh "$REPO_ROOT" 2>/dev/null || echo "")
-LINKS_OBS=$(scorers/score-link-health.sh "$REPO_ROOT" 2>/dev/null || echo "")
+for scorer in \
+  score-readme-quality.sh \
+  score-docs-coverage.sh \
+  score-doc-staleness.sh \
+  score-link-health.sh
+do
+  out="$("$SCORERS_DIR/$scorer" "$REPO_ROOT")"
+  if [[ -n "$out" ]]; then
+    printf '%s\n' "$out" >> "$OBS_FILE"
+  fi
+done
 
-OBSERVATIONS=$(jq -n \
-  --argjson r "${README_OBS:-null}" \
-  --argjson d "${DOCS_OBS:-null}" \
-  --argjson s "${STALE_OBS:-null}" \
-  --argjson l "${LINKS_OBS:-null}" \
-  '[$r, $d, $s, $l] | map(select(. != null))')
-
-jq -n --argjson obs "$OBSERVATIONS" '{
+jq -s '{
   "$schema_version": 2,
   plugin: "inkwell",
   dimension: "code-documentation",
   categories: [],
-  observations: $obs,
+  observations: .,
   composite_score: null,
   recommendations: []
-}'
+}' "$OBS_FILE"
 ```
 
-Observations are kept as a filtered array — null entries from
-omitted scorers (tool absent, no scope) are dropped before
-assembly, so the envelope's `observations[]` only carries
-populated entries. Empty array is permitted and triggers the
-translator's case-3 carve-out (passthrough back to the kernel
-presence check), preserving the "no scope" semantic.
+`plugins/inkwell/skills/audit/SKILL.md` becomes a thin dispatcher
+that invokes the orchestrator and emits its stdout verbatim:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/bin/build-envelope.sh" "<REPO_ROOT>"
+```
+
+Observations are filtered by the empty-stdout guard — scorers
+that empty-scope (tool absent, no scope) emit nothing and are
+omitted from `observations[]` rather than appearing as null
+entries. Empty array is permitted and triggers the translator's
+case-3 carve-out (passthrough back to the kernel presence check),
+preserving the "no scope" semantic.
 
 `composite_score: null` defers all scoring to the rubric path.
 H4's translator computes the score from `observations[]` against
-the new stanza below.
+the new stanza below. Mirror of the lintguini 2b3 posture: the
+orchestrator stops doing scoring math entirely; the rubric stanza
+is the sole authority.
+
+Extracting the envelope assembly into a script (rather than
+inlining the bash in SKILL.md) is what makes the snapshots test
+mechanical — the test invokes `bin/build-envelope.sh` directly
+rather than driving the model. See "Variance harness shape"
+below.
 
 ### `code-documentation` rubric stanza
 
@@ -205,108 +227,219 @@ The `code-documentation` row flips from stub to populated:
   "plugin_status": "shipped",
   "install_command": "/plugin install inkwell@quickstop",
   "audit_command": "/inkwell:audit --json",
-  "parser_agent": "parse-inkwell",
+  "parser_agent": null,
   "roll_your_own_ref": "roll-your-own/code-documentation.md",
   "presence_check": "README.md at repo root with >=10 non-blank lines"
 }
 ```
 
-`plugin_status` flips from `phase-2-plus` to `shipped`. `parser_agent`
-stays populated for one minor version as the documented step-2
-fallback per ADR-005 §5; subsequent removal happens in a follow-up
-once step-1 discovery is verified in production.
+`plugin_status` flips from `phase-2-plus` to `shipped`.
+`parser_agent` is set to `null` — see "Discovery posture" below
+for the rationale. The transitional `parse-inkwell` agent shipped
+in 2a1 lives under `plugins/inkwell/agents/parse-inkwell.md`;
+that's a sibling-side file, separate from the (non-existent)
+pronto-side `plugins/pronto/agents/parsers/inkwell.md` that a
+populated `parser_agent` would point at. The sibling-side file's
+removal is filed as a follow-up.
+
+### Discovery posture
+
+The `parser_agent` field is left **null** rather than pointing at
+`parsers/inkwell`. Three reasons (mirror of the lintguini 2b3
+posture documented in commit `f90cc5e`):
+
+1. **Sub-path A wins.** Pronto's audit orchestrator
+   (`plugins/pronto/skills/audit/SKILL.md` Phase 3 step 3) checks
+   `plugin.json`'s `pronto.audits[]` declaration first; if
+   present, it dispatches via slash command (`/inkwell:audit
+   --json`) and **never consults `parser_agent`**. Inkwell
+   declares `pronto.audits[]` natively from 2a1, so Sub-path A is
+   the only dispatch path that fires today. A populated
+   `parser_agent` would be dead code — the parser-agent path
+   (Sub-path B / Phase 4.1) only triggers when Sub-path A is
+   unavailable.
+2. **Phase 4.1's invocation pattern doesn't fit new-pattern
+   siblings.** The literal Bash dispatch
+   (`${CLAUDE_PLUGIN_ROOT}/agents/parsers/scorers/score-<sibling>.sh`)
+   resolves under pronto's tree, not the sibling's. Legacy
+   siblings (claudit, skillet, commventional, avanti) have their
+   scorer scripts bundled in pronto's tree because the M1/M2/M3
+   migration ported them in. New-pattern siblings (lintguini,
+   inkwell, towncrier) own their orchestrator in their own plugin
+   tree (`plugins/inkwell/bin/build-envelope.sh`) — a Phase 4.1
+   dispatch would require either a cross-plugin script-path hop
+   (`${CLAUDE_PLUGIN_ROOT}/../inkwell/bin/build-envelope.sh`,
+   brittle under installed-plugin layouts) or duplicating the
+   orchestrator in pronto's tree (architecturally wrong — pronto
+   stays the rubric/orchestration authority, the sibling owns its
+   scoring logic per ADR-006).
+3. **ADR-005 §5 frames step-2 as a fallback, not a requirement.**
+   Siblings that declare `pronto.audits[]` natively don't need
+   step-2 to satisfy the discovery contract. The contract is
+   honoured by step-1 alone.
+
+The trade-off: if `/inkwell:audit --json` ever fails to dispatch
+(sibling not installed, version-handshake out-of-range, runtime
+error), the dimension degrades to presence-cap (50 capped from
+kernel check) instead of falling back to a parser-agent path.
+That's the same posture every new-pattern sibling has — lintguini
+adopted it in 2b3. Step-2 fallback for new-pattern siblings is a
+future-ticket concern, not 2a3's.
 
 ### `rubric.md` updates
 
-- Line 14 (`code-documentation` row): the description column flips
-  from `README exists and is non-empty` to a brief depth-signal
-  summary (e.g. `README quality + docs coverage + staleness + link
-  health`). The "phase" column flips `Phase 2+` → `Shipped`.
-- Line 46 (Phase-2+ list): remove `inkwell` from the list of
-  Phase 2+ siblings. (`lintguini` and `autopompa` stay until 2b/2c
-  ship; or `autopompa` flips to `towncrier` per the 2c sweep.)
-- Line 93 (presence-cap row for code-documentation): remove the
-  "sibling `inkwell` not yet shipped" parenthetical and replace the
-  row with a pointer to the new translation rules section ("see
-  `code-documentation` translation rules below").
+- **`code-documentation` row** (table at the top of rubric.md):
+  description column flips from `README exists and is non-empty`
+  to a brief depth-signal summary (e.g. `README arrival coverage
+  + docs coverage + staleness + link health`). The "Status"
+  column flips `Phase 2+` → `Shipped`.
+- **Phase-2+ list mid-document**: remove `inkwell` from the list
+  of Phase 2+ siblings. (`autopompa` stays until 2c ships, or
+  flips to `towncrier` per the 2c sweep.)
+- **Mechanical-vs-judgment table row for `code-documentation`**:
+  rewrite the existing presence-cap-only row to a pointer to the
+  new translation rules section, mirroring the post-2b3 shape
+  used for `lint-posture`: "Sibling inkwell's `/inkwell:audit
+  --json` emits a v2 wire-contract envelope with four
+  observations consumed by the `code-documentation` translation
+  rules below."
 - Add a new `### code-documentation translation rules` section
-  containing the rubric stanza above plus a hand-walked
-  verification paragraph mirroring M3's pattern.
+  after the existing translation-rules sections. Stanza JSON
+  above plus a hand-walked verification paragraph mirroring 2b3's
+  shape.
 
-### Eval harness verification
+### Variance harness shape
 
-After the rubric stanza + `recommendations.json` updates land, the
-existing `mid` fixture in the eval harness runs N=10. Acceptance:
+Inkwell's audit path is **fully mechanical** post-2a3 — orchestrator
+(`bin/build-envelope.sh`) + four deterministic shell scorers + the
+translator, with no model in the loop — so the per-dimension
+`code-documentation` stddev is structurally 0.0 across N runs.
+Per-fixture N=10 against this pipeline measures variance from a
+source that has none, so the mechanical-determinism bar is
+carried by triple-run byte-equivalence in the snapshots test
+rather than an N=10 eval-harness run per fixture.
 
-- `code-documentation` per-dimension stddev ≤ 1.0 over N=10.
-- `code-documentation` per-dimension mean within the predicted
-  band per the verification table above (mid → 81, ±0.5).
-- Composite score stddev unchanged (≤ 1.0).
-- Grade-flip rate ≤ 5% over N=10.
+This deviates from the original 2a3 brief (which called for
+eval-harness N=10 on `low`/`mid`/`high`) and mirrors the
+deviation 2b3 took for the same reason. See 2b3's "Eval harness
+verification" section for the precedent.
 
-Per-fixture N=10 also runs for `low` and `high` to verify the
-calibration table empirically.
+For 2a3:
+- **Snapshots test** (`plugins/inkwell/tests/fixtures/snapshots.test.sh`)
+  carries the per-fixture variance bar — triple-run byte-equivalence
+  on each of the three fixtures, which is a stronger statement
+  than N=10 on a mechanical path.
+- **Translator unit-test extension**
+  (`plugins/pronto/agents/parsers/scorers/observations-to-score.test.sh`)
+  carries the calibration-table fidelity bar — band-edge coverage
+  per observation plus the four-observation composite cases
+  reproducing the predicted scores from the calibration table.
+- **Eval harness on the existing `mid` worktree fixture**
+  (`fixtures.json`) at N=10 carries the cross-sibling no-regression
+  bar — composite stddev ≤ 1.0, grade-flip rate ≤ 5%,
+  `code-documentation` per-dimension stddev ≤ 1.0 (structurally
+  0 for a mechanical path). No regression on `claude-code-config`,
+  `skills-quality`, `commit-hygiene`, `lint-posture`.
+- **No per-fixture N=10 on the inkwell low/mid/high fixtures.**
+  Snapshots-test triple-run replaces it.
+
+Caveat: this deviation is universal *only* because all four
+inkwell scorers stay mechanical. If a future scorer dispatches to
+an LLM (judgment-shaped) rather than to deterministic shell, that
+scorer's calibration would need per-fixture N=10 — the snapshot
+test's byte-equivalence assertion would catch the variance as a
+test failure, but the calibration would have to land via the
+eval harness against the noisy signal. None of the four 2a2
+scorers are model-driven, so the deviation holds for 2a3.
 
 ## Implementation order
 
-1. **`plugins/inkwell/tests/fixtures/{low,mid,high}/`** — populate
+1. **`plugins/pronto/references/rubric.md`** — add the
+   `code-documentation` translation rules stanza; flip the table
+   row description and phase column; remove `inkwell` from the
+   Phase-2+ list; rewrite the mechanical-vs-judgment row.
+2. **`plugins/pronto/references/recommendations.json`** — populate
+   `install_command`, `audit_command`, flip `plugin_status` to
+   `shipped`. `parser_agent` stays `null` (see Discovery posture).
+3. **Pronto version bump** — `plugin.json`, `marketplace.json`,
+   root README. Minor bump (rubric stanza addition is a
+   behavioural change to the scoring path).
+4. **`plugins/inkwell/bin/build-envelope.sh`** — new orchestrator
+   script per the architecture section above. The orchestrator
+   runs the four scorers in fixed order and slurps non-empty
+   stdouts into the envelope's `observations[]` array;
+   `composite_score` is `null`.
+5. **`plugins/inkwell/skills/audit/SKILL.md`** — replace the 2a1
+   empty-envelope emission with a thin dispatcher that invokes
+   the orchestrator and emits its stdout verbatim.
+6. **Inkwell version bump** — `plugin.json`, `marketplace.json`,
+   root README. Minor bump (sibling now consumes the rubric path;
+   orchestrator behaviour changes from empty-envelope to
+   populated).
+7. **`plugins/inkwell/tests/fixtures/{low,mid,high}/`** — populate
    the three fixture directories. Each gets a tailored README,
    `docs/` tree, and `src/` tree with controlled inputs producing
    the predicted observation values.
-2. **`plugins/inkwell/skills/audit/SKILL.md`** — replace the
-   2a1 empty-envelope emission with the four-scorer dispatch and
-   filtered-array assembly per the architecture section above.
-3. **`plugins/pronto/references/rubric.md`** — add the
-   `code-documentation` translation rules stanza; update the
-   table row and the Phase-2+ list per the bullets above.
-4. **`plugins/pronto/references/recommendations.json`** — populate
-   the four `null` fields in the `code-documentation` row.
-5. **`plugins/inkwell/tests/fixtures/{low,mid,high}/envelope.json`** —
+8. **`plugins/inkwell/tests/fixtures/{low,mid,high}/envelope.json`** —
    capture the three populated envelopes by running
-   `/inkwell:audit --json` against each fixture and committing
+   `bin/build-envelope.sh` against each fixture and committing
    the output verbatim. These are the byte-equivalence anchors
    for invariant B.
-6. **`plugins/inkwell/tests/fixtures/snapshots.test.sh`** —
-   per-fixture envelope diff against the locked `envelope.json`
-   plus per-observation evidence-shape assertions.
-7. **`plugins/pronto/agents/parsers/scorers/observations-to-score.test.sh`** —
-   add a fixture-scoped case for the four-observation
-   `code-documentation` shape so the harness flags drift if the
-   stanza or fixtures move out of sync.
-8. **Eval harness on `mid`** — N=10. Acceptance per the table
-   above.
+9. **`plugins/inkwell/tests/fixtures/snapshots.test.sh`** —
+   per-fixture envelope diff against the locked `envelope.json`,
+   plus the `$schema_version`, observation-ID set, and
+   translator-applied composite assertions. Mirror lintguini's
+   snapshots.test.sh.
+10. **`plugins/pronto/agents/parsers/scorers/observations-to-score.test.sh`** —
+    extend with a stub `code-documentation` translation rules
+    stanza (byte-identical to the real rubric.md stanza) and
+    band-coverage cases for each of the four observations plus
+    composite cases for `low`/`mid`/`high`.
+11. **Eval harness on `mid`** — `plugins/pronto/tests/eval.sh
+    --fixture mid --n 10`. Acceptance per the variance harness
+    shape section.
 
 ## Acceptance
 
-- `/inkwell:audit --json` against each of the three fixtures emits
+- `bin/build-envelope.sh` emits a v2 envelope with
+  `composite_score: null` and observations slurped from the four
+  scorers. SKILL.md is a thin dispatcher that emits the
+  orchestrator's stdout verbatim.
+- `bin/build-envelope.sh` against each of the three fixtures emits
   the predicted populated envelope, byte-for-byte matching
-  `envelope.json` across three runs.
-- Translator (`observations-to-score.sh`) consumes each fixture's
-  envelope and produces the predicted dimension score (low → 45,
-  mid → 81, high → 100) within ±1.
-- Eval harness on `mid` (N=10): per-dimension `code-documentation`
-  stddev ≤ 1.0, mean within ±0.5 of 81; composite stddev ≤ 1.0;
-  grade-flip rate ≤ 5%.
-- Eval harness on `low` (N=10): per-dimension stddev ≤ 1.0, mean
-  within ±0.5 of 45.
-- Eval harness on `high` (N=10): per-dimension stddev ≤ 1.0, mean
-  within ±0.5 of 100. (Tighter floor since 100 is at the band cap.)
+  `envelope.json` across three runs (triple-run determinism per
+  fixture).
+- Translator (`observations-to-score.sh code-documentation`)
+  consumes each fixture's envelope and produces the predicted
+  dimension score (low → 45, mid → 81, high → 100) within ±1.
+- `observations-to-score.test.sh` passes — existing test cases
+  stay green and the new `code-documentation` block exercises
+  every band edge plus the three composite cases.
+- `snapshots.test.sh` passes for all three fixtures.
+- `pronto` and `inkwell` both bump versions in
+  `plugin.json` / `marketplace.json` / root README;
+  `./scripts/check-plugin-versions.sh` clean.
 - `recommendations.json`'s `code-documentation` row reads
-  `plugin_status: shipped`, all four previously-null fields
-  populated.
+  `plugin_status: shipped`, with `install_command` and
+  `audit_command` populated; `parser_agent` stays `null` per the
+  Discovery posture rationale.
 - `rubric.md` carries the new translation rules section and the
   table-row + Phase-2+-list updates.
 - The `code-documentation` row no longer falls through to the
   presence-cap behaviour (50 capped from kernel check); it lands
   the rubric-derived score on every audit.
-- No regression on the other three rubric dimensions —
-  `claude-code-config`, `skills-quality`, `commit-hygiene` scores
-  unchanged on the existing snapshot fixtures (claudit, skillet,
-  commventional all still pass their `snapshots.test.sh`).
+- Eval harness on `mid` (N=10): per-dimension `code-documentation`
+  stddev ≤ 1.0 (structurally 0 for a mechanical path), composite
+  stddev ≤ 1.0, grade-flip rate ≤ 5%. No regression on
+  `claude-code-config`, `skills-quality`, `commit-hygiene`,
+  `lint-posture` per their existing snapshot tests.
+- No regression on the other rubric dimensions — claudit,
+  skillet, commventional, lintguini all still pass their
+  `snapshots.test.sh`.
 - No changes to `plugins/claudit/`, `plugins/skillet/`,
-  `plugins/commventional/`, `plugins/towncrier/`, or other
-  unrelated paths in the diff (verified via `git diff main..` scope
-  check).
+  `plugins/commventional/`, `plugins/towncrier/`,
+  `plugins/avanti/`, or `plugins/lintguini/` (verified via
+  `git diff main..` scope check).
 
 ## Three load-bearing invariants
 
@@ -334,11 +467,18 @@ a single CI sweep before declaring 2a3 done.
 
 - **Removal of the transitional `parse-inkwell` agent.** Filed as
   a follow-up after 2a3 verifies step-1 discovery in production
-  for one minor version.
-- **Lintguini (PR 2b)** — separate PR, separate dimension; lands
-  parallel with 2c after 2a closes.
+  for one minor version. Mirrors 2b3's parse-lintguini handling.
+- **Lintguini (PR 2b)** — landed in 2b3 ahead of 2a3. The
+  `lint-posture` translation rules section sits next to the
+  `code-documentation` translation rules in `rubric.md`; no
+  semantic conflict.
 - **Towncrier `:audit` extension (PR 2c)** — separate PR, separate
   dimension.
+- **Per-fixture eval-harness N=10.** Replaced by snapshots-test
+  triple-run for the mechanical-determinism bar (deviation from
+  the original 2a3 brief — see "Variance harness shape" above for
+  rationale). 2b3 set the precedent. Cross-sibling regression on
+  the pinned `mid` worktree carries forward.
 - **Network-aware lychee mode.** External-link health is a future
   scorer extension; 2a2/2a3 stay `--offline`.
 - **Within-dimension weight rebalancing.** The plan calls for
@@ -351,17 +491,21 @@ a single CI sweep before declaring 2a3 done.
   ship installers. Tool absence degrades gracefully per 2a2's
   invariant B.
 - **Migration of any other sibling to step-1 discovery.** Claudit,
-  skillet, commventional all migrated under M1/M2/M3. Inkwell ships
-  step-1-ready from day one.
+  skillet, commventional all migrated under M1/M2/M3. Lintguini
+  ships step-1-ready in 2b3. Inkwell ships step-1-ready in 2a3.
 
 ## References
 
 - `project/plans/active/phase-2-pronto.md` — PR 2a 2a3 paragraph,
   acceptance bar.
-- `project/tickets/open/phase-2-2a1-inkwell-scaffold.md` — scaffold
-  this ticket completes.
-- `project/tickets/open/phase-2-2a2-inkwell-scorers.md` — scorers
-  this ticket wires in.
+- `project/tickets/closed/phase-2-2a1-inkwell-scaffold.md` —
+  scaffold this ticket completes.
+- `project/tickets/closed/phase-2-2a2-inkwell-scorers.md` —
+  scorers this ticket wires in.
+- `project/tickets/closed/phase-2-2b3-lintguini-contract-fixtures.md` —
+  the precedent ticket whose Discovery posture and Variance
+  harness shape sections this ticket mirrors. Commit `f90cc5e`
+  carries the parser_agent: null rationale.
 - `project/tickets/closed/phase-2-h3-wire-contract-schema-2.md` —
   wire-contract schema 2 + observations[] field this envelope
   emits against.
