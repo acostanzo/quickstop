@@ -21,6 +21,19 @@ Every documented Claude Code hook event (currently 26): `SessionStart`, `Session
 
 Each one is wrapped in the same envelope and dispatched through the same transport.
 
+## Plugin surface
+
+This plugin ships:
+- Skills: `audit`
+- Commands: none
+- Agents: none
+- Hooks: 26 — one per documented Claude Code hook event, each dispatching through `bin/emit.sh` to the configured transport (`file:` / `fifo:` / `http(s):`)
+- Opinions: writes the event envelope to the configured transport (default: `~/.towncrier/events.jsonl`); falls back to the same default file if the configured transport fails. The `bin/emit.sh` script always exits 0 and emits nothing on stdout — the hook flow is pass-through.
+
+The hook handlers respect the ADR-006 §3 invariants: no `hookSpecificOutput` payload-shaping, no persistent host state mutation at hook time (writes are confined to the configured event sink the consumer opted into), no undeclared writes outside the declared transport target.
+
+The audit skill operates strictly read-only on `<REPO_ROOT>` — no consumer-config edits, no auto-installation of dependencies, no cross-plugin automation. Consumers compose automation against this plugin's capabilities per ADR-006 §6.
+
 ## Installation
 
 ### From marketplace
