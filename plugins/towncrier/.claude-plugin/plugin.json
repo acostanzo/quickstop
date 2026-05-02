@@ -1,6 +1,6 @@
 {
   "name": "towncrier",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Emit a structured JSON event for every Claude Code hook to a configurable transport (file, fifo, or HTTP).",
   "author": {
     "name": "Anthony Costanzo",
@@ -15,5 +15,15 @@
     "logging",
     "eventbus"
   ],
-  "homepage": "https://github.com/acostanzo/quickstop/tree/main/plugins/towncrier"
+  "homepage": "https://github.com/acostanzo/quickstop/tree/main/plugins/towncrier",
+  "pronto": {
+    "compatible_pronto": ">=0.4.0",
+    "audits": [
+      {
+        "dimension": "event-emission",
+        "command": "/towncrier:audit --json",
+        "weight_hint": 0.05
+      }
+    ]
+  }
 }
