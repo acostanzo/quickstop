@@ -13,7 +13,7 @@ Total weight = 100. Weights are tunable but must sum to 100.
 | Commit + review hygiene | `commit-hygiene` | 15 | `commventional` | Recent commits follow conventional-commit pattern | Shipped |
 | Code documentation | `code-documentation` | 15 | `inkwell` | README arrival coverage + docs coverage + staleness + link health | Shipped |
 | Lint / format / language rules | `lint-posture` | 15 | `lintguini` | Linter strictness + formatter presence + CI lint wiring + suppression count | Shipped |
-| Event emission | `event-emission` | 5 | `autopompa` | Observability instrumentation detected (e.g. OpenTelemetry config, event-bus references, structured logging setup) | Phase 2+ |
+| Event emission | `event-emission` | 5 | `towncrier` | Observability instrumentation detected (e.g. OpenTelemetry config, event-bus references, structured logging setup) | Phase 2+ |
 | AGENTS.md scaffold | `agents-md` | 10 | `pronto` kernel | Non-empty `AGENTS.md` at repo root | Shipped (this plugin) |
 | Project record | `project-record` | 5 | `avanti` | `project/` directory with expected subdirs (`plans/`, `tickets/`, `adrs/`, `pulse/`) | Phase 1b |
 
@@ -43,7 +43,7 @@ Dimension scores **0**. The recommended action is either to install the sibling 
 
 ### Dimensions whose recommended sibling isn't yet shipped
 
-`autopompa` is Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below. `inkwell` shipped in Phase 2 PR 2a — see the `code-documentation` translation rules below.)
+`towncrier`'s `:audit` extension is Phase 2+. `avanti` is Phase 1b. Until their siblings ship, these dimensions score under the presence-cap rules above. When the sibling arrives, its audit replaces the presence check and contributes the full depth score. (`lintguini` shipped in Phase 2 PR 2b — see the `lint-posture` translation rules below. `inkwell` shipped in Phase 2 PR 2a — see the `code-documentation` translation rules below.)
 
 ## Letter grades
 
@@ -92,7 +92,7 @@ mechanical/judgment axis.
 | `commit-hygiene` | 15 | Deterministic shell scorer at `agents/parsers/scorers/score-commventional.sh` — `git log` regex match ratios plus trailer and auto-attribution counts. Conventional Comments defaults to 100 with a low-severity "no review signal" note; the audit stays network-free. | None. |
 | `code-documentation` | 15 | Sibling inkwell's `/inkwell:audit --json` emits a v2 wire-contract envelope with four observations (README arrival coverage, docs coverage, doc staleness, internal link health) consumed by the `code-documentation` translation rules below. | None. |
 | `lint-posture` | 15 | Sibling lintguini's `/lintguini:audit --json` emits a v2 wire-contract envelope with four observations (linter strictness, formatter presence, CI lint wiring, suppression count) consumed by the `lint-posture` translation rules below. | None. |
-| `event-emission` | 5 | Deterministic presence check via `skills/audit/presence-check.sh event-emission ${REPO_ROOT}` — `grep -rqE` with the documented pattern set and a fixed `--exclude-dir` list → 50 capped (sibling `autopompa` not yet shipped). | None. |
+| `event-emission` | 5 | Deterministic presence check via `skills/audit/presence-check.sh event-emission ${REPO_ROOT}` — `grep -rqE` with the documented pattern set and a fixed `--exclude-dir` list → 50 capped (sibling `towncrier`'s `:audit` extension not yet shipped). | None. |
 | `agents-md` | 10 | Kernel binary: `AGENTS.md` exists and ≥5 non-blank lines → 100, else 0. No presence cap — this dimension is always kernel-driven. | None. |
 | `project-record` | 5 | Avanti's native `/avanti:audit --json` (declared in `plugins/avanti/.claude-plugin/plugin.json`) returns a deterministic composite. Falls back to kernel binary (capped at 50) only if the avanti dispatch itself fails. | None. |
 

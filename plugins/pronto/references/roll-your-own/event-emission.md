@@ -1,8 +1,8 @@
 # Roll Your Own — Event Emission / Observability
 
-How to achieve the `event-emission` dimension's readiness without installing the forthcoming `autopompa` plugin.
+How to achieve the `event-emission` dimension's readiness without installing the forthcoming `towncrier` `:audit` extension.
 
-Autopompa (Phase 2+) is the recommended depth auditor for observability posture. Until it ships, this document covers the manual bar.
+Towncrier's `:audit` extension (Phase 2+) is the recommended depth auditor for observability posture. Until it ships, this document covers the manual bar.
 
 ## What "good" looks like
 
@@ -94,7 +94,7 @@ Consume the resulting log stream with your existing pipeline (journald, Loki, Da
 
 ## Presence check pronto uses
 
-Pronto's kernel presence check for this dimension greps source for any of: `opentelemetry`, `OTEL_`, `tracer`, `metric`, `event_bus`, `eventbus`, `emit(`, `structlog`, `pino`, `winston`, `logrus`. Presence-cap is 50 until autopompa ships or a depth audit runs.
+Pronto's kernel presence check for this dimension greps source for any of: `opentelemetry`, `OTEL_`, `tracer`, `metric`, `event_bus`, `eventbus`, `emit(`, `structlog`, `pino`, `winston`, `logrus`. Presence-cap is 50 until towncrier's `:audit` extension ships or a depth audit runs.
 
 ## Concrete first step
 

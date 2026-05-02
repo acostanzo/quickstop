@@ -98,7 +98,7 @@ Last audit: <timestamp> (<relative-time>)
 Composite: <score>/100  Grade: <grade>
 
 Dimensions (weakest first):
-  event-emission         0/100   F   × not configured            recommended: autopompa (Phase 2+)
+  event-emission         0/100   F   × not configured            recommended: towncrier (Phase 2+)
   skills-quality        50/100   D   ⊘ presence-cap              recommended: skillet
   ...
   claude-code-config    82/100   B   ✓ claudit                   installed v2.6.0

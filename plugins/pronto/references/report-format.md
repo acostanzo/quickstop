@@ -112,7 +112,7 @@ Single JSON object written to stdout. All progress or diagnostic output goes to 
       "source": "presence-fail",
       "source_plugin": null,
       "source_audit": null,
-      "notes": "autopompa not installed; observability grep found no matches"
+      "notes": "towncrier not installed; observability grep found no matches"
     }
   ],
   "kernel": {
