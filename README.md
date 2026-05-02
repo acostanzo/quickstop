@@ -43,7 +43,7 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 
 **Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
 
-### Towncrier (v0.3.0)
+### Towncrier (v0.4.0)
 
 Emit a structured JSON event for every Claude Code hook to a configurable transport.
 
