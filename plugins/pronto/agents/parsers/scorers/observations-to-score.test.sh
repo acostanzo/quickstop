@@ -253,6 +253,62 @@ cat > "$RUBRIC_FIXTURE" <<'RUBRIC_EOF'
 }
 ```
 
+### `code-documentation` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "readme-arrival-coverage",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "docs-coverage-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.95, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.30, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "docs-staleness-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 30, "score": 30 },
+        { "gte": 10, "score": 60 },
+        { "gte": 3,  "score": 85 },
+        { "else": 100 }
+      ]
+    },
+    {
+      "id": "broken-internal-links-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 5, "score": 30 },
+        { "gte": 2, "score": 60 },
+        { "gte": 1, "score": 85 },
+        { "else": 100 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
 RUBRIC_EOF
 
 export PRONTO_RUBRIC_PATH="$RUBRIC_FIXTURE"
@@ -623,6 +679,136 @@ expect_branch "lint-posture composite: python-low (28)" lint-posture \
 # *-high: all signals at the top -> 100/100/100/100 -> 100.
 expect_branch "lint-posture composite: *-high (100)" lint-posture \
   '{"$schema_version":2,"observations":[{"id":"linter-strictness-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"formatter-configured-count","kind":"count","evidence":{"configured":1},"summary":"x"},{"id":"ci-lint-wired-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"lint-suppression-count","kind":"count","evidence":{"suppressions":0},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+# ----- code-documentation stanza coverage ------------------------------
+#
+# The four-observation code-documentation shape inkwell emits in 2a3.
+# Stub stanza (above in RUBRIC_FIXTURE) is byte-identical to the real
+# stanza in plugins/pronto/references/rubric.md. If the two ever drift,
+# this test stays green (it's testing against its own stub) but the
+# inkwell snapshots.test.sh fails — surfacing the drift through the
+# locked envelope.json round-trip.
+#
+# Per-observation band coverage (each observation tested in isolation
+# against the code-documentation stanza), then four-observation
+# composites verifying the calibration table from the 2a3 ticket.
+
+# readme-arrival-coverage band edges (0.40/0.60/0.80/1.00 ladder).
+expect_branch "code-documentation readme: top (1.00)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "code-documentation readme: edge 0.80" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "code-documentation readme: edge 0.60" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":0.60},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "code-documentation readme: edge 0.40" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":0.40},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "code-documentation readme: just below 0.40 (else)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":0.20},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# docs-coverage-ratio band edges (0.30/0.60/0.80/0.95 ladder — note
+# the gte 0.95 top band is tighter than readme-arrival's gte 1.00).
+expect_branch "code-documentation docs: top (1.00)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "code-documentation docs: edge 0.95" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.95},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "code-documentation docs: just below 0.95" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.94},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "code-documentation docs: edge 0.80" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "code-documentation docs: edge 0.60" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.60},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "code-documentation docs: edge 0.30" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.30},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "code-documentation docs: just below 0.30 (else)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# docs-staleness-count: four-band ladder (0 / 3 / 10 / 30).
+expect_branch "code-documentation stale: 0 (clean else)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":0},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "code-documentation stale: 2 (still clean, else)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":2},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "code-documentation stale: 3 (forgivable)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":3},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "code-documentation stale: 9 (still forgivable, gte 3)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":9},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "code-documentation stale: 10 (concerning)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":10},"summary":"x"}]}' \
+  '.composite_score' '60'
+
+expect_branch "code-documentation stale: 29 (still concerning, gte 10)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":29},"summary":"x"}]}' \
+  '.composite_score' '60'
+
+expect_branch "code-documentation stale: 30 (rotted)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":30},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# broken-internal-links-count: four-band ladder (0 / 1 / 2 / 5).
+expect_branch "code-documentation broken: 0 (clean else)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":0},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "code-documentation broken: 1 (isolated)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":1},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "code-documentation broken: 2 (maintenance)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":2},"summary":"x"}]}' \
+  '.composite_score' '60'
+
+expect_branch "code-documentation broken: 4 (still maintenance, gte 2)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":4},"summary":"x"}]}' \
+  '.composite_score' '60'
+
+expect_branch "code-documentation broken: 5 (rotted)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":5},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# Four-observation composites — calibration table from the 2a3 ticket.
+# low: 0.20 / 0.00 / 18 / 4 -> 30, 30, 60, 60 -> mean 45.
+expect_branch "code-documentation composite: low (45)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":0.20},"summary":"x"},{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"},{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":18},"summary":"x"},{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":4},"summary":"x"}]}' \
+  '.composite_score' '45'
+
+# mid: 0.80 / 0.72 / 6 / 1 -> 85, 70, 85, 85 -> mean 81.25 round 81.
+expect_branch "code-documentation composite: mid (81)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"},{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.72},"summary":"x"},{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":6},"summary":"x"},{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":1},"summary":"x"}]}' \
+  '.composite_score' '81'
+
+# high: 1.00 / 0.95 / 0 / 0 -> 100, 100, 100, 100 -> mean 100.
+expect_branch "code-documentation composite: high (100)" code-documentation \
+  '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.95},"summary":"x"},{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":0},"summary":"x"},{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":0},"summary":"x"}]}' \
   '.composite_score' '100'
 
 # ----- summary --------------------------------------------------------
