@@ -39,9 +39,9 @@
       "dimension": "code-documentation",
       "dimension_label": "Code documentation",
       "recommended_plugin": "inkwell",
-      "plugin_status": "phase-2-plus",
-      "install_command": null,
-      "audit_command": null,
+      "plugin_status": "shipped",
+      "install_command": "/plugin install inkwell@quickstop",
+      "audit_command": "/inkwell:audit --json",
       "parser_agent": null,
       "roll_your_own_ref": "roll-your-own/code-documentation.md",
       "presence_check": "README.md at repo root with >=10 non-blank lines"
