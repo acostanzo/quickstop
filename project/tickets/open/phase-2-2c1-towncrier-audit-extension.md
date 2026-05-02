@@ -272,8 +272,9 @@ the scorer scripts themselves under the plugin tree.
 
 ### Autopompa references sweep
 
-ADR-005 retired the `autopompa` plugin name. Six files under
-`plugins/pronto/` still carry references; this ticket sweeps them.
+ADR-005 retired the `autopompa` plugin name. Five files in total
+under `plugins/pronto/` carry references — four under `references/`
+plus the `status` skill; this ticket sweeps them.
 
 | File | Line(s) | Change |
 |---|---|---|
@@ -301,6 +302,30 @@ in 2a3 (`f90cc5e` precedent) and 2b3, `parser_agent` is permanently
 `null` for new-pattern siblings that declare `pronto.audits[]`
 natively. Populating it now just to retire it later would be
 churn — the cleaner shape is to start at `null` and keep it.
+
+**`install_command` and `audit_command` stay `null` in 2c1.**
+Plan-doc line 171 enumerates these fields as part of the 2c1 sweep
+(`set install_command: /plugin install towncrier@quickstop and
+audit_command: /towncrier:audit --json`). 2c1 deviates: both fields
+are deferred to 2c3 alongside the rubric stanza. The deviation
+matches the established 2a / 2b precedent — lintguini's install /
+audit fields were populated in 2b3 commit `acb834e`
+("feat(pronto): ship lint-posture as fully-translated dimension"),
+and inkwell's in 2a3 commit `bd9c6e4` (same shape) — not in either
+plugin's scaffold ticket.
+
+The semantic reason: until the rubric stanza is in place (2c3),
+populating `audit_command` would direct pronto's discovery to
+dispatch through `/towncrier:audit --json` for a dimension that
+has no translation rubric yet. The dimension would still resolve
+correctly via case-3 passthrough (empty `observations[]` →
+presence-cap), but keeping discovery flat-presence-shaped until
+the contract layer is ready avoids a transient half-wired state
+where dispatch happens but scoring degrades silently. The fields
+light up atomically with the rubric stanza in 2c3, mirroring 2a3
+/ 2b3. The plan-doc enumeration on line 171 reflects an earlier
+draft authored before the 2a / 2b sequencing precedent solidified;
+treat the precedent as authoritative.
 
 The recommendations.json row after the sweep:
 
