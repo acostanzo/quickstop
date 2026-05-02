@@ -60,7 +60,7 @@
     "event-emission": {
       "dimension": "event-emission",
       "dimension_label": "Event emission",
-      "recommended_plugin": "autopompa",
+      "recommended_plugin": "towncrier",
       "plugin_status": "phase-2-plus",
       "install_command": null,
       "audit_command": null,
