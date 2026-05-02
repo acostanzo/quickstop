@@ -309,6 +309,63 @@ cat > "$RUBRIC_FIXTURE" <<'RUBRIC_EOF'
 }
 ```
 
+### `event-emission` translation rules
+
+```json
+{
+  "observations": [
+    {
+      "id": "structured-logging-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "metrics-instrumentation-count",
+      "kind": "count",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 10, "score": 100 },
+        { "gte": 3,  "score": 85  },
+        { "gte": 1,  "score": 70  },
+        { "else": 50 }
+      ]
+    },
+    {
+      "id": "trace-propagation-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
+    },
+    {
+      "id": "event-schema-consistency-ratio",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 0.95, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.30, "score": 50  },
+        { "else": 30 }
+      ]
+    }
+  ],
+  "default_rule": "passthrough"
+}
+```
+
 RUBRIC_EOF
 
 export PRONTO_RUBRIC_PATH="$RUBRIC_FIXTURE"
@@ -809,6 +866,140 @@ expect_branch "code-documentation composite: mid (81)" code-documentation \
 # high: 1.00 / 0.95 / 0 / 0 -> 100, 100, 100, 100 -> mean 100.
 expect_branch "code-documentation composite: high (100)" code-documentation \
   '{"$schema_version":2,"observations":[{"id":"readme-arrival-coverage","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"docs-coverage-ratio","kind":"ratio","evidence":{"ratio":0.95},"summary":"x"},{"id":"docs-staleness-count","kind":"count","evidence":{"stale_files":0},"summary":"x"},{"id":"broken-internal-links-count","kind":"count","evidence":{"broken":0},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+# ----- event-emission stanza coverage ---------------------------------
+#
+# The four-observation event-emission shape towncrier emits in 2c3.
+# Stub stanza (above in RUBRIC_FIXTURE) is byte-identical to the real
+# stanza in plugins/pronto/references/rubric.md. If the two ever drift,
+# this test stays green (it's testing against its own stub) but the
+# towncrier snapshots.test.sh fails — surfacing the drift through the
+# locked envelope.json round-trip.
+#
+# Per-observation band coverage (each observation tested in isolation
+# against the event-emission stanza), then four-observation composites
+# verifying the calibration table from the 2c3 ticket.
+
+# structured-logging-ratio band edges
+expect_branch "event-emission struct: top (1.00)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "event-emission struct: edge 0.80" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "event-emission struct: edge 0.60" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.60},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "event-emission struct: edge 0.40" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.40},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "event-emission struct: just below 0.40 (else)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.20},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+expect_branch "event-emission struct: zero (else)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# metrics-instrumentation-count: hybrid count semantics — the scorer
+# emits both `metrics_sites` (canonical domain field) and `count` (a
+# duplicate consumed by the translator's count-extractor). The
+# translator's lookup chain prefers `count` over `configured`, so the
+# stanza ladders against metrics_sites (not the boolean configured).
+# Band-edge coverage (10 / 3 / 1 / else 50).
+expect_branch "event-emission metrics: top (12)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":12,"count":12},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "event-emission metrics: edge 10" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":10,"count":10},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "event-emission metrics: edge 3" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":3,"count":3},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "event-emission metrics: edge 1 (just-instrumented)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":1,"count":1},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+# Hybrid edge: configured=1, metrics_sites=0 → count=0 → else 50
+# (library imported but unused). This is the python-low contribution
+# to the bait-and-switch case — surface presence does not silently
+# inflate the composite when the actual instrumentation surface is
+# bare.
+expect_branch "event-emission metrics: configured-but-zero-sites (else 50)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":0,"count":0},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+# trace-propagation-ratio mirrors structured-logging ladder shape;
+# spot-check the top, mid, and else bands.
+expect_branch "event-emission trace: 1.00" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"trace-propagation-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "event-emission trace: 0.67 (gte 0.60)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"trace-propagation-ratio","kind":"ratio","evidence":{"ratio":0.6667},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "event-emission trace: 0.00 (else)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"trace-propagation-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# event-schema-consistency-ratio: tighter top band (gte 0.95 instead
+# of gte 1.00) to recognise that domain-anchor presence is a steeper
+# bar than structural well-formedness.
+expect_branch "event-emission schema: top 1.00" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "event-emission schema: edge 0.95" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.95},"summary":"x"}]}' \
+  '.composite_score' '100'
+
+expect_branch "event-emission schema: just below 0.95" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.94},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "event-emission schema: edge 0.80" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"}]}' \
+  '.composite_score' '85'
+
+expect_branch "event-emission schema: edge 0.60" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.60},"summary":"x"}]}' \
+  '.composite_score' '70'
+
+expect_branch "event-emission schema: edge 0.30" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.30},"summary":"x"}]}' \
+  '.composite_score' '50'
+
+expect_branch "event-emission schema: just below 0.30 (else)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"}]}' \
+  '.composite_score' '30'
+
+# Four-observation composites — calibration table from the 2c3 ticket.
+# python-low: 0.20 / 0 (cfg=1) / 0.00 / 0.00 -> 30, 50, 30, 30 -> mean 35.
+# This is the bait-and-switch case: kernel presence-check grep would
+# match (structlog/prometheus_client/opentelemetry imports) and assign
+# 50 capped, but the rubric stanza correctly lands the dimension at 35
+# because the actual emission/instrumentation surface is bare.
+expect_branch "event-emission composite: python-low (35, bait-and-switch)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.20},"summary":"x"},{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":0,"count":0},"summary":"x"},{"id":"trace-propagation-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"},{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.00},"summary":"x"}]}' \
+  '.composite_score' '35'
+
+# python-mid: 0.83 / 5 / 0.67 / 0.80 -> 85, 85, 70, 85 -> mean 81.25 round 81.
+expect_branch "event-emission composite: python-mid (81)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":0.8333},"summary":"x"},{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":5,"count":5},"summary":"x"},{"id":"trace-propagation-ratio","kind":"ratio","evidence":{"ratio":0.6667},"summary":"x"},{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":0.80},"summary":"x"}]}' \
+  '.composite_score' '81'
+
+# python-high: 1.00 / 12 / 1.00 / 1.00 -> 100, 100, 100, 100 -> mean 100.
+expect_branch "event-emission composite: python-high (100)" event-emission \
+  '{"$schema_version":2,"observations":[{"id":"structured-logging-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"metrics-instrumentation-count","kind":"count","evidence":{"configured":1,"metrics_sites":12,"count":12},"summary":"x"},{"id":"trace-propagation-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"},{"id":"event-schema-consistency-ratio","kind":"ratio","evidence":{"ratio":1.00},"summary":"x"}]}' \
   '.composite_score' '100'
 
 # ----- summary --------------------------------------------------------
