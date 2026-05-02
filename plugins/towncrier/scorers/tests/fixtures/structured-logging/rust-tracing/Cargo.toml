@@ -1,0 +1,4 @@
+[package]
+name = "tracing-fixture"
+version = "0.0.1"
+edition = "2021"
