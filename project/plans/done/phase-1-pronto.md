@@ -1,8 +1,8 @@
 ---
 phase: 1
-status: active
+status: done
 tickets: [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, a1, a2, a3]
-updated: 2026-04-21
+updated: 2026-05-03
 ---
 
 # Pronto Phase 1 — Kernel + Rubric + Audit Orchestrator

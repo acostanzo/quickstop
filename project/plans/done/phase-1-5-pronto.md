@@ -1,8 +1,8 @@
 ---
 phase: 1.5
-status: in-progress
+status: done
 tickets: [t1, t2, t3, t4, t5, a1, a2]
-updated: 2026-04-22
+updated: 2026-05-03
 ---
 
 # Pronto Phase 1.5 — Bugfix pass from live dogfood
