@@ -474,8 +474,8 @@ This plugin audits the **<SIBLING_DIMENSION_LABEL>** dimension of pronto's readi
 /<name>:audit --json
 ```
 
-Emits a v2 wire-contract JSON envelope to stdout. The `data` field contains
-observations pronto's rubric translates into a dimension score.
+Emits a v2 wire-contract JSON envelope to stdout. The `observations[]` field
+carries entries pronto's rubric translates into a dimension score.
 
 ## Pronto handshake
 
