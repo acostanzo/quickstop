@@ -140,25 +140,49 @@ Set `SIBLING_DIMENSION` to the slug of the chosen dimension (the JSON key, e.g. 
 If "Other", warn: "Non-canonical dimensions are not in pronto's rubric. The sibling will scaffold correctly but pronto won't discover it automatically until the dimension is registered in `recommendations.json`."
 
 ### Question 5: Components
-Use AskUserQuestion with options to ask:
+
+**For role = sibling (`IS_SIBLING=true`):** Skip the Skills and Agents toggles entirely — the `audit` skill (Phase 3.2a) and the `parse-<name>` agent (Phase 3.3a) are auto-included for every sibling and are not configurable here. Use AskUserQuestion with the trimmed list:
+
+"What additional components does this plugin need?
+*(Note: the `audit` skill and `parse-<name>` agent are auto-included for siblings — not toggled here.)*"
+
+Options (allow multiple selections):
+- MCP servers (external tool integration)
+- Reference files (heavy docs/schemas loaded on demand)
+
+In this branch, Q6 (additional skills) and Q7 (additional agents) are still asked — framed as *"List any **additional** skills beyond `audit`"* and *"List any **additional** agents beyond `parse-<name>`"* — and the user may answer with an empty line if they want only the auto-included pair.
+
+**For role = tool (`IS_SIBLING=false`):** Use AskUserQuestion with the full list:
+
 "What components does this plugin need?"
+
 Options (allow multiple selections):
 - Skills (slash commands)
 - Agents (sub-agents for parallel work)
 - MCP servers (external tool integration)
 - Reference files (heavy docs/schemas loaded on demand)
 
-Note: hooks are not an option. If the user types "hooks" in the free-text follow-up, surface the migration note.
+Note: hooks are not an option in either branch. If the user types "hooks" in the free-text follow-up, surface the migration note.
 
-### Question 6: Skills (if selected)
+### Question 6: Skills
+
+**For role = sibling:** Always ask, framed as additional to the auto-included `audit` skill:
+
+"List any **additional** skills this plugin needs beyond the auto-included `audit` skill. For each, provide a name and brief description. Format: `name: description` (one per line). Leave blank if `audit` is the only skill."
+
+**For role = tool:** Ask only if Q5 selected Skills:
+
 "List the skills this plugin needs. For each, provide a name and brief description. Format: `name: description` (one per line)"
 
-Note: if IS_SIBLING, an `audit` skill will be auto-created from the wire-contract template (even if not listed here) — you don't need to list it separately.
+### Question 7: Agents
 
-### Question 7: Agents (if selected)
+**For role = sibling:** Always ask, framed as additional to the auto-included `parse-<name>` parser:
+
+"List any **additional** agents this plugin needs beyond the auto-included transitional parser `parse-<name>`. For each, provide a name and brief description. Format: `name: description` (one per line). Leave blank if `parse-<name>` is the only agent."
+
+**For role = tool:** Ask only if Q5 selected Agents:
+
 "List the agents this plugin needs. For each, provide a name and brief description. Format: `name: description` (one per line)"
-
-Note: if IS_SIBLING, a transitional parser agent `parse-<name>` will be auto-created.
 
 ### Question 8: Agent Model (if agents selected)
 Use AskUserQuestion with options:
