@@ -182,7 +182,7 @@ if ! git -C "$FIXTURE_REPO" worktree add --detach "$WORKTREE" "$FIXTURE_SHA" >&2
   exit 2
 fi
 
-PLUGIN_DIRS=(pronto avanti claudit skillet commventional)
+PLUGIN_DIRS=(pronto avanti claudit skillet commventional inkwell lintguini towncrier)
 PLUGIN_ARGS=()
 for p in "${PLUGIN_DIRS[@]}"; do
   if [[ -d "$REPO_ROOT/plugins/$p" ]]; then
