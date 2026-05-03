@@ -21,7 +21,7 @@
     },
     {
       "name": "commventional",
-      "version": "1.1.0",
+      "version": "2.0.0",
       "description": "Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews",
       "source": "./plugins/commventional",
       "keywords": [
