@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./scripts/check-plugin-versions.sh",
+            "command": "./scripts/check-plugin-versions.sh 1>&2",
             "timeout": 10000
           }
         ]
