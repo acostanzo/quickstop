@@ -5,14 +5,15 @@ A Claude Code plugin marketplace.
 ## Plugins
 
 
-### Commventional (v1.1.0)
+### Commventional (v2.0.0)
 
 Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews.
 
-- Passive auto-invocation — activates on commit, PR, and review context without explicit commands
+- Auto-invoking `commventional` skill activates on commit, PR, and review context without explicit commands
 - Sub-agent architecture: commit-crafter for diffs, review-formatter for feedback
 - Three conventions: conventional commits, conventional comments, engineering ownership
-- Reference specs bundled for consistent enforcement
+- Three consumer-invoked skills for engineering-ownership wiring: `:strip-trailers` (capability), `:strip-pr-body` (one-shot PR cleanup), `:install-trailer-stripper` (writes Claude Code or git-hook wirings into the consumer's surface on demand)
+- v2.0 ADR-006 conformance — no plugin-installed Claude Code hooks; trigger surface belongs to the consumer
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
