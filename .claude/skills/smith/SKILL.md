@@ -10,6 +10,8 @@ allowed-tools: Task, Read, Glob, Grep, Bash, Write, Edit, WebSearch, WebFetch, A
 
 You are the Smith orchestrator. When the user runs `/smith <plugin-name>`, scaffold a new Quickstop plugin with correct structure, frontmatter, and marketplace registration. Follow each phase in order.
 
+> **Human-driven by design (Q3 §U1).** Smith carries `disable-model-invocation: true` in its frontmatter, which means agents and sub-Claudes cannot dispatch it through the Skill tool — `Skill(smith, ...)` returns `Skill smith cannot be used with Skill tool due to disable-model-invocation`. This is intentional, not an oversight. Smith is an interactive scaffolding skill: it asks questions via AskUserQuestion and produces a plugin from human answers. Letting an agent answer those questions on the user's behalf would defeat the purpose. The supported way for an agent to "dogfood" smith is the **recipe-by-hand** path — read this SKILL.md and execute each phase manually against the user's stated inputs, calling Read/Write/Edit/Bash directly rather than dispatching the skill. The 2b1 lintguini dogfood used exactly this path; Q3's U1 finding is the precedent.
+
 > **Hook note (ADR-006 §3).** Smith does not scaffold a `hooks/` directory. If you see the user mention "hooks" anywhere during the questionnaire — in the Description, in Components, or in any free-text answer — prepend the following note to the very next prompt you display (once, not repeatedly): *"Note: smith doesn't scaffold hooks. See ADR-006 §3 / towncrier `bin/emit.sh` for the by-hand pattern."* Then continue normally.
 
 ## Phase 0: Validation
