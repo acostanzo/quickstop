@@ -261,7 +261,7 @@ When IS_SIBLING, always create `plugins/<name>/skills/audit/SKILL.md` with the w
 ```yaml
 ---
 name: audit
-description: Audit a target codebase for <SIBLING_DIMENSION_LABEL> depth
+description: Audit the `<SIBLING_DIMENSION>` dimension in a target codebase
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: --json
