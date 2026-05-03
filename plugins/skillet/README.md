@@ -9,6 +9,23 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 - **Opinionated directory template**: enforces consistent skill structure
 - **6-category scoring rubric**: specific to skill quality assessment
 
+## Plugin surface
+
+Per ADR-006 §1, this plugin ships:
+
+- **Skills (3):**
+  - `build` — consumer-invoked. Scaffolds a new Claude Code skill from scratch with correct directory structure, frontmatter, and phase organization. Research-first: fetches the latest Anthropic skill/agent/hook docs before scaffolding, then presents a blueprint for approval before any file is written.
+  - `audit` — consumer-invoked. Audits an existing skill's quality with a 6-category scoring rubric (Frontmatter, Instruction Quality, Agent Design, Directory Structure, Over-Engineering, Reference & Tooling). Read-only by default; only writes if the consumer accepts an interactive fix.
+  - `improve` — consumer-invoked. Improves an existing skill using audit findings or manual direction; presents an improvement plan for approval, then re-scores affected categories after applying changes.
+- **Commands:** none (each skill is invoked via its `/skillet:<skill>` slash).
+- **Agents (2):**
+  - `research-skill-spec` — fetches official Anthropic skill / agent / hook authoring documentation. Dispatched by `build` and `audit` to keep the spec baseline current. Runs on `haiku`.
+  - `audit-skill` — reads and grades skill files against the scoring rubric. Dispatched by `audit`.
+- **Hooks:** none. Per ADR-006 §3, the hook invariants are vacuously satisfied — skillet installs no Claude Code event hooks.
+- **Opinions:** skillet enforces an opinionated directory template (`references/directory-template.md`) and a skill-quality scoring rubric (`skills/audit/references/scoring-rubric.md`). Both encode skillet's stance on what a well-shaped skill looks like and are not consumer-configurable per invocation. Writes happen only when the consumer accepts a scaffolding blueprint (`build`), an interactive fix (`audit`), or an improvement plan (`improve`); each phase pauses for explicit approval.
+
+ADR-006 §2 conformance (no silent mutation of consumer artefacts): skillet does not mutate consumer state at plugin-install time. Every file write is the result of a slash command the consumer typed and a plan the consumer approved.
+
 ## Skills
 
 ### `/skillet:build <name>`
