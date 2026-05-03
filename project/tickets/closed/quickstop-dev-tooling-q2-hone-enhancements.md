@@ -1,7 +1,7 @@
 ---
 id: q2
 plan: quickstop-dev-tooling
-status: open
+status: closed
 updated: 2026-04-29
 depends_on: q1
 ---
