@@ -1,7 +1,7 @@
 ---
 id: commventional-adr-006-conformance
 plan: phase-2-pronto
-status: open
+status: closed
 updated: 2026-04-29
 ---
 
