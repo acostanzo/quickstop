@@ -1,7 +1,7 @@
 ---
 id: q3
 plan: quickstop-dev-tooling
-status: open
+status: closed
 updated: 2026-05-01
 ---
 
