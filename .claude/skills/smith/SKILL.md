@@ -538,7 +538,7 @@ Use Edit to add the entry — do not overwrite the entire file.
 
 ### 4.2: Root README
 
-Read `README.md` and add a new plugin section following the existing format (look at Claudit and Skillet entries for the pattern). Add it after the last plugin entry with version v0.1.0.
+Read `README.md` and add a new plugin section following the existing format (look at Claudit and Skillet entries for the pattern). Add as the last plugin entry.
 
 ---
 
