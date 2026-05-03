@@ -546,19 +546,41 @@ When `license != none`, end the README with:
 
 ### 4.1: Marketplace Entry
 
-Read `.claude-plugin/marketplace.json`, add a new entry to the `plugins` array:
+Read `.claude-plugin/marketplace.json`, then use Edit to insert a new entry at the end of the `plugins` array. **Do not overwrite the entire file.**
 
-```json
-{
-  "name": "<name>",
-  "version": "0.1.0",
-  "description": "<description>",
-  "source": "./plugins/<name>",
-  "keywords": [<user's keywords>]
+**Anchor on the structural close, not on the last plugin's content.** The closing brace of the last plugin entry, the closing bracket of the `plugins` array, and the closing brace of the root object always appear together at the bottom of the file regardless of which plugin is currently last:
+
+```
+    }
+  ]
 }
 ```
 
-Use Edit to add the entry — do not overwrite the entire file.
+That trailing block (4-space indent for the plugin's `}`, 2-space indent for `]`, 0-space indent for `}`) is unique in the file and survives any reordering. Use it as the Edit anchor — *not* the last plugin's `"name"` line, `"keywords"` array, or any other content that shifts every time a plugin is added.
+
+Edit pattern:
+
+- `old_string`:
+  ```
+      }
+    ]
+  }
+  ```
+- `new_string`:
+  ```
+      },
+      {
+        "name": "<name>",
+        "version": "0.1.0",
+        "description": "<description>",
+        "source": "./plugins/<name>",
+        "keywords": [<user's keywords>]
+      }
+    ]
+  }
+  ```
+
+Note the comma added to the previous last entry's closing brace, and the new entry inserted at the same 4-space indent level as the existing entries.
 
 ### 4.2: Root README
 
