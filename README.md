@@ -44,7 +44,7 @@ Build, audit, and improve Claude Code skills with research-first architecture an
 
 **Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
 
-### Towncrier (v0.4.0)
+### Towncrier (v0.4.1)
 
 Emit a structured JSON event for every Claude Code hook to a configurable transport.
 
@@ -81,7 +81,7 @@ The SDLC work layer — authors and maintains the records under `project/` (plan
 
 **Commands:** `/avanti:plan`, `/avanti:ticket`, `/avanti:adr`, `/avanti:promote`, `/avanti:pulse`, `/avanti:status`, `/avanti:audit`
 
-### Lintguini (v0.4.0)
+### Lintguini (v0.4.1)
 
 Audits lint-posture for Claude Code consumer repos: linter config strictness, formatter presence, CI lint enforcement, and rule-suppression count.
 
@@ -94,7 +94,7 @@ Audits lint-posture for Claude Code consumer repos: linter config strictness, fo
 
 **Commands:** `/lintguini:audit`
 
-### Inkwell (v0.3.0)
+### Inkwell (v0.3.1)
 
 Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.
 
