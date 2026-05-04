@@ -48,7 +48,7 @@
     },
     {
       "name": "towncrier",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "description": "Emit a structured JSON event for every Claude Code hook to a configurable transport (file, fifo, or HTTP).",
       "source": "./plugins/towncrier",
       "keywords": [
@@ -91,7 +91,7 @@
     },
     {
       "name": "lintguini",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "description": "Audits lint-posture for Claude Code consumer repos: linter config strictness, formatter presence, CI lint enforcement, and rule-suppression count.",
       "source": "./plugins/lintguini",
       "keywords": [
@@ -105,7 +105,7 @@
     },
     {
       "name": "inkwell",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "description": "Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.",
       "source": "./plugins/inkwell",
       "keywords": [

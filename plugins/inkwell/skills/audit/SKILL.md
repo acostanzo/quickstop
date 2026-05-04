@@ -1,7 +1,6 @@
 ---
 name: audit
 description: Audit code-documentation depth (README quality, docs coverage, staleness, internal link health) in a target codebase
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: --json
 ---

@@ -1,7 +1,6 @@
 ---
 name: audit
 description: Audit lint-posture (linter strictness, formatter presence, CI enforcement, rule-suppression count) in a target codebase
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: --json
 ---

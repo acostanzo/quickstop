@@ -1,7 +1,6 @@
 ---
 name: audit
 description: Audit event-emission posture (structured logging, metrics, trace propagation, event-schema consistency) in a target codebase
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: --json
 ---
