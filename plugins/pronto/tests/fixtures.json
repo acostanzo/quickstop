@@ -3,8 +3,8 @@
   "fixtures": {
     "mid": {
       "repo": ".",
-      "sha": "7650b49ec9828494f066ec56682a8b653791bfcc",
-      "description": "quickstop at Phase 1.5 PR 2 merge — known mid-grade baseline (~C composite). Used by PR 3b to measure before/after variance."
+      "sha": "0ea8e2f87bbdf98923140905920d1df13c3b65aa",
+      "description": "quickstop at main HEAD as of 2026-05-03 (Phase 2 close). Pin bumped from 7650b49 (2026-04-24, pre-Phase-2) to expose new siblings (inkwell/lintguini/towncrier) to the audit target's working tree — see project/tickets/closed/phase-2-followup-eval-harness-staleness.md. The pre-Phase-2 baseline is intentionally retired; cross-reference Phase 1.5 PR 3b for the historical variance numbers it underpinned."
     }
   }
 }
