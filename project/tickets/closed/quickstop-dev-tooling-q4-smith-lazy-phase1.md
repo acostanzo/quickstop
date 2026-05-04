@@ -45,7 +45,7 @@ shape 2b1's lintguini scaffold produced before customization
 (plugin.json with pronto block, audit/SKILL.md using the slug per Q3 U3,
 parse-<name>.md transitional parser, README with Plugin surface section).
 
-PR: #__ (will fill in post-push).
+PR: [#91](https://github.com/acostanzo/quickstop/pull/91).
 
 
 ## Scope
