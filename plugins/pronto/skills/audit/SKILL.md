@@ -33,13 +33,17 @@ Parse `$ARGUMENTS`:
 
 ## Phase 2: Discover installed siblings
 
-Determine which sibling plugins are available. Check in this order:
+Discovery is a single deterministic shell call — there is no LLM-controlled enumeration in this phase. Invoke:
 
-1. **Repo-local plugins**: Read `${REPO_ROOT}/.claude-plugin/marketplace.json` if present — lists plugins available in the current marketplace (e.g., quickstop itself).
-2. **Installed plugins**: Read `~/.claude/plugins/installed_plugins.json` if present — lists globally installed plugins.
-3. **Plugin.json declarations**: For each installed plugin, read its `plugin.json`. If it carries a `pronto.audits` block, record the dimension → command mapping for native emission. Also read `pronto.compatible_pronto` (the optional ADR-004 §2 version range); treat absent as the empty string.
+```bash
+"${PLUGIN_ROOT}/skills/audit/discover-siblings.sh" "${PLUGIN_ROOT}"
+```
 
-Store the discovery result as **INSTALLED_SIBLINGS** — a map from plugin name to `{ version, compatible_pronto, native_declarations, plugin_root }`.
+The helper walks the parent directory of pronto's plugin root and emits a JSON array of every co-located plugin (one record per plugin), each carrying `{ name, plugin_root, version, compatible_pronto, native_declarations }`. `native_declarations` is the plugin's `pronto.audits` array (empty `[]` when absent — siblings without that block are still emitted so parser-agent dispatch via Sub-path B in Phase 4.1 can reach them through `recommendations.json`).
+
+Capture the helper's stdout and parse it as the **INSTALLED_SIBLINGS** map (keyed by `.name`). The bash variable holds the raw JSON; the orchestrator looks plugins up by name (e.g., `INSTALLED_SIBLINGS[claudit].compatible_pronto`).
+
+**Why parent-walk, not `installed_plugins.json` or the audit-target's `marketplace.json`.** When pronto runs in a Claude Code session, `${CLAUDE_PLUGIN_ROOT}` resolves to the directory it was loaded from — `~/.claude/plugins/pronto@<source>/` for `/plugin install`, or `<repo>/plugins/pronto/` for `--plugin-dir`. In both layouts, sibling plugins sit one directory up. Walking the parent captures both cases and is the only source that reflects what is *actually loaded into this session* — `installed_plugins.json` misses `--plugin-dir` loads, and the audit-target's `marketplace.json` describes what plugins the *target* expects to be available, not what is loaded into pronto's session. The historical Phase 2 sources confused "what the audit target's marketplace says exists" with "what pronto can dispatch to in this session"; they diverge whenever the audit runs against a fixture or any tree whose own `plugins/pronto/` predates the current sibling set (see `project/tickets/closed/phase-2-followup-eval-harness-staleness.md`).
 
 ## Phase 2.5: Expert context is out of scope by design
 

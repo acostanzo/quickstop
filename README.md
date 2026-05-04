@@ -57,7 +57,7 @@ Emit a structured JSON event for every Claude Code hook to a configurable transp
 
 **Default output:** `~/.towncrier/events.jsonl` — `tail -F` and `jq` to start
 
-### Pronto (v0.5.0)
+### Pronto (v0.5.1)
 
 Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins.
 
