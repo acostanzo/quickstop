@@ -3,7 +3,7 @@ name: audit
 description: Run pronto's composite readiness audit — walks the rubric, delegates per-dimension to installed sibling plugins, falls back to kernel presence checks, emits a composite scorecard
 disable-model-invocation: true
 argument-hint: "[--json]"
-allowed-tools: Task, Read, Glob, Grep, Bash, Write
+allowed-tools: Task, Read, Glob, Grep, Bash, Write, SlashCommand
 ---
 
 # Pronto: Readiness Audit
