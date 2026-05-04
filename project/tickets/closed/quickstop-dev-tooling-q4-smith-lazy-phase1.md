@@ -1,11 +1,52 @@
 ---
 id: q4-smith-lazy-phase1
 plan: quickstop-dev-tooling
-status: open
-updated: 2026-05-03
+status: closed
+updated: 2026-05-04
 ---
 
 # Q4 — Smith lazy Phase 1 verification (deferred from Q3 / U2)
+
+## Closure note (2026-05-04)
+
+Verification protocol executed per the spec below. Six recipe-by-hand
+scaffolds (3 cases × 2 modes) produced byte-identical output across all
+three case-pairs:
+
+```
+=== Case 1 (sibling testfoo) ===            IDENTICAL
+=== Case 2 (tool testbar, hooks-mentioned)===IDENTICAL
+=== Case 3 (tool testbaz, no hooks) ===      IDENTICAL
+```
+
+Mode A faithfully ran Phase 1's research-subagent fallback (claudit:knowledge
+not in the active skill list); Mode B skipped Phase 1 entirely. Both modes
+fed the same Phase 2 answers into the same Phase 3 templates. Diff was empty.
+
+**Root cause why this had to be empirical.** Phase 3's templates substitute
+only from user answers (Phase 2) and three pronto files
+(`.claude-plugin/plugin.json`, `references/recommendations.json`,
+`references/rubric.md`) plus `date +%Y`. None of the substitution slots
+(`<PRONTO_VERSION>`, `<SIBLING_DIMENSION>`, `<SIBLING_DIMENSION_LABEL>`,
+`<WEIGHT_HINT>`, `<YEAR>`, `<name>`, `<description>`, etc.) are sourced
+from Expert Context. The "Use Expert Context" guidance at Phase 3's
+intro was a verification hint, not a substitution input.
+
+**Decision.** Shipped lazy-Phase-1 path: Phase 1 is now default-skip with
+explicit trigger conditions (Q4 returned "Other (non-canonical)";
+free-text answer names a capability the templates don't cover; explicit
+verification need). For the standard sibling and tool paths, smith now
+goes Phase 0 → Phase 2 → Phase 3 directly.
+
+**Sanity check.** Re-scaffolded a `lintguini`-style sibling
+(name=`lintguini-q4-sanity`, dimension=`lint-posture`) via the lazy
+path to a throwaway directory; output is well-formed and matches the
+shape 2b1's lintguini scaffold produced before customization
+(plugin.json with pronto block, audit/SKILL.md using the slug per Q3 U3,
+parse-<name>.md transitional parser, README with Plugin surface section).
+
+PR: #__ (will fill in post-push).
+
 
 ## Scope
 
