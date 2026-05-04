@@ -30,14 +30,28 @@ Extract the plugin name from `$ARGUMENTS`. If empty or missing, use AskUserQuest
 Tell the user:
 ```
 Scaffolding plugin: <name>
-Phase 1: Building expert context from official plugin documentation...
+Gathering requirements...
 ```
 
 ---
 
-## Phase 1: Build Expert Context
+## Phase 1: Build Expert Context (lazy)
 
-### Step 1: Load Expert Context
+> **Default: skip this phase.** Q4 verification (`project/tickets/closed/quickstop-dev-tooling-q4-smith-lazy-phase1.md`) confirmed empirically that Phase 1's output does not influence the scaffolded files for any standard sibling or tool case — Phase 3's templates contain no Expert-Context substitution slots. Substitutions come from user answers (Phase 2) and three pronto files (`plugin.json`, `references/recommendations.json`, `references/rubric.md`); none flow from Expert Context. The expert-context fanout was a defensive measure that turned out to be sunk cost on the standard path.
+>
+> Run Phase 1 only when one of the trigger conditions below fires during Phase 2, and then run it **between Phase 2 and Phase 3** (not before Phase 2 — you need the questionnaire answers to know whether a trigger applies). For the common case, jump straight from Phase 0 to Phase 2.
+
+### Trigger conditions
+
+Run Phase 1 if any of these surface during Phase 2:
+
+- **Q4 returned "Other (non-canonical)"** — the sibling dimension is not in pronto's rubric, so the wire-contract scaffold may need verification beyond the templates. Load Expert Context to confirm the v2 envelope shape and the dimension-naming conventions before scaffolding.
+- **A free-text answer (Q1 description, Q5 follow-up, Q6/Q7 skill/agent descriptions) names a capability the templates don't cover** — e.g. multi-dimension siblings (out of Q1 scope), hook-only plugins (smith doesn't scaffold hooks; redirect to towncrier's pattern), LSP/monitor servers, or anything outside the Skills / Agents / MCP / References component classes Q5 lists. Load Expert Context if you're unsure how to scaffold the request.
+- **You explicitly need to verify frontmatter or wire-contract details that aren't already in `.claude/skills/smith/references/plugin-spec.md`** — e.g. a recently-added `claude-plugin/plugin.json` field. Lean conservative: when in doubt, load.
+
+If none of these fire, skip directly to Phase 3.
+
+### Step 1: Load Expert Context (only if a trigger fired)
 
 Invoke `/claudit:knowledge ecosystem` to retrieve ecosystem knowledge.
 
@@ -45,7 +59,7 @@ Invoke `/claudit:knowledge ecosystem` to retrieve ecosystem knowledge.
 - Use its output as the ecosystem portion of Expert Context
 - Also read `.claude/skills/smith/references/plugin-spec.md` for plugin-authoring-specific detail (plugin.json schema, directory conventions) that the ecosystem cache may not cover at full depth
 - Combine both as **Expert Context**
-- **Skip to Phase 2**
+- Continue to Phase 3
 
 **If the skill is not available** (claudit not installed — the invocation produces an error, is not recognized as a command, or produces no knowledge output):
 - Proceed to Step 2
@@ -84,7 +98,7 @@ Once both return, combine their results:
 
 Tell the user:
 ```
-Expert context assembled. Gathering requirements...
+Expert context assembled. Continuing to scaffold...
 ```
 
 ---
@@ -198,7 +212,7 @@ Use AskUserQuestion with options:
 
 ## Phase 3: Scaffold
 
-Using Expert Context and the user's answers, create all files. Use the official spec from Expert Context to ensure correct frontmatter and structure.
+Using the user's answers, create all files according to the templates below. The templates are self-contained — every substitution slot is filled from a Phase 2 answer, a pronto file (`plugin.json`, `references/recommendations.json`, `references/rubric.md`), or `date +%Y`. If Phase 1 was triggered, also use Expert Context to verify any frontmatter or wire-contract details the templates don't already cover.
 
 ### Phase 3.0: Hook Surface (ADR-006 §3 boundary)
 
