@@ -83,6 +83,15 @@ fi
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THRESHOLDS_JSON="$HERE/../references/thresholds.json"
 
+# Source the shingle/Jaccard helpers shared with the scorers so the two
+# surfaces (tidy's `duplicate` rule and score-duplicate-density) cannot
+# diverge on the math. _common.sh ships with `set -euo pipefail`; tidy
+# is intentionally fail-soft in many branches, so restore the looser
+# option set after sourcing.
+# shellcheck source=../scorers/_common.sh
+. "$HERE/../scorers/_common.sh"
+set +e
+
 STALENESS_DAYS=90
 DUP_MIN="0.85"
 DUP_ARCHIVE="0.95"
@@ -261,41 +270,22 @@ check_stale() {
 # Duplicate detection — title + body bigram Jaccard.
 # Pairs only, no transitive merging. The alphabetic-earlier path is the
 # finding's primary path; the partner path appears in `details:`.
+#
+# Math (bigrams_for_doc / jaccard_files) lives in scorers/_common.sh and
+# is shared with score-duplicate-density.sh. Tidy keeps only the
+# pair-finding loop and the per-pair float comparison helpers below.
 # ---------------------------------------------------------------------
-
-bigrams_for() {
-  local file="$1" out="$2" fm title
-  fm="$(extract_frontmatter "$file")"
-  title="$(fm_field title "$fm")"
-  {
-    printf '%s\n' "$title"
-    extract_body "$file"
-  } \
-    | tr '[:upper:]' '[:lower:]' \
-    | tr -c 'a-z0-9' '\n' \
-    | awk 'NF && length($0) >= 2' \
-    | awk 'BEGIN { prev = "" } { if (prev != "") print prev " " $0; prev = $0 }' \
-    | LC_ALL=C sort -u >"$out"
-}
 
 # Float comparison via awk (locale-independent).
 ge() { awk -v a="$1" -v b="$2" 'BEGIN { exit !(a+0 >= b+0) }'; }
 lt() { awk -v a="$1" -v b="$2" 'BEGIN { exit !(a+0 <  b+0) }'; }
-
-jaccard_files() {
-  local a="$1" b="$2" inter union
-  inter="$(LC_ALL=C comm -12 "$a" "$b" | wc -l | tr -d ' ')"
-  union="$(LC_ALL=C sort -u "$a" "$b" | wc -l | tr -d ' ')"
-  if (( union == 0 )); then echo "0.0000"; return; fi
-  awk -v n="$inter" -v d="$union" 'BEGIN { printf "%.4f", n/d }'
-}
 
 detect_duplicates() {
   local docs=("$@")
   local n=${#docs[@]} i j a b score bi_count bj_count
   if (( n < 2 )); then return; fi
   for ((i=0; i<n; i++)); do
-    bigrams_for "$REPO_ROOT/${docs[i]}" "$BIGRAM_DIR/$i"
+    bigrams_for_doc "$REPO_ROOT/${docs[i]}" "$BIGRAM_DIR/$i"
   done
   for ((i=0; i<n; i++)); do
     bi_count="$(wc -l <"$BIGRAM_DIR/$i" | tr -d ' ')"
