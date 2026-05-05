@@ -37,6 +37,24 @@ if [[ -x "$SNAPSHOTS" ]]; then
   fi
 fi
 
+# t2 bin/ tests — exercise the FTS5 indexer, search wrapper, and
+# tag-Jaccard suggester against the bin-docs fixture. These don't
+# need git history (the bin scripts read filesystem mtime, not git
+# log), so the fixture is a static blueprint copied into a tempdir
+# at test time.
+BIN_TESTS_DIR="$HERE/../../tests"
+for t in \
+  inkwell-index.test.sh \
+  inkwell-search.test.sh \
+  inkwell-suggest-links.test.sh
+do
+  if [[ -x "$BIN_TESTS_DIR/$t" ]]; then
+    if ! bash "$BIN_TESTS_DIR/$t"; then
+      fail=1
+    fi
+  fi
+done
+
 if (( fail == 0 )); then
   echo "run-all.sh: ALL PASS"
   exit 0
