@@ -45,4 +45,4 @@ reader should expect. Optional but valuable when there's a real choice. -->
 <!-- Wikilinks or relative paths to sibling docs the reader should consult next.
 Soft requirement — leave the heading even if the list is short. -->
 
--
+<!-- inkwell:related — populate when the doc earns siblings -->

@@ -24,7 +24,11 @@
 #   template-non-compliance  — frontmatter missing or invalid
 #                              (template / title / updated)
 #   missing-related          — terminal `## Related` block absent or
-#                              contains only the bare `-` placeholder
+#                              contains only the bare `-` placeholder.
+#                              A `<!-- inkwell:related -->` HTML comment
+#                              counts as writer-acknowledged-empty: no
+#                              finding fires. Real bullets short-circuit
+#                              the rule the same way.
 #
 # Thresholds live in `references/thresholds.json` so the staleness
 # scorer and tidy share one knob. `jq` absence falls back to inline
@@ -254,7 +258,7 @@ check_missing_related() {
   ' "$file")"
   if [[ -z "$meaningful" ]]; then
     emit_finding "$rel" "missing-related" \
-      "\`## Related\` block has no content (bare \`-\` placeholder doesn't count)"
+      "\`## Related\` block has no content (add bullets, or use \`<!-- inkwell:related -->\` to mark intentionally empty)"
   fi
 }
 

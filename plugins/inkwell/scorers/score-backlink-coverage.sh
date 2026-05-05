@@ -8,9 +8,11 @@
 #
 # A `## Related` block is "non-empty" iff the file has a heading
 # matching `^## +Related[[:space:]]*$` AND at least one non-blank,
-# non-`-`-placeholder line follows it before EOF. The exact check
-# matches inkwell-tidy.sh's check_missing_related so the two surfaces
-# never disagree about which docs have backlinks.
+# non-`-`-placeholder line follows it before EOF. A
+# `<!-- inkwell:related -->` HTML comment counts as content (the
+# writer's "intentionally empty" placeholder), mirroring tidy's
+# missing-related rule so the two surfaces never disagree about which
+# docs have backlinks.
 #
 # Empty-scope short-circuit:
 #   No `docs/**/*.md` carries a Diátaxis `template:` value -> omit
