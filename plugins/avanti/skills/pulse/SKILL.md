@@ -1,7 +1,6 @@
 ---
 name: pulse
 description: Append a timestamped entry to today's pulse day-file in project/pulse/
-disable-model-invocation: true
 argument-hint: <message>
 allowed-tools: Read, Write, Edit, Bash, Glob, AskUserQuestion
 ---

@@ -1,7 +1,6 @@
 ---
 name: ticket
 description: Draft a new plan-scoped ticket from the avanti template into project/tickets/open/
-disable-model-invocation: true
 argument-hint: <slug> --plan <plan-slug>
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
 ---
