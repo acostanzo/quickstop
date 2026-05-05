@@ -215,6 +215,22 @@ assert_eq "no-match → no-match sentinel" \
 assert_eq "no-match exit code" "0" "$?"
 
 # -------------------------------------------------------------------
+# Case 4b — natural-language sentence-shaped question with punctuation
+# must produce real citations. FTS5's MATCH parser would reject the
+# raw question (the implicit-AND of every token, plus punctuation
+# parsed as syntax, drops it to zero hits); the script normalises to
+# an OR-joined token list before searching. This is the regression
+# test for the layer-2 smoke blocker.
+# -------------------------------------------------------------------
+out_nl=$(triple_run_retrieve \
+  "What does validate_session do, and what's the default token prefix?" \
+  "$TMP")
+assert_match "natural-language citation shape" \
+  '^- \[docs/.+\.md#[a-z0-9-]+\]\(docs/.+\.md#[a-z0-9-]+\) — ' "$out_nl"
+assert_contains "natural-language corroboration header" \
+  "**Corroboration:**" "$out_nl"
+
+# -------------------------------------------------------------------
 # Case 5 — frontmatter-only match: when the FTS5 hit's line falls
 # in the YAML frontmatter (before any heading), the resolver must
 # fall back to the doc's first heading rather than dropping the
