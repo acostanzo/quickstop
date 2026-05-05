@@ -62,7 +62,17 @@ if ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   exit 0
 fi
 
+# Threshold sourced from references/thresholds.json so tidy and the
+# scorer never drift. `jq` absence falls back to the inline default
+# (90), the same value documented in references/thresholds.md.
+THRESHOLDS_JSON="$HERE/../references/thresholds.json"
 THRESHOLD_DAYS=90
+if [[ -f "$THRESHOLDS_JSON" ]] && command -v jq >/dev/null 2>&1; then
+  v="$(jq -r '.staleness_days // 90' <"$THRESHOLDS_JSON" 2>/dev/null || echo 90)"
+  if [[ "$v" =~ ^[0-9]+$ ]]; then
+    THRESHOLD_DAYS="$v"
+  fi
+fi
 THRESHOLD_SECONDS=$((THRESHOLD_DAYS * 86400))
 
 # ---- docs_mtime: newest commit time across README.md + docs/ ---------
