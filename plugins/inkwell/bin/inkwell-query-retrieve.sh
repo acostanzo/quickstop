@@ -2,17 +2,18 @@
 # inkwell-query-retrieve.sh — retrieve top-N FTS5 hits, resolve each
 # hit to its enclosing heading anchor, extract the section body, and
 # render the locked /inkwell:query response contract (Sources block +
-# Corroboration stub).
+# Corroboration verdicts).
 #
 # This script is the deterministic half of `/inkwell:query`. The LLM
 # half is the skill body: it reads the chunks block above the
 # `---END-OF-CHUNKS---` sentinel, synthesises a one-paragraph Answer
 # from those chunks, then concatenates the Sources block and the
-# Corroboration stub below it verbatim.
+# Corroboration block below it verbatim.
 #
 # The contract surface — field names, ordering, citation format —
-# is locked at M3 so M5's corroboration dispatcher can fill in the
-# `Corroboration:` line without reshaping anything else. See
+# is locked at M3. M5 wires `bin/inkwell-corroborate.sh` against the
+# accumulated chunks; the per-citation verdicts replace the M3 stub.
+# Field shape, ordering, and citation format are unchanged. See
 # project/adrs/007-inkwell-corroboration-architecture.md.
 #
 # Output shape (stdout) on success:
@@ -34,7 +35,10 @@
 #   - [docs/auth/session.md#sessions](docs/auth/session.md#sessions) — <one-line snippet>
 #   - [docs/concepts/auth.md#authentication](docs/concepts/auth.md#authentication) — <one-line snippet>
 #
-#   **Corroboration:** `not yet implemented` (see ADR-007; M5 wires this)
+#   **Corroboration:**
+#   - docs/auth/session.md#sessions — verified
+#   - docs/concepts/auth.md#authentication — drift detected (see src/auth/login.ts: symbol 'foo' not found)
+#   - docs/concepts/auth.md#authentication — could not corroborate
 #
 # Empty-scope contract: if the underlying search yields no hits
 # (empty docs/, no matches, or every hit failed anchor resolution),
@@ -199,9 +203,41 @@ if [[ -z "$sources_block" ]]; then
   exit 0
 fi
 
-printf '## Retrieved chunks\n\n'
-printf '%s' "$chunks_block"
+# Render the chunks block first so we can also pipe it to the
+# corroboration dispatcher unchanged.
+chunks_payload="$(printf '## Retrieved chunks\n\n%s' "$chunks_block")"
+printf '%s' "$chunks_payload"
 printf -- '---END-OF-CHUNKS---\n\n'
 printf '**Sources:**\n'
 printf '%s' "$sources_block"
-printf '\n**Corroboration:** `not yet implemented` (see ADR-007; M5 wires this)\n'
+
+# Corroboration block. The dispatcher consumes the same `### citation`
+# sections we just emitted above the sentinel and prints one
+# `<citation>\t<verdict>` line per claim. We render those into the
+# locked `**Corroboration:**` field. Failure to dispatch (script
+# missing, exit non-zero, empty stdout) degrades to the per-citation
+# `could not corroborate` fallback so the response still ships — per
+# ADR-007's "corroboration never blocks the response" invariant.
+CORROBORATOR="$HERE/inkwell-corroborate.sh"
+verdicts=""
+if [[ -x "$CORROBORATOR" ]]; then
+  verdicts="$(printf '%s' "$chunks_payload" | "$CORROBORATOR" "$REPO_ROOT" 2>/dev/null || true)"
+fi
+
+printf '\n**Corroboration:**\n'
+if [[ -n "$verdicts" ]]; then
+  while IFS=$'\t' read -r citation verdict; do
+    [[ -z "$citation" ]] && continue
+    printf -- '- %s — %s\n' "$citation" "$verdict"
+  done <<<"$verdicts"
+else
+  # Dispatcher unavailable / produced no output. Emit a "could not
+  # corroborate" entry per cited Source so the field is populated and
+  # the contract shape holds.
+  while IFS= read -r src_line; do
+    [[ -z "$src_line" ]] && continue
+    if [[ "$src_line" =~ ^-\ \[([^]]+)\] ]]; then
+      printf -- '- %s — could not corroborate\n' "${BASH_REMATCH[1]}"
+    fi
+  done <<<"$sources_block"
+fi

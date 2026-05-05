@@ -1,6 +1,6 @@
 ---
 name: query
-description: Retrieval-augmented Q&A over the repo's `docs/` tree. Returns a one-paragraph synthesis plus citations (doc path + heading anchor) and a corroboration field. The corroboration field is stubbed at M3 and wired by M5; the response shape is locked from M3 onward.
+description: Retrieval-augmented Q&A over the repo's `docs/` tree. Returns a one-paragraph synthesis plus citations (doc path + heading anchor) and per-citation corroboration verdicts. Field shape and ordering are locked at M3; M5 populates the verdicts.
 allowed-tools: Read, Bash, Glob
 argument-hint: <question>
 ---
@@ -38,8 +38,13 @@ the working directory when `/inkwell:query` was invoked. The script:
   click.
 - Extracts the section body from the heading line through the next
   heading of equal or higher rank, capped at 60 lines.
-- Renders the **Sources** block and the **Corroboration** stub line
-  in the locked contract shape (see "Response contract" below).
+- Pipes the chunks block to `bin/inkwell-corroborate.sh`, which
+  classifies each citation's claims into Tier 1 (deterministic
+  name-resolution), Tier 2 (subagent-judged behavioural verification),
+  or Tier 3 (annotated "could not corroborate"). The dispatcher's
+  per-citation verdicts populate the **Corroboration** block.
+- Renders the **Sources** block and the **Corroboration** block in
+  the locked contract shape (see "Response contract" below).
 
 ### 2. Read and synthesise
 
@@ -71,19 +76,22 @@ Concatenate, in this exact order:
 3. The **Sources:** block (verbatim, copied from the script output
    below the `---END-OF-CHUNKS---` sentinel).
 4. A blank line.
-5. The **Corroboration:** line (verbatim, copied from the script
-   output).
+5. The **Corroboration:** block (verbatim, copied from the script
+   output) — one bullet per citation/claim with the dispatcher's
+   verdict.
 
 If the script's stdout is the literal `*No matching documentation
 found.*` line, return that string as-is. The empty-`docs/` branch
 and the no-FTS5-hits branch share this sentinel; do not retry, do
 not fabricate citations.
 
-## Response contract — locked at M3
+## Response contract — locked at M3, populated at M5
 
-This contract is **load-bearing for M5**. The corroboration
-dispatcher (T5) wires the `Corroboration:` field by reading this
-SKILL.md alone, without re-deciding the shape. Do not reshape it.
+This contract is **load-bearing**. The M3 stub and the M5 verdicts
+share the same field name, ordering, and citation format —
+downstream consumers of `/inkwell:query` output can rely on the
+field's existence and position from M3 onward; M5 only changes the
+*content* of the Corroboration block.
 
 The response, in order:
 
@@ -91,18 +99,27 @@ The response, in order:
 |---|---|---|---|
 | **Answer.** (one paragraph) | LLM synthesis from chunks | Synthesised | Unchanged |
 | **Sources:** list, one per cited doc | `bin/inkwell-query-retrieve.sh` | `- [path#anchor](path#anchor) — <one-line snippet>` | Unchanged |
-| **Corroboration:** line | `bin/inkwell-query-retrieve.sh` | `not yet implemented` (literal stub) | Per-claim verdict — `verified` / `drift detected (see file.ts:N)` / `could not corroborate` |
+| **Corroboration:** block, one bullet per claim | `bin/inkwell-corroborate.sh` (via `inkwell-query-retrieve.sh`) | Single literal stub line `not yet implemented` | `- path#anchor — <verdict>` per claim — verdict ∈ `verified` / `drift detected (see …)` / `could not corroborate` |
 
-The literal stub line emitted at M3 is:
+The M5 Corroboration block looks like:
 
 ```
-**Corroboration:** `not yet implemented` (see ADR-007; M5 wires this)
+**Corroboration:**
+- docs/auth/session.md#sessions — verified
+- docs/auth/session.md#sessions — could not corroborate
+- docs/concepts/auth.md#authentication — drift detected (see src/auth/login.ts: symbol 'foo' not found)
 ```
 
-When M5 lands, only the rendering of the **Corroboration:** field
-changes — Answer and Sources stay shape-stable. Downstream consumers
-of `/inkwell:query` output (humans, future tooling) can rely on the
-field's existence and position from M3 onward.
+Multiple lines per citation are normal — Tier 1 emits one verdict
+per inline code span; Tier 2 emits one verdict per behavioural
+claim batch; Tier 3 emits a single fallback line for citations
+with no code-shape signal.
+
+If the dispatcher is unavailable, fails, or returns empty stdout,
+`/inkwell:query` falls back to one `could not corroborate` bullet
+per cited Source — the field is always populated, the shape is
+always stable, the response always ships. Per ADR-007:
+"corroboration never blocks the response."
 
 The architectural rationale is in
 `project/adrs/007-inkwell-corroboration-architecture.md`.
@@ -120,16 +137,15 @@ Exit cleanly. Never crash on a fresh repo.
 
 ## What this skill does not do
 
-- **No subagent dispatch.** Tier-1/Tier-2/Tier-3 corroboration is M5's
-  scope; M3 is retrieval + answer-shaping only. The corroboration
-  field is a literal stub at this milestone.
-- **No claim extraction.** The synthesis is one paragraph drawn from
-  chunks; per-claim verdicts wait for the M5 dispatcher.
 - **No vector search.** v1 is FTS5 only. Vector retrieval is deferred
   to v2.
 - **No mutation of `docs/` or any consumer artefact.** ADR-006 §2
-  holds: read-only retrieval surface.
+  holds: read-only retrieval surface. The corroboration dispatcher
+  is also read-only against the consumer's source tree.
 - **No inventing citations.** Every entry in **Sources:** comes from
   `inkwell-query-retrieve.sh`'s deterministic output. If the chunks
   don't answer the question, say so — do not fabricate sources to
   pad an answer.
+- **No inventing verdicts.** Every entry in **Corroboration:** comes
+  from `inkwell-corroborate.sh`'s deterministic / subagent-dispatched
+  output. Do not synthesise verdicts in the answer paragraph.
