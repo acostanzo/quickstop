@@ -13,6 +13,16 @@
 #
 # Pure shell + grep + awk + jq plus the per-scorer tools. Same
 # filesystem state and same git history → same JSON bytes every run.
+#
+# Sourcing convention: this file enables `set -euo pipefail` because
+# the scorers that use it are strict-by-design — any unhandled error
+# should abort the audit rather than silently degrade. Sourcing
+# inherits the option set of the file being sourced, so bin scripts
+# that source this file with different error semantics (e.g.
+# `inkwell-tidy.sh`, which is intentionally fail-soft across many
+# branches) must `set +e` (or whatever option set fits) immediately
+# after sourcing to restore their own posture. The consumer is
+# responsible for re-establishing its own error handling.
 
 set -euo pipefail
 
