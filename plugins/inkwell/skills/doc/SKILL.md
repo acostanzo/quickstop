@@ -95,9 +95,13 @@ If the resolver returned `none`:
    - `Read` the source file.
    - For known languages, seed the `## Parameters` table with the
      exported function signatures (Python `def`, JS/TS `export
-     function`, Go `func`). One row per export: `| name | — | — |
-     <one-line meaning> |`. Leave the meaning blank if you can't
-     extract a docstring — the author fills it in.
+     function`, Go `func`). The reference template's table is four
+     columns — `Name | Type | Default | Description` — so each row
+     must be `| name | — | — | — | <one-line meaning> |` (5 pipes,
+     4 cells). Populate type/default if you can extract them from
+     source; otherwise leave the em-dash placeholders. Leave the
+     meaning blank if you can't extract a docstring — the author
+     fills it in.
    - Add a one-line `## Description` paragraph naming the source path
      so the doc is self-locating.
 6. **`Write` the new file** at `<REPO_ROOT>/docs/<slug>.md` with the
