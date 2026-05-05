@@ -79,6 +79,8 @@ Common invocations:
 
 Notable flags: `--template <concept|how-to|reference|tutorial>`, `--from-code <path>`. See [`skills/doc/SKILL.md`](skills/doc/SKILL.md) for the full surface.
 
+New scaffolds land under the conventional Diátaxis subdirectory — `docs/concepts/`, `docs/howtos/`, `docs/reference/`, `docs/tutorials/` — and their `## Related` block ships with a `<!-- inkwell:related -->` comment placeholder that `/inkwell:tidy` treats as writer-acknowledged-empty (no `missing-related` finding on fresh docs).
+
 ## /inkwell:search — FTS5 over `docs/`
 
 Thin wrapper over `bin/inkwell-search.sh`. The script invokes `bin/inkwell-index.sh` first, so the index is always current relative to the on-disk tree. FTS5 `porter unicode61` tokenizer; ranking is `bm25`; capped at 25 hits.

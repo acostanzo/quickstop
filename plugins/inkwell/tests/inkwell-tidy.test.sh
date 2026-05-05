@@ -362,7 +362,53 @@ assert_not_contains "rename clears the old link target" \
   "(../concepts/auth.md)" "$sign_in_body"
 
 # -------------------------------------------------------------------
-# Case 7 — triple-run determinism on the read-only path is exercised
+# Case 7 — `<!-- inkwell:related -->` comment counts as
+# writer-acknowledged-empty. A fresh scaffold with the comment
+# placeholder must NOT fire missing-related; a doc with the legacy
+# bare `-` placeholder still fires (so authors get nudged to migrate).
+# -------------------------------------------------------------------
+PLACEHOLDER_REPO="$WORKDIR/placeholder"
+mkdir -p "$PLACEHOLDER_REPO/docs"
+cat >"$PLACEHOLDER_REPO/docs/fresh.md" <<EOF
+---
+title: Fresh
+updated: ${TODAY_ISO%T*}
+template: concept
+tags: [fresh]
+---
+
+# Fresh
+
+Just-scaffolded doc, no siblings yet.
+
+## Related
+
+<!-- inkwell:related — populate when the doc earns siblings -->
+EOF
+cat >"$PLACEHOLDER_REPO/docs/legacy.md" <<EOF
+---
+title: Legacy
+updated: ${TODAY_ISO%T*}
+template: concept
+tags: [legacy]
+---
+
+# Legacy
+
+Doc that still carries the bare-dash placeholder from before 0.4.1.
+
+## Related
+
+-
+EOF
+out_placeholder=$("$TIDY" "$PLACEHOLDER_REPO" 2>/dev/null)
+assert_not_contains "comment placeholder doesn't fire missing-related" \
+  "docs/fresh.md  rule=missing-related" "$out_placeholder"
+assert_contains "bare-dash placeholder still fires missing-related" \
+  "docs/legacy.md  rule=missing-related" "$out_placeholder"
+
+# -------------------------------------------------------------------
+# Case 8 — triple-run determinism on the read-only path is exercised
 # by every triple_run_tidy call above; this final guard re-asserts on
 # the bin-docs fixture explicitly.
 # -------------------------------------------------------------------

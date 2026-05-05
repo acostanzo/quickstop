@@ -140,10 +140,13 @@ If the resolver returned `none`:
    ```
    The script returns either `path  score=...  rationale: ...` lines
    on stdout or `no automatic suggestion` on stderr.
-8. **`Edit` the `## Related` block.** If the suggester emitted
-   candidates, replace the dash placeholder with one bullet per
-   candidate (`- [path](path)`). If the suggester emitted "no
-   automatic suggestion", leave the dash placeholder in place.
+8. **`Edit` the `## Related` block.** Templates ship with the
+   `<!-- inkwell:related — populate when the doc earns siblings -->`
+   placeholder. If the suggester emitted candidates, replace that
+   comment with one bullet per candidate (`- [path](path)`). If the
+   suggester emitted "no automatic suggestion", leave the comment in
+   place — `inkwell-tidy.sh` treats it as writer-acknowledged-empty
+   and won't fire `missing-related` against fresh scaffolds.
 
 ### 3. Refresh the FTS5 index
 
