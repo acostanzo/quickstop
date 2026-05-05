@@ -47,7 +47,8 @@ for t in \
   inkwell-index.test.sh \
   inkwell-search.test.sh \
   inkwell-suggest-links.test.sh \
-  inkwell-query-retrieve.test.sh
+  inkwell-query-retrieve.test.sh \
+  inkwell-tidy.test.sh
 do
   if [[ -x "$BIN_TESTS_DIR/$t" ]]; then
     if ! bash "$BIN_TESTS_DIR/$t"; then
