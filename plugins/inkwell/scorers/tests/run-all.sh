@@ -46,7 +46,8 @@ BIN_TESTS_DIR="$HERE/../../tests"
 for t in \
   inkwell-index.test.sh \
   inkwell-search.test.sh \
-  inkwell-suggest-links.test.sh
+  inkwell-suggest-links.test.sh \
+  inkwell-query-retrieve.test.sh
 do
   if [[ -x "$BIN_TESTS_DIR/$t" ]]; then
     if ! bash "$BIN_TESTS_DIR/$t"; then
