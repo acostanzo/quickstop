@@ -100,18 +100,24 @@ If the resolver returned `none`:
      extract a docstring — the author fills it in.
    - Add a one-line `## Description` paragraph naming the source path
      so the doc is self-locating.
-6. **Suggest `## Related`.** Compute the target write path
-   (`docs/<slug>.md`) and call:
+6. **`Write` the new file** at `<REPO_ROOT>/docs/<slug>.md` with the
+   substituted body and an empty `## Related` block (the heading
+   followed by the dash placeholder). The file must exist on disk
+   before the suggester runs because the suggester reads the
+   target's frontmatter `tags:` to score peers — it refuses a
+   non-existent target.
+7. **Suggest `## Related`.** Call the suggester against the
+   now-existent path:
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/bin/inkwell-suggest-links.sh" \
        "docs/<slug>.md" "<REPO_ROOT>"
    ```
    The script returns either `path  score=...  rationale: ...` lines
-   or `no automatic suggestion` on stderr. Insert the candidate paths
-   under the `## Related` heading in the scaffolded body, one per line
-   as a bullet (`- [path](path)`). If the suggester emits no
-   suggestions, leave the heading and the existing dash placeholder.
-7. **`Write` the new file** at `<REPO_ROOT>/docs/<slug>.md`.
+   on stdout or `no automatic suggestion` on stderr.
+8. **`Edit` the `## Related` block.** If the suggester emitted
+   candidates, replace the dash placeholder with one bullet per
+   candidate (`- [path](path)`). If the suggester emitted "no
+   automatic suggestion", leave the dash placeholder in place.
 
 ### 3. Refresh the FTS5 index
 
