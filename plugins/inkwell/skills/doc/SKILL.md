@@ -28,22 +28,34 @@ doc is immediately searchable via `/inkwell:search`.
 
 ### 1. Resolve target path
 
-Derive a slug from `<topic>` — lower-case, non-alphanumerics replaced
-with `-`, runs of `-` collapsed, leading/trailing `-` stripped. Look
-for an existing doc at any of these paths under `docs/`:
+Call the resolver with the raw topic:
 
-```
-docs/<slug>.md
-docs/**/<slug>.md
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/bin/inkwell-doc-resolve.sh" \
+    "<topic>" "<REPO_ROOT>"
 ```
 
-Use `Glob` to enumerate. The first match wins. If multiple matches
-exist, prefer the shallowest path (smallest number of `/`); break
-remaining ties alphabetically.
+The resolver emits one of three outputs on a single line:
+
+- `match <relative-path>` — exactly one existing doc matches by
+  filename slug or by frontmatter `title:` (case-insensitive). Take
+  the update path (§2a) against this file.
+- `ambiguous <path1> <path2> ...` — two or more docs share a `title:`
+  matching `<topic>` and no slug match exists. Surface the candidates
+  to the user and stop; do **not** scaffold a third copy. The author
+  resolves the ambiguity (e.g. by re-running with a more specific
+  topic, or by editing one of the candidates manually first).
+- `none` — no existing doc to update. Take the scaffold path (§2b).
+
+The resolver checks slug first (the strongest signal — it's the
+write-target the scaffold path would otherwise create) and falls
+back to a `title:` scan so a topic like `Authentication` finds an
+existing `docs/concepts/auth.md` rather than scaffolding a duplicate
+at `docs/authentication.md`.
 
 ### 2a. Existing doc → update path
 
-If a match is found:
+If the resolver returned `match <path>`:
 
 1. `Read` the file.
 2. `Edit` the `updated:` line in the frontmatter to today's date
@@ -54,11 +66,11 @@ If a match is found:
    author's, not yours — `/inkwell:doc` updates the `updated:` stamp,
    not the prose. Semantic rewrites belong to `/inkwell:tidy
    --apply-semantic` (T4).
-4. Skip to step 5 (index refresh).
+4. Skip to §3 (index refresh).
 
 ### 2b. New doc → scaffold path
 
-If no match is found:
+If the resolver returned `none`:
 
 1. **Pick the template.** If `--template <name>` was supplied, use it.
    Otherwise auto-pick from the topic shape:

@@ -52,6 +52,7 @@ for t in \
   inkwell-search.test.sh \
   inkwell-suggest-links.test.sh \
   inkwell-query-retrieve.test.sh \
+  inkwell-doc-resolve.test.sh \
   inkwell-tidy.test.sh \
   inkwell-corroborate.test.sh
 do
