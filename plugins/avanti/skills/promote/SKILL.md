@@ -138,8 +138,9 @@ Run `date +%Y-%m-%d` via Bash. Store as **TODAY**.
 If NEXT_STATE is `active`, target folder is `project/plans/active/`.
 If NEXT_STATE is `done`, target folder is `project/plans/done/`.
 
-1. Edit ARTIFACT_PATH: `status: ${CURRENT_STATE}` → `status: ${NEXT_STATE}`, bump `updated: ${TODAY}`.
-2. Bash `mv ARTIFACT_PATH <target-folder>/<basename>` to move the file.
+1. Ensure the target folder exists: `mkdir -p <target-folder>` via Bash. Plan-state subdirectories (`active/`, `done/`) are avanti's destination — create them on demand if missing rather than failing the move.
+2. Edit ARTIFACT_PATH: `status: ${CURRENT_STATE}` → `status: ${NEXT_STATE}`, bump `updated: ${TODAY}`.
+3. Bash `mv ARTIFACT_PATH <target-folder>/<basename>` to move the file.
 
 Store the new path as **NEW_PATH**.
 
@@ -152,8 +153,9 @@ If NEXT_STATE is `in-progress`:
 
 If NEXT_STATE is `closed`:
 
-1. Edit ARTIFACT_PATH: `status: ${CURRENT_STATE}` → `status: closed`, bump `updated: ${TODAY}`.
-2. Bash `mv ARTIFACT_PATH project/tickets/closed/<basename>`.
+1. Ensure `project/tickets/closed/` exists: `mkdir -p` via Bash if missing.
+2. Edit ARTIFACT_PATH: `status: ${CURRENT_STATE}` → `status: closed`, bump `updated: ${TODAY}`.
+3. Bash `mv ARTIFACT_PATH project/tickets/closed/<basename>`.
 
 Store the new path as NEW_PATH.
 
