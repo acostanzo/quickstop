@@ -94,19 +94,18 @@ Audits lint-posture for Claude Code consumer repos: linter config strictness, fo
 
 **Commands:** `/lintguini:audit`
 
-### Inkwell (v0.3.1)
+### Inkwell (v0.4.0)
 
-Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.
+Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree. Pronto-sibling audit for code-documentation depth ships alongside.
 
-- Pronto sibling — depth auditor for the `code-documentation` rubric dimension (weight 15)
-- Four deterministic shell scorers under `scorers/` — `score-readme-quality.sh` (arrival-question coverage), `score-link-health.sh` (lychee `--offline` over README + docs/), `score-doc-staleness.sh` (git-log mtimes vs threshold), `score-docs-coverage.sh` (per-language tool dispatch — interrogate / eslint-jsdoc / revive / cargo doc)
-- `bin/build-envelope.sh` orchestrator dispatches the four scorers in fixed order and slurps their non-empty stdouts into the v2 envelope's `observations[]` array
-- Tool-absent branches degrade gracefully — missing interrogate / lychee / revive / cargo omit the observation rather than fail the audit
-- Wire-contract v2 envelope on `/inkwell:audit --json` — observations consumed by pronto's `code-documentation` translation rules; `composite_score: null` defers all scoring to the rubric path
-- Three-fixture calibration set under `tests/fixtures/{low,mid,high}/` with locked envelopes for byte-equivalence regression
-- Declares `compatible_pronto: ">=0.3.0"` per ADR-004 handshake
+- Five skills: `/inkwell:doc` (Diátaxis-template scaffold/update), `/inkwell:search` (FTS5 over `docs/`), `/inkwell:query` (RAG Q&A with citations + corroboration), `/inkwell:tidy` (drift-finder), `/inkwell:audit` (Pronto-sibling code-documentation auditor)
+- Diátaxis four-quadrant templates ship under `templates/` — `concept`, `how-to`, `reference`, `tutorial`
+- FTS5 index at `docs/.inkwell.fts5.db` (gitignored), rebuilt on-write by `bin/inkwell-index.sh`
+- Inference-time code corroboration — Tier 1 deterministic name-resolution, Tier 2 LLM-judged behavioural verification, Tier 3 annotated-only — architecture in ADR-007
+- Audit stays deterministic: pure shell + grep + awk + jq, no LLM dispatch in scorers; conditional scorers (`score-template-compliance.sh`, `score-backlink-coverage.sh`, `score-duplicate-density.sh`) gate on inkwell-frontmatter presence and emit empty-scope on non-inkwell consumers
+- Pronto sibling — depth auditor for the `code-documentation` rubric dimension (weight 15); declares `compatible_pronto: ">=0.3.0"` per ADR-004 handshake
 
-**Commands:** `/inkwell:audit`
+**Commands:** `/inkwell:doc`, `/inkwell:search`, `/inkwell:query`, `/inkwell:tidy`, `/inkwell:audit`
 
 ## Dev Tools
 
