@@ -1,6 +1,6 @@
 ---
 id: 007
-status: proposed
+status: accepted
 superseded_by: null
 updated: 2026-05-05
 ---
