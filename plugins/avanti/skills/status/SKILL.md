@@ -1,7 +1,6 @@
 ---
 name: status
 description: Summarize active plans, open tickets, proposed ADRs, and the latest pulse entry
-disable-model-invocation: true
 argument-hint: "[--verbose]"
 allowed-tools: Read, Bash, Glob, Grep
 ---
