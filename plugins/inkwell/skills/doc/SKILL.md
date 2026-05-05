@@ -1,0 +1,144 @@
+---
+name: doc
+description: Scaffold a new doc under `docs/` from a Diátaxis template, or update an existing one and bump its `updated:` date. Suggests `## Related` candidates and refreshes the FTS5 index on write.
+allowed-tools: Read, Write, Edit, Bash, Glob
+argument-hint: <topic> [--template <name>] [--from-code <path>]
+---
+
+# Inkwell:doc
+
+Write or update a doc under the repo's `docs/` tree. The skill is the
+writer's primary scaffolding surface: it picks a Diátaxis template,
+substitutes the topic into the headline placeholders, seeds a `## Related`
+block from the link suggester, and refreshes the FTS5 index so the new
+doc is immediately searchable via `/inkwell:search`.
+
+## Inputs
+
+- `<topic>` — required. Free-form topic title. Used both to derive the
+  filename slug and to substitute the template's headline placeholders
+  (`<Topic>`, `<Goal>`, `<Surface>`, `<What you'll learn>`).
+- `--template <name>` — optional. One of `concept`, `how-to`,
+  `reference`, `tutorial`. Overrides the auto-pick.
+- `--from-code <path>` — optional. Source file to draft a
+  reference-shaped doc from. Forces `--template reference` if no
+  explicit template was given.
+
+## Behaviour
+
+### 1. Resolve target path
+
+Derive a slug from `<topic>` — lower-case, non-alphanumerics replaced
+with `-`, runs of `-` collapsed, leading/trailing `-` stripped. Look
+for an existing doc at any of these paths under `docs/`:
+
+```
+docs/<slug>.md
+docs/**/<slug>.md
+```
+
+Use `Glob` to enumerate. The first match wins. If multiple matches
+exist, prefer the shallowest path (smallest number of `/`); break
+remaining ties alphabetically.
+
+### 2a. Existing doc → update path
+
+If a match is found:
+
+1. `Read` the file.
+2. `Edit` the `updated:` line in the frontmatter to today's date
+   (UTC, `YYYY-MM-DD`). Today's date is available as the
+   `{{ today }}` substitution in the conversation context, or
+   compute via `Bash: date -u +%Y-%m-%d`.
+3. Write nothing else. The body and other frontmatter are the
+   author's, not yours — `/inkwell:doc` updates the `updated:` stamp,
+   not the prose. Semantic rewrites belong to `/inkwell:tidy
+   --apply-semantic` (T4).
+4. Skip to step 5 (index refresh).
+
+### 2b. New doc → scaffold path
+
+If no match is found:
+
+1. **Pick the template.** If `--template <name>` was supplied, use it.
+   Otherwise auto-pick from the topic shape:
+   - Starts with "How to " (case-insensitive) → `how-to`
+   - Starts with "What is " → `concept`
+   - Starts with "Get started" / "Build your first" / "Tutorial" → `tutorial`
+   - Contains a `(` and `)` (function signature shape) or contains a
+     path separator (`/` between non-space tokens, suggesting a file)
+     → `reference`
+   - Otherwise → `concept` (conservative default).
+2. **`--from-code <path>` overrides the auto-pick to `reference`** (a
+   doc generated from source code is reference-shaped by definition,
+   unless the author explicitly asks for another template).
+3. `Read` the chosen template at `${CLAUDE_PLUGIN_ROOT}/templates/<template>.md`.
+4. **Substitute placeholders.** In the template body, replace:
+   - `<Topic>` → the user's `<topic>` (concept/reference)
+   - `<Goal>` → the user's `<topic>` (how-to)
+   - `<Surface>` → the user's `<topic>` (reference)
+   - `<What you'll learn>` → the user's `<topic>` (tutorial)
+   - The `updated:` frontmatter value → today's date.
+5. **`--from-code` enrichment.** If `--from-code <path>` is given:
+   - `Read` the source file.
+   - For known languages, seed the `## Parameters` table with the
+     exported function signatures (Python `def`, JS/TS `export
+     function`, Go `func`). One row per export: `| name | — | — |
+     <one-line meaning> |`. Leave the meaning blank if you can't
+     extract a docstring — the author fills it in.
+   - Add a one-line `## Description` paragraph naming the source path
+     so the doc is self-locating.
+6. **Suggest `## Related`.** Compute the target write path
+   (`docs/<slug>.md`) and call:
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/bin/inkwell-suggest-links.sh" \
+       "docs/<slug>.md" "<REPO_ROOT>"
+   ```
+   The script returns either `path  score=...  rationale: ...` lines
+   or `no automatic suggestion` on stderr. Insert the candidate paths
+   under the `## Related` heading in the scaffolded body, one per line
+   as a bullet (`- [path](path)`). If the suggester emits no
+   suggestions, leave the heading and the existing dash placeholder.
+7. **`Write` the new file** at `<REPO_ROOT>/docs/<slug>.md`.
+
+### 3. Refresh the FTS5 index
+
+Always run, regardless of update or create path:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/bin/inkwell-index.sh" "<REPO_ROOT>"
+```
+
+The indexer is mtime-cached and idempotent — touching only the file
+just written. The on-write index refresh is what makes
+`/inkwell:search` reflect the new doc immediately, no manual reindex.
+
+## Voice
+
+The doc you write must match the inkwell voice (see plugin README §
+"Documentation voice"):
+
+- LLM-first, then engineers, then product team.
+- Structured and scannable — headings are semantic, sections are one
+  idea.
+- Concrete — file paths spelled out, function names in code spans.
+- Self-contained — a reader (human or LLM) shouldn't need adjacent
+  files to follow this one.
+- Plain-spoken — engineering documentation is not marketing copy.
+
+The templates ship with `<!-- comment -->` guidance under each
+section. **Delete those guidance comments before saving** — they're
+authoring scaffolding, not output content.
+
+## What this skill does not do
+
+- Does not author the prose. The user is the author; the skill
+  scaffolds, substitutes, and seeds.
+- Does not enforce template compliance. Sections are soft scaffolding
+  per the plan's "Document model" section. Compliance scoring is
+  T5's `score-template-compliance.sh`, not this skill's concern.
+- Does not corroborate code. That's `/inkwell:query` (T3) at inference
+  time, per ADR-007.
+- Does not modify files outside `docs/<slug>.md` and the gitignored
+  index file. ADR-006 §2 holds: no silent mutation of consumer
+  artefacts.
