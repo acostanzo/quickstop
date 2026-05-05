@@ -94,7 +94,7 @@ Audits lint-posture for Claude Code consumer repos: linter config strictness, fo
 
 **Commands:** `/lintguini:audit`
 
-### Inkwell (v0.4.0)
+### Inkwell (v0.4.1)
 
 Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree. Pronto-sibling audit for code-documentation depth ships alongside.
 

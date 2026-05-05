@@ -105,7 +105,7 @@
     },
     {
       "name": "inkwell",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "description": "Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree. Pronto-sibling audit for code-documentation depth ships alongside.",
       "source": "./plugins/inkwell",
       "keywords": [
