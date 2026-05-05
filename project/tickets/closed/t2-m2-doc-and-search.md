@@ -1,7 +1,7 @@
 ---
 id: t2
 plan: inkwell-expansion
-status: open
+status: closed
 updated: 2026-05-05
 ---
 
