@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
-# build-envelope.sh — orchestrate the four code-documentation
-# scorers and emit a v2 wire-contract envelope on stdout.
+# build-envelope.sh — orchestrate the code-documentation scorers and
+# emit a v2 wire-contract envelope on stdout.
 #
 # Runs each scorer in fixed order. Non-empty stdout from a scorer
 # is treated as one observation; empty stdout (the empty-scope
 # short-circuit — tool absent, no language detected, not a git
-# repo, no scope) is dropped. The collected observations are
-# slurped via `jq -s` into the envelope's observations[] array.
+# repo, no scope, no inkwell frontmatter) is dropped. The collected
+# observations are slurped via `jq -s` into the envelope's
+# observations[] array.
+#
+# The three conditional scorers added in T5
+# (template-compliance, backlink-coverage, duplicate-density) only
+# contribute when the consumer carries inkwell frontmatter on
+# `docs/**/*.md`. On non-inkwell consumers they empty-scope and the
+# audit composite is identical to its pre-T5 shape — A4 in the
+# inkwell-expansion plan is the load-bearing assertion.
 #
 # composite_score is null — the rubric stanza in
 # plugins/pronto/references/rubric.md is the authority on
@@ -48,14 +56,22 @@ fi
 OBS_FILE="$(mktemp -t inkwell-observations.XXXXXX.json)"
 trap 'rm -f "$OBS_FILE"' EXIT
 
-# Run the four scorers in fixed order so observations[] order is
+# Run the scorers in fixed order so observations[] order is
 # deterministic across machines. The fixed order also pins the
 # observation-ID set assertion in snapshots.test.sh.
+#
+# The four existing scorers come first; the three T5 conditional
+# scorers run after and empty-scope on non-inkwell consumers, so
+# their observations only appear when inkwell frontmatter is
+# present.
 for scorer in \
   score-readme-quality.sh \
   score-docs-coverage.sh \
   score-doc-staleness.sh \
-  score-link-health.sh
+  score-link-health.sh \
+  score-template-compliance.sh \
+  score-backlink-coverage.sh \
+  score-duplicate-density.sh
 do
   out="$("$SCORERS_DIR/$scorer" "$REPO_ROOT")"
   if [[ -n "$out" ]]; then
