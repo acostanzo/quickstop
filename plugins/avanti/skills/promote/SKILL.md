@@ -1,7 +1,6 @@
 ---
 name: promote
 description: Move an artifact forward through its lifecycle and record the transition in pulse
-disable-model-invocation: true
 argument-hint: <artifact-path-or-shortcut> [--supersedes <adr-id>]
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
 ---
@@ -183,7 +182,7 @@ Promoted ${TYPE} ${<basename-without-ext>}: ${CURRENT_STATE} → ${NEXT_STATE}.
 
 For ADR supersession, append " (superseded by ${SUPERSEDES_ID})."
 
-If `/avanti:pulse` is not yet wired (bootstrap), fall back to appending the entry directly to today's pulse file per the convention in `${CLAUDE_PLUGIN_ROOT}/references/sdlc-conventions.md#pulse-structure`.
+`/avanti:pulse` is model-invocable, so dispatching it from this skill is the supported path. If the Skill call is unavailable in the current harness, fall back to appending the entry directly to today's pulse file per the convention in `${CLAUDE_PLUGIN_ROOT}/references/sdlc-conventions.md#pulse-structure`.
 
 ## Phase 5: Report
 
