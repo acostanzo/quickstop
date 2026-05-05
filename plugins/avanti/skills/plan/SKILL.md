@@ -38,14 +38,11 @@ A plan with slug "${SLUG}" already exists at <matching path>.
 Refusing to overwrite. Pick a different slug or remove the existing plan.
 ```
 
-### Step 4: Confirm the plans directory exists
+### Step 4: Ensure the plans directory exists
 
-If `${PLANS_DIR}active/` does not exist, this repo has not been `/pronto:init`'d. Report this clearly and abort:
+The destination is deterministic: `${PLANS_DIR}active/`. If it is missing, create it with `mkdir -p` via Bash and continue. Do not abort and do not gate on `/pronto:init` — the parent `project/` container is pronto's to scaffold, but plan-state subdirectories are avanti's destination and cheap to create on demand.
 
-```
-project/plans/active/ does not exist in this repo.
-Run /pronto:init first (or create the directory manually).
-```
+If `project/` itself is absent (the entire subtree would need to be created), suggest `/pronto:init` as a softer note in the final report so the consumer can pick up the rest of the kernel scaffold — but still proceed with the `mkdir` and write the plan.
 
 ## Phase 1: Gather authoring input
 
@@ -104,4 +101,4 @@ Next:
 
 - **Slug validation fails repeatedly**: abort after two failed attempts with a pointer to the kebab-case rule.
 - **Write fails**: report the underlying error; do not leave a partial file. If Write created a file before failing, delete it (`rm` via Bash) before re-raising.
-- **Repo has no `project/plans/active/`**: tell the user to run `/pronto:init` and abort — do not auto-create the directory (that belongs to the kernel).
+- **Repo has no `project/plans/active/`**: auto-create it with `mkdir -p` and proceed. Plan-state subdirectories (`active/`, `draft/`, `done/`) are avanti's destination — refusing to create them just to defer to `/pronto:init` is unnecessary friction. If the entire `project/` subtree is missing, mention `/pronto:init` in the final report as a softer note but still write the plan.

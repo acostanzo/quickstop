@@ -28,12 +28,7 @@ Run `git rev-parse --show-toplevel 2>/dev/null`. Abort on failure. Store as **RE
 
 **PULSE_DIR** = `${REPO_ROOT}/project/pulse/`.
 
-If PULSE_DIR does not exist, abort with a pointer to `/pronto:init`:
-
-```
-project/pulse/ does not exist. Run /pronto:init to scaffold the container,
-then re-run /avanti:pulse.
-```
+If PULSE_DIR does not exist, create it with `mkdir -p` via Bash and continue — the destination is deterministic and cheap to create on demand. If the entire `project/` subtree is missing, mention `/pronto:init` as a softer note alongside the success report so the consumer picks up the rest of the kernel scaffold; do not block the pulse write.
 
 ### Step 3: Resolve today's date and time
 
@@ -108,6 +103,6 @@ Pulse logged: project/pulse/${TODAY}.md @ ${NOW} (day-file created)
 ## Error handling
 
 - **Empty message after prompt**: abort rather than log an empty entry. Pulse entries exist to convey something; empty ones are noise.
-- **Pulse directory missing**: do not auto-create. Point to `/pronto:init` and abort.
+- **Pulse directory missing**: auto-create with `mkdir -p` and proceed. The directory is deterministic and avanti's destination — refusing to create it just to defer to `/pronto:init` is unnecessary friction. If the entire `project/` subtree is missing, mention `/pronto:init` as a softer note alongside the success report but still write the entry.
 - **Write fails**: report the error; if DAY_FILE was newly created but the append failed, leave the file intact (the header-only file is harmless) so the next pulse picks up where this one left off.
 - **Clock drift / duplicate HH:MM**: two pulses in the same minute is fine — both land under the same timestamp, in the order they were written. The appended entry just comes below the prior one with its own `## HH:MM` header; if both happen to be the same minute the reader sees two identical headers, which is accurate.
