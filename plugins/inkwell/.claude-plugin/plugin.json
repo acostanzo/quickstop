@@ -1,7 +1,7 @@
 {
   "name": "inkwell",
-  "version": "0.3.1",
-  "description": "Audits code-documentation depth for Claude Code consumer repos: README quality, docs coverage, staleness, and internal link health.",
+  "version": "0.4.0",
+  "description": "Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree. Pronto-sibling audit for code-documentation depth ships alongside.",
   "author": {
     "name": "Anthony Costanzo",
     "url": "https://github.com/acostanzo"
@@ -9,6 +9,9 @@
   "license": "MIT",
   "keywords": [
     "documentation",
+    "markdown",
+    "fts5",
+    "rag",
     "code-documentation",
     "audit",
     "sibling",
