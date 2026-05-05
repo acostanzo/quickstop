@@ -1,7 +1,6 @@
 ---
 name: plan
 description: Draft a new plan from the avanti template into project/plans/active/
-disable-model-invocation: true
 argument-hint: <slug>
 allowed-tools: Read, Write, Bash, Glob, AskUserQuestion
 ---

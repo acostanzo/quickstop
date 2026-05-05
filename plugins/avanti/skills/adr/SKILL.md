@@ -1,7 +1,6 @@
 ---
 name: adr
 description: Draft a new ADR (Architecture Decision Record) from the avanti template into project/adrs/
-disable-model-invocation: true
 argument-hint: <slug>
 allowed-tools: Read, Write, Bash, Glob, AskUserQuestion
 ---
