@@ -149,10 +149,15 @@ inkwell_fm_field() {
 
 # inkwell_list_marked_docs <REPO_ROOT>
 #   Print the absolute path of every `docs/**/*.md` whose frontmatter
-#   carries a `template:` field with a value matching
-#   $VALID_INKWELL_TEMPLATES_RE. Sorted under LC_ALL=C for
-#   determinism. Excludes `docs/templates/` and `docs/archive/`
-#   (template scaffolding and archived docs are out of scope).
+#   carries a `template:` field — any value. A doc with an invalid
+#   `template:` value still counts as inkwell-marked (it's trying to
+#   be an inkwell doc); the per-scorer compliance check is what
+#   distinguishes valid from invalid. The "is this an inkwell
+#   consumer?" gate (inkwell_marked_consumer) is the stricter check.
+#
+#   Sorted under LC_ALL=C for determinism. Excludes
+#   `docs/templates/` and `docs/archive/` (template scaffolding and
+#   archived docs are out of scope).
 inkwell_list_marked_docs() {
   local root="$1"
   local docs_dir="$root/docs"
@@ -164,22 +169,32 @@ inkwell_list_marked_docs() {
     [[ -z "$fm" ]] && continue
     tmpl="$(inkwell_fm_field template "$fm")"
     [[ -z "$tmpl" ]] && continue
-    if [[ "$tmpl" =~ $VALID_INKWELL_TEMPLATES_RE ]]; then
-      printf '%s\n' "$f"
-    fi
+    printf '%s\n' "$f"
   done < <(find "$docs_dir" -type f -name '*.md' \
              ! -path "$docs_dir/templates/*" \
              ! -path "$docs_dir/archive/*" \
              ! -name '_*.md' 2>/dev/null | LC_ALL=C sort)
 }
 
-# inkwell_inkwell_marked <REPO_ROOT>
-#   Exit 0 if any `docs/**/*.md` is inkwell-marked, else exit 1.
+# inkwell_marked_consumer <REPO_ROOT>
+#   Exit 0 if any `docs/**/*.md` is inkwell-marked AND at least one
+#   has a Diátaxis-valid `template:` value, else exit 1. The
+#   Diátaxis-valid requirement is what stops a single typo'd
+#   template field from marking a non-inkwell repo as inkwell.
 inkwell_marked_consumer() {
   local root="$1"
-  local first
-  first="$(inkwell_list_marked_docs "$root" | head -n 1)"
-  [[ -n "$first" ]]
+  local f fm tmpl
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    fm="$(inkwell_extract_frontmatter "$f")"
+    [[ -z "$fm" ]] && continue
+    tmpl="$(inkwell_fm_field template "$fm")"
+    [[ -z "$tmpl" ]] && continue
+    if [[ "$tmpl" =~ $VALID_INKWELL_TEMPLATES_RE ]]; then
+      return 0
+    fi
+  done < <(inkwell_list_marked_docs "$root")
+  return 1
 }
 
 # ---------------------------------------------------------------------
