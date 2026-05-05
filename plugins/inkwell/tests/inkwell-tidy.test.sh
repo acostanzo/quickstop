@@ -306,7 +306,63 @@ assert_eq "semantic leaves working tree clean" "$status_before" "$status_after"
 assert_eq "semantic preserves both twins on disk" "yes" "$both"
 
 # -------------------------------------------------------------------
-# Case 6 — triple-run determinism on the read-only path is exercised
+# Case 6 — --apply rewrites inbound links across a git rename. The
+# sibling doc's `(../concepts/auth.md)` link is rewritten to
+# `(../concepts/authentication.md)` after `git mv` of the rename
+# target. Exercises the portable realpath shim
+# (_path_canonical / _path_relative_to) on the rewrite path; without
+# the shim, BSD/macOS realpath would fail silently and the test
+# would catch the regression.
+# -------------------------------------------------------------------
+RENAME_REPO="$WORKDIR/rename"
+init_repo "$RENAME_REPO"
+mkdir -p "$RENAME_REPO/docs/concepts" "$RENAME_REPO/docs/howtos"
+cat >"$RENAME_REPO/docs/concepts/auth.md" <<EOF
+---
+title: Authentication
+updated: ${TODAY_ISO%T*}
+template: concept
+tags: [auth]
+---
+
+# Authentication
+
+What auth is and how it fits.
+
+## Related
+
+- [Sign-in how-to](../howtos/sign-in.md)
+EOF
+cat >"$RENAME_REPO/docs/howtos/sign-in.md" <<EOF
+---
+title: Sign in
+updated: ${TODAY_ISO%T*}
+template: how-to
+tags: [auth]
+---
+
+# Sign in
+
+See [Authentication](../concepts/auth.md) for the concept doc.
+
+## Related
+
+- [Authentication](../concepts/auth.md)
+EOF
+git -C "$RENAME_REPO" add -A
+commit_at "$RENAME_REPO" "$TODAY_ISO" "init auth + sign-in"
+git -C "$RENAME_REPO" mv docs/concepts/auth.md docs/concepts/authentication.md
+commit_at "$RENAME_REPO" "$TODAY_ISO" "rename auth.md to authentication.md"
+
+"$TIDY" --apply "$RENAME_REPO" >/dev/null 2>&1 || true
+sign_in_body=$(cat "$RENAME_REPO/docs/howtos/sign-in.md")
+assert_contains "rename rewrites inbound link to new path" \
+  "(../concepts/authentication.md)" "$sign_in_body"
+assert_not_contains "rename clears the old link target" \
+  "(../concepts/auth.md)" "$sign_in_body"
+
+# -------------------------------------------------------------------
+# Case 7 — triple-run determinism on the read-only path is exercised
 # by every triple_run_tidy call above; this final guard re-asserts on
 # the bin-docs fixture explicitly.
 # -------------------------------------------------------------------

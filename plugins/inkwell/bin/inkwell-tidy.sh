@@ -113,6 +113,35 @@ THRESHOLD_SECONDS=$((STALENESS_DAYS * 86400))
 VALID_TEMPLATES="concept how-to reference tutorial"
 
 # ---------------------------------------------------------------------
+# Portable path helpers.
+#
+# `realpath -m` and `realpath --relative-to=` are GNU coreutils only;
+# macOS / BSD ships `realpath` without those flags. The link-rewriter
+# resolves possibly-nonexistent paths (the `-m` semantic) and computes
+# relative paths against an anchor (the `--relative-to=` semantic), so
+# both branches need a portable form. Mirror the GNU/BSD `stat`
+# detection in inkwell-index.sh: probe once with the GNU invocation,
+# fall back to a Python shim on failure (Python 3 ships on every
+# supported macOS).
+#
+#   _path_canonical <path>          → absolute, with `.` / `..` / `//`
+#                                     normalised; existence not required
+#   _path_relative_to <anchor> <p>  → path of <p> relative to <anchor>
+# ---------------------------------------------------------------------
+
+if realpath -m --relative-to=/ / >/dev/null 2>&1; then
+  _path_canonical()    { realpath -m "$1"; }
+  _path_relative_to()  { realpath -m --relative-to="$1" "$2"; }
+else
+  _path_canonical() {
+    python3 -c 'import os, sys; print(os.path.normpath(os.path.abspath(sys.argv[1])))' "$1"
+  }
+  _path_relative_to() {
+    python3 -c 'import os, sys; print(os.path.relpath(sys.argv[2], sys.argv[1]))' "$1" "$2"
+  }
+fi
+
+# ---------------------------------------------------------------------
 # Common helpers (extract_frontmatter / extract_body / fm_field mirror
 # the inkwell-index.sh implementations — kept inline rather than
 # sourced to keep this script standalone).
@@ -371,11 +400,11 @@ rewrite_inbound_links() {
       if [[ "$path_part" == /* ]]; then
         target_abs="$REPO_ROOT$path_part"
       else
-        target_abs="$(realpath -m "$mdfile_dir/$path_part" 2>/dev/null || true)"
+        target_abs="$(_path_canonical "$mdfile_dir/$path_part" 2>/dev/null || true)"
       fi
       [[ -z "$target_abs" ]] && continue
       if [[ "$target_abs" == "$old_abs" ]]; then
-        new_relpath="$(realpath -m --relative-to="$mdfile_dir" "$new_abs" 2>/dev/null || true)"
+        new_relpath="$(_path_relative_to "$mdfile_dir" "$new_abs" 2>/dev/null || true)"
         [[ -z "$new_relpath" ]] && continue
         new_url="${new_relpath}${frag}"
         # Replace literal `(URL)` with `(NEW_URL)` everywhere in the file.
