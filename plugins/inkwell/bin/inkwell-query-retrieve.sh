@@ -77,6 +77,44 @@ emit_no_match() {
   printf '%s\n' '*No matching documentation found.*'
 }
 
+# normalise_question <text> — turn a natural-language question into an
+# FTS5 MATCH expression. Sentence-shaped input ("What does X do?")
+# fails MATCH on two counts: punctuation is parsed as syntax (`?` is
+# noise, `'` and `"` open quoted phrases, `:` is a column qualifier),
+# and bare-token sequences are AND-joined by FTS5's implicit operator
+# — a five-token sentence demands all five tokens in one document,
+# which almost no doc satisfies. We strip punctuation, drop the FTS5
+# reserved keywords plus tokens shorter than three chars, and OR-join
+# what remains so any matching token contributes a hit. Empty after
+# normalisation → empty string; the caller falls through to the
+# no-match sentinel.
+normalise_question() {
+  local raw="$1"
+  # Replace any character that isn't [A-Za-z0-9_] or whitespace with
+  # a space. Underscores are kept because identifiers like
+  # `validate_session` are the highest-signal tokens in a question
+  # about code.
+  local stripped
+  stripped="$(printf '%s' "$raw" | tr -c 'A-Za-z0-9_ \t\n' ' ')"
+  # Tokenise on whitespace, drop short tokens and FTS5 keywords
+  # (case-insensitive), de-duplicate while preserving order.
+  printf '%s' "$stripped" | awk '
+    {
+      for (i = 1; i <= NF; i++) {
+        tok = $i
+        if (length(tok) < 3) continue
+        upper = toupper(tok)
+        if (upper == "AND" || upper == "OR" || upper == "NOT" || upper == "NEAR") continue
+        if (!(tok in seen)) {
+          seen[tok] = 1
+          out = (out == "" ? tok : out " OR " tok)
+        }
+      }
+    }
+    END { print out }
+  '
+}
+
 # slugify <text> — GitHub-style heading anchor. Lowercase; replace
 # any non-alphanumeric run with '-'; collapse repeated '-'; strip
 # leading/trailing '-'. Matches the slug rule the doc skill uses
@@ -141,10 +179,21 @@ extract_section() {
   ' "$file" | head -n 60
 }
 
+# Normalise the question into an FTS5 MATCH expression before
+# running search. The bare question would fail MATCH because of
+# punctuation and the implicit-AND token semantics; the normaliser
+# OR-joins the high-signal tokens. If the normaliser emits an empty
+# string (the question reduced to noise after stripping), pass the
+# raw question through so a single-keyword input still works.
+SEARCH_QUERY="$(normalise_question "$QUESTION")"
+if [[ -z "$SEARCH_QUERY" ]]; then
+  SEARCH_QUERY="$QUESTION"
+fi
+
 # Run the FTS5 search. inkwell-search.sh handles its own empty-docs
 # branch (exits 0, empty stdout, message on stderr). Empty stdout
 # here means "no hits" regardless of cause.
-RAW="$("$SEARCHER" "$QUESTION" "$REPO_ROOT" 2>/dev/null || true)"
+RAW="$("$SEARCHER" "$SEARCH_QUERY" "$REPO_ROOT" 2>/dev/null || true)"
 if [[ -z "$RAW" ]]; then
   emit_no_match
   exit 0
