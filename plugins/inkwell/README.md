@@ -7,7 +7,7 @@ Audits code-documentation depth for Claude Code consumer repos: README quality, 
 This plugin ships:
 - Skills: `audit`
 - Commands: none
-- Agents: `parse-inkwell` (transitional, per ADR-005 §5)
+- Agents: none
 - Hooks: none
 - Opinions: none
 
@@ -50,7 +50,7 @@ claude --plugin-dir /path/to/quickstop/plugins/inkwell
 
 ## Architecture
 
-1 skill (`audit`), 1 transitional parser agent (`parse-inkwell`). No commands, no hooks, no MCP servers. The 2a1 scaffold emits an empty `observations[]` envelope; the four deterministic shell scorers (README quality, docs coverage, staleness, internal link health) and the rubric stanza land in 2a2/2a3.
+1 skill (`audit`). No commands, no agents, no hooks, no MCP servers. The 2a1 scaffold emits an empty `observations[]` envelope; the four deterministic shell scorers (README quality, docs coverage, staleness, internal link health) and the rubric stanza land in 2a2/2a3.
 
 ## Documentation voice
 
