@@ -104,17 +104,39 @@ If the resolver returned `none`:
      fills it in.
    - Add a one-line `## Description` paragraph naming the source path
      so the doc is self-locating.
-6. **`Write` the new file** at `<REPO_ROOT>/docs/<slug>.md` with the
-   substituted body and an empty `## Related` block (the heading
-   followed by the dash placeholder). The file must exist on disk
+6. **`Write` the new file** at
+   `<REPO_ROOT>/docs/<template-dir>/<slug>.md` with the substituted
+   body and an empty `## Related` block (the heading followed by the
+   placeholder). `<template-dir>` is the conventional Diátaxis
+   directory name, mapped from the chosen template:
+
+   | Template | Directory |
+   |---|---|
+   | `concept`   | `concepts/`   |
+   | `how-to`    | `howtos/`     |
+   | `reference` | `reference/`  |
+   | `tutorial`  | `tutorials/`  |
+
+   The template files are named singular (`concept.md`, `how-to.md`,
+   `reference.md`, `tutorial.md`); the on-disk neighbourhoods are
+   plural (`concepts/`, `howtos/`, `tutorials/`) where natural and
+   un-hyphenated (`howtos`). The mapping above is the source of
+   truth — keep both halves in sync.
+
+   Run `mkdir -p <REPO_ROOT>/docs/<template-dir>` before the write so
+   the destination directory exists. The file must exist on disk
    before the suggester runs because the suggester reads the
    target's frontmatter `tags:` to score peers — it refuses a
    non-existent target.
+
+   The resolver (`inkwell-doc-resolve.sh`) scans `docs/**/*.md`
+   recursively, so existing docs at any depth continue to be found
+   on the update path; only the scaffold path picks the subdirectory.
 7. **Suggest `## Related`.** Call the suggester against the
    now-existent path:
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/bin/inkwell-suggest-links.sh" \
-       "docs/<slug>.md" "<REPO_ROOT>"
+       "docs/<template-dir>/<slug>.md" "<REPO_ROOT>"
    ```
    The script returns either `path  score=...  rationale: ...` lines
    on stdout or `no automatic suggestion` on stderr.
