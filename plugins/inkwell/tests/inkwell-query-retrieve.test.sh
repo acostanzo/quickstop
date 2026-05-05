@@ -4,19 +4,24 @@
 # is what this test pins; the synthesis paragraph that the skill body
 # produces lives in the LLM and is intentionally untested here.
 #
-# Verifies the locked M3 response contract:
+# Verifies the M3-locked / M5-populated response contract:
 #   1. A grounded query against the fixture returns at least one
 #      citation matching the locked `path#anchor` shape.
 #   2. Every emitted citation resolves: the path is a real file under
 #      docs/ and the anchor matches a real heading slug in that file.
-#   3. The Corroboration field is the literal stub string from the
-#      contract (`not yet implemented`).
+#   3. The **Corroboration:** block is present and carries one bullet
+#      per claim. With the subagent disabled (see SUBAGENT_OFF) only
+#      Tier 1 + Tier 3 contribute, so the test pins:
+#        - the block header literal `**Corroboration:**`
+#        - at least one citation appears as a bullet
+#        - every bullet ends with one of the three locked verdicts
+#          (`verified` / `drift detected` / `could not corroborate`).
+#      Tier 2 is intentionally pinned off — the subagent path is
+#      non-deterministic by design (ADR-007).
 #   4. Empty docs/ returns the no-match sentinel, exit 0, no crash.
 #   5. No-match query returns the no-match sentinel, exit 0.
 #   6. Triple-run determinism on the citation-resolution and
-#      corroboration-stub paths. The Answer paragraph is the LLM's
-#      job and is not produced by this script — only the
-#      deterministic tail is checked.
+#      corroboration-block paths (with Tier 2 disabled).
 
 set -uo pipefail
 
@@ -55,9 +60,14 @@ assert_match() {
 triple_run_retrieve() {
   local query="$1" repo="$2"
   local r1 r2 r3
-  r1=$("$RETRIEVER" "$query" "$repo" 2>/dev/null)
-  r2=$("$RETRIEVER" "$query" "$repo" 2>/dev/null)
-  r3=$("$RETRIEVER" "$query" "$repo" 2>/dev/null)
+  # Pin Tier 2 off so the corroboration block is deterministic
+  # across runs. Subagent dispatch is non-deterministic by design
+  # (see ADR-007 — that's a documented negative consequence) and
+  # the deterministic-tail invariant the test pins applies only to
+  # the Tier 1 + Tier 3 paths.
+  r1=$(INKWELL_CORROBORATE_SUBAGENT=/bin/false "$RETRIEVER" "$query" "$repo" 2>/dev/null)
+  r2=$(INKWELL_CORROBORATE_SUBAGENT=/bin/false "$RETRIEVER" "$query" "$repo" 2>/dev/null)
+  r3=$(INKWELL_CORROBORATE_SUBAGENT=/bin/false "$RETRIEVER" "$query" "$repo" 2>/dev/null)
   if [[ "$r1" != "$r2" || "$r2" != "$r3" ]]; then
     echo "FAIL [triple-run: $query]: stdout diverged across runs" >&2
     fail=1
@@ -125,10 +135,29 @@ out=$(triple_run_retrieve "validateSession" "$TMP")
 assert_match "sources line shape" \
   '^- \[docs/.+\.md#[a-z0-9-]+\]\(docs/.+\.md#[a-z0-9-]+\) — ' "$out"
 
-# Corroboration field is the literal stub string from the M3 contract.
-assert_contains "corroboration stub" \
-  '**Corroboration:** `not yet implemented` (see ADR-007; M5 wires this)' \
-  "$out"
+# Corroboration block header is present (M5 contract).
+assert_contains "corroboration header" "**Corroboration:**" "$out"
+
+# Every Corroboration bullet must end with one of the three locked
+# verdicts. The block is everything below the `**Corroboration:**`
+# header through end of stdout.
+corro_block="$(printf '%s\n' "$out" | awk '/^\*\*Corroboration:\*\*/{p=1; next} p')"
+if [[ -z "$corro_block" ]]; then
+  echo "FAIL [corroboration block empty]: no bullets after **Corroboration:**" >&2
+  echo "  actual: $out" >&2
+  fail=1
+fi
+while IFS= read -r line; do
+  [[ -z "$line" ]] && continue
+  case "$line" in
+    "- "*" — verified"|"- "*" — could not corroborate"|"- "*" — drift detected"*)
+      ;;
+    *)
+      echo "FAIL [corroboration bullet shape]: '$line' does not match the locked verdict shape" >&2
+      fail=1
+      ;;
+  esac
+done <<<"$corro_block"
 
 # Sentinel separating chunks payload from the contract tail must be
 # present — the skill body relies on it.
@@ -143,9 +172,7 @@ assert_contains "grounded citation" "docs/auth/session.md#sessions" "$out"
 # multi-hit query so we exercise more than one citation.
 # -------------------------------------------------------------------
 out_multi=$(triple_run_retrieve "auth*" "$TMP")
-assert_contains "multi-hit corroboration stub" \
-  '**Corroboration:** `not yet implemented` (see ADR-007; M5 wires this)' \
-  "$out_multi"
+assert_contains "multi-hit corroboration header" "**Corroboration:**" "$out_multi"
 
 citations=()
 while IFS= read -r citation; do

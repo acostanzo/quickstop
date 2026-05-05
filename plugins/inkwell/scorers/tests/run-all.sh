@@ -20,7 +20,11 @@ for t in \
   readme-quality.test.sh \
   link-health.test.sh \
   doc-staleness.test.sh \
-  docs-coverage.test.sh
+  docs-coverage.test.sh \
+  score-template-compliance.test.sh \
+  score-backlink-coverage.test.sh \
+  score-duplicate-density.test.sh \
+  audit-a4-regression.test.sh
 do
   if ! bash "$HERE/$t"; then
     fail=1
@@ -48,7 +52,8 @@ for t in \
   inkwell-search.test.sh \
   inkwell-suggest-links.test.sh \
   inkwell-query-retrieve.test.sh \
-  inkwell-tidy.test.sh
+  inkwell-tidy.test.sh \
+  inkwell-corroborate.test.sh
 do
   if [[ -x "$BIN_TESTS_DIR/$t" ]]; then
     if ! bash "$BIN_TESTS_DIR/$t"; then
