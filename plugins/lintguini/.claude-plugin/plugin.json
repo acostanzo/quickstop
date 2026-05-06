@@ -1,7 +1,7 @@
 {
   "name": "lintguini",
-  "version": "0.4.1",
-  "description": "Audits lint-posture for Claude Code consumer repos: linter config strictness, formatter presence, CI lint enforcement, and rule-suppression count.",
+  "version": "0.5.0",
+  "description": "Lint-posture toolkit for Claude Code consumer repos: configure, lint, format, fix. Pronto-sibling audit grades lint-posture against the rubric.",
   "author": {
     "name": "Anthony Costanzo",
     "url": "https://github.com/acostanzo"
@@ -9,8 +9,10 @@
   "license": "MIT",
   "keywords": [
     "lint",
+    "format",
+    "fix",
+    "configure",
     "posture",
-    "formatter",
     "audit",
     "sibling",
     "pronto"
