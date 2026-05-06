@@ -19,7 +19,8 @@ for t in \
   format.test.sh \
   fix.test.sh \
   end-to-end.test.sh \
-  snapshots.test.sh
+  snapshots.test.sh \
+  audit-a4-regression.test.sh
 do
   if ! bash "$HERE/$t"; then
     fail=1
