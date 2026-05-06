@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Shared helpers for lintguini deterministic scorers.
+# Shared helpers for lintguini deterministic scorers and the
+# toolkit's bin/ surface (configure, lint, format, fix — added by
+# the lintguini-expansion plan).
 #
 # Scorers convert shell-measurable signals from a target repo
 # (<REPO_ROOT>) into one-line v2 wire-contract observation entries.
@@ -9,6 +11,16 @@
 #
 # Pure shell + grep + awk + jq. Same filesystem state produces the
 # same JSON bytes every run.
+#
+# Sourcing convention: this file enables `set -euo pipefail` because
+# the scorers that use it are strict-by-design — any unhandled error
+# should abort the audit rather than silently degrade. Sourcing
+# inherits the option set of the file being sourced, so bin scripts
+# that source this file with different error semantics (e.g. a
+# future `lintguini-fix.sh`, which is intentionally fail-soft across
+# many auto-fix branches) must `set +e` (or whatever option set fits)
+# immediately after sourcing to restore their own posture. The
+# consumer is responsible for re-establishing its own error handling.
 
 set -euo pipefail
 
@@ -57,4 +69,31 @@ detect_primary_language() {
   else
     echo "none"
   fi
+}
+
+# detect_languages <REPO_ROOT>
+#   Print every language with a config-file marker present in the
+#   repo, one per line, in stable rubric order:
+#     python rust go ruby typescript javascript
+#   Empty stdout if none are detected.
+#
+#   Polyglot-friendly counterpart to detect_primary_language. The
+#   M2 /lintguini:configure skill consumes this to scope per-language
+#   template application; the existing scorers stay on the
+#   primary-language path so their byte-equivalent output is preserved.
+#
+#   typescript and javascript are both reported when both markers
+#   exist (tsconfig.json plus package.json) — a TS repo that also has
+#   a package.json is genuinely polyglot from a tooling perspective.
+detect_languages() {
+  local root="$1"
+  [[ -f "$root/pyproject.toml" || -f "$root/setup.py" ]] && echo "python"
+  [[ -f "$root/Cargo.toml" ]] && echo "rust"
+  [[ -f "$root/go.mod" ]] && echo "go"
+  if [[ -f "$root/Gemfile" ]] || compgen -G "$root/*.gemspec" >/dev/null 2>&1 || [[ -f "$root/.rubocop.yml" ]] || [[ -f "$root/standard.yml" ]]; then
+    echo "ruby"
+  fi
+  [[ -f "$root/tsconfig.json" ]] && echo "typescript"
+  [[ -f "$root/package.json" && ! -f "$root/tsconfig.json" ]] && echo "javascript"
+  return 0
 }
