@@ -1,0 +1,19 @@
+{
+  "verdict": {
+    "event": "COMMENT",
+    "body": "Has one well-formed comment and one comment missing 'path'."
+  },
+  "comments": [
+    {
+      "path": "src/ok.ts",
+      "line": 10,
+      "label": "suggestion",
+      "subject": "This one is fine"
+    },
+    {
+      "line": 20,
+      "label": "issue",
+      "subject": "This one has no path"
+    }
+  ]
+}

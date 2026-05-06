@@ -1,0 +1,31 @@
+{
+  "verdict": {
+    "event": "COMMENT",
+    "body": "Nice work overall. Three findings — one suggestion, one nitpick, one praise."
+  },
+  "comments": [
+    {
+      "path": "src/auth.ts",
+      "line": 42,
+      "side": "RIGHT",
+      "label": "suggestion",
+      "subject": "Extract this repeated pattern into a helper",
+      "discussion": "The same null-check-then-transform appears on lines 42, 67, and 91. A small utility function would reduce duplication."
+    },
+    {
+      "path": "src/api.ts",
+      "line": 15,
+      "side": "RIGHT",
+      "label": "issue (blocking)",
+      "subject": "Missing error handling for network failure",
+      "discussion": "fetchUser() can throw on network errors but there's no try/catch or .catch() handler. This will crash the request handler."
+    },
+    {
+      "path": "src/utils.ts",
+      "line": 3,
+      "side": "RIGHT",
+      "label": "praise",
+      "subject": "Clean separation of concerns in this module"
+    }
+  ]
+}
