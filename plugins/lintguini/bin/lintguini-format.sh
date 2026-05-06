@@ -228,28 +228,34 @@ tool_failure() {
 
 sort_lines() { LC_ALL=C sort -u; }
 
+#
+# NOTE: tool-availability checks (`command -v`) live in the main loop
+# pre-flight, not inside files_<tool>. Reason: files_<tool> runs inside
+# `format_lang`, which itself runs inside `$(format_lang ...)` in main.
+# `tool_missing`'s `exit 3` from inside the inner-most subshell only
+# kills that subshell — by the time the rc reaches main, it's been
+# swallowed. Pre-flighting the check at the main loop level (one
+# subshell up from `format_lang`) ensures `tool_missing`'s exit
+# propagates correctly. See the lint script for the simpler one-level
+# case where tool_missing can live inside the per-language function.
+
 files_python() {
-  command -v ruff >/dev/null 2>&1 || tool_missing python ruff
   ( cd "$REPO_ROOT" && ruff format --check . 2>/dev/null ) \
     | sed -n 's/^Would reformat: //p' | sort_lines
 }
 
 files_biome() {
-  local lang="$1"
-  command -v biome >/dev/null 2>&1 || tool_missing "$lang" biome
   ( cd "$REPO_ROOT" && biome check --formatter-enabled=true --linter-enabled=false --reporter=github . 2>/dev/null ) \
     | sed -n 's|^::[a-zA-Z]\+ .*file=\([^,]*\).*|\1|p' | sort_lines
 }
 
 files_rust() {
-  command -v cargo >/dev/null 2>&1 || tool_missing rust cargo
   ( cd "$REPO_ROOT" && cargo fmt -- --check 2>/dev/null ) \
     | sed -n 's/^Diff in \(.*\) at line.*/\1/p' | sort_lines
 }
 
 files_ruby() {
   local tool; tool="$(ruby_tool)"
-  command -v "$tool" >/dev/null 2>&1 || tool_missing ruby "$tool"
   local out
   out="$(cd "$REPO_ROOT" && "$tool" --format json . 2>/dev/null)"
   [[ -z "$out" ]] && return 0
@@ -261,7 +267,6 @@ files_ruby() {
 }
 
 files_go() {
-  command -v gofmt >/dev/null 2>&1 || tool_missing go gofmt
   ( cd "$REPO_ROOT" && gofmt -l . 2>/dev/null ) | sort_lines
 }
 
@@ -303,8 +308,8 @@ format_lang() {
   local files
   case "$lang" in
     python)     files="$(files_python)" ;;
-    javascript) files="$(files_biome javascript)" ;;
-    typescript) files="$(files_biome typescript)" ;;
+    javascript) files="$(files_biome)" ;;
+    typescript) files="$(files_biome)" ;;
     rust)       files="$(files_rust)" ;;
     ruby)       files="$(files_ruby)" ;;
     go)         files="$(files_go)" ;;
@@ -350,6 +355,25 @@ done
 if [[ ${#CONFIGURED_LANGS[@]} -eq 0 ]]; then
   exit 0
 fi
+
+# Pre-flight: ensure each configured language's canonical tool is on
+# PATH BEFORE we drop into format_lang's nested subshells. tool_missing
+# below exits 3 from the parent shell, not from a buried subshell.
+for lang in "${CONFIGURED_LANGS[@]}"; do
+  case "$lang" in
+    python)
+      command -v ruff >/dev/null 2>&1 || tool_missing python ruff ;;
+    javascript|typescript)
+      command -v biome >/dev/null 2>&1 || tool_missing "$lang" biome ;;
+    rust)
+      command -v cargo >/dev/null 2>&1 || tool_missing rust cargo ;;
+    ruby)
+      _tool="$(ruby_tool)"
+      command -v "$_tool" >/dev/null 2>&1 || tool_missing ruby "$_tool" ;;
+    go)
+      command -v gofmt >/dev/null 2>&1 || tool_missing go gofmt ;;
+  esac
+done
 
 EMIT_HEADERS=0
 (( ${#CONFIGURED_LANGS[@]} > 1 )) && EMIT_HEADERS=1
