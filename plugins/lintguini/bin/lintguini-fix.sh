@@ -607,6 +607,25 @@ count_changed() {
   fi
 }
 
+# is_empty_scope_by_design <lang>
+#   True if (lang, MODE) is a known empty-scope combination — the
+#   fix_<lang> function emits its own explanatory stderr message and
+#   returns no stdout. The driver suppresses the generic
+#   "no fixes available" stderr for these to avoid double-messaging.
+is_empty_scope_by_design() {
+  local lang="$1"
+  if [[ "$MODE" != "semantic" ]]; then
+    return 1
+  fi
+  case "$lang" in
+    rust|go) return 0 ;;
+    ruby)
+      [[ "$(ruby_tool)" == "standardrb" ]] && return 0
+      ;;
+  esac
+  return 1
+}
+
 TOTAL_CHANGED=0
 for lang in "${CONFIGURED_LANGS[@]}"; do
   case "$lang" in
@@ -627,6 +646,10 @@ for lang in "${CONFIGURED_LANGS[@]}"; do
     count=0
   else
     count="$(count_changed "$out")"
+  fi
+
+  if (( count == 0 )) && ! is_empty_scope_by_design "$lang"; then
+    echo "$lang: no fixes available" >&2
   fi
 
   if (( EMIT_HEADERS == 1 && count > 0 )); then
