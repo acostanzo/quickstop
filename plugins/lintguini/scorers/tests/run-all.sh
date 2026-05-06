@@ -14,6 +14,7 @@ for t in \
   suppression-count.test.sh \
   detect-language.test.sh \
   templates.test.sh \
+  configure.test.sh \
   end-to-end.test.sh \
   snapshots.test.sh
 do
