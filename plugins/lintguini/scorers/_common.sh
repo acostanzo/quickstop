@@ -47,11 +47,20 @@ clamp_ratio() {
 # detect_primary_language <REPO_ROOT>
 #   Print one of: python | rust | go | ruby | typescript | javascript | none
 #   Precedence: pyproject.toml / setup.py > Cargo.toml > go.mod >
-#   Gemfile / *.gemspec / .rubocop.yml > tsconfig.json > package.json.
+#   Gemfile / *.gemspec / .rubocop.yml / standard.yml / .standard.yml >
+#   tsconfig.json > package.json.
 #   Ruby is placed before tsconfig.json so a Ruby app with a small
 #   JS asset pipeline (Rails + Vite, etc.) doesn't misclassify as
 #   typescript or javascript. The first match wins; polyglot repos
 #   report against the highest-precedence language only.
+#
+#   standardrb's config files (standard.yml / .standard.yml) are
+#   ruby markers because a standardrb-only repo has no Gemfile or
+#   .rubocop.yml; without them the detect_languages helper would
+#   surface ruby while detect_primary_language returned "none",
+#   and /lintguini:configure (which uses the plural helper) would
+#   see ruby while /lintguini:audit (still on the singular) would
+#   see nothing. Aligning the two helpers eliminates that drift.
 detect_primary_language() {
   local root="$1"
   if [[ -f "$root/pyproject.toml" || -f "$root/setup.py" ]]; then
@@ -60,7 +69,11 @@ detect_primary_language() {
     echo "rust"
   elif [[ -f "$root/go.mod" ]]; then
     echo "go"
-  elif [[ -f "$root/Gemfile" ]] || compgen -G "$root/*.gemspec" >/dev/null 2>&1 || [[ -f "$root/.rubocop.yml" ]]; then
+  elif [[ -f "$root/Gemfile" ]] \
+       || compgen -G "$root/*.gemspec" >/dev/null 2>&1 \
+       || [[ -f "$root/.rubocop.yml" ]] \
+       || [[ -f "$root/standard.yml" ]] \
+       || [[ -f "$root/.standard.yml" ]]; then
     echo "ruby"
   elif [[ -f "$root/tsconfig.json" ]]; then
     echo "typescript"
@@ -90,7 +103,11 @@ detect_languages() {
   [[ -f "$root/pyproject.toml" || -f "$root/setup.py" ]] && echo "python"
   [[ -f "$root/Cargo.toml" ]] && echo "rust"
   [[ -f "$root/go.mod" ]] && echo "go"
-  if [[ -f "$root/Gemfile" ]] || compgen -G "$root/*.gemspec" >/dev/null 2>&1 || [[ -f "$root/.rubocop.yml" ]] || [[ -f "$root/standard.yml" ]]; then
+  if [[ -f "$root/Gemfile" ]] \
+     || compgen -G "$root/*.gemspec" >/dev/null 2>&1 \
+     || [[ -f "$root/.rubocop.yml" ]] \
+     || [[ -f "$root/standard.yml" ]] \
+     || [[ -f "$root/.standard.yml" ]]; then
     echo "ruby"
   fi
   [[ -f "$root/tsconfig.json" ]] && echo "typescript"
