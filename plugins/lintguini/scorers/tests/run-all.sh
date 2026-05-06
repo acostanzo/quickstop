@@ -15,6 +15,8 @@ for t in \
   detect-language.test.sh \
   templates.test.sh \
   configure.test.sh \
+  lint.test.sh \
+  format.test.sh \
   end-to-end.test.sh \
   snapshots.test.sh
 do
