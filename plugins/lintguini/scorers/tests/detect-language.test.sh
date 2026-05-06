@@ -87,6 +87,12 @@ assert_primary "$FIXTURES/rust-unformatted"     "rust"
 assert_primary "$FIXTURES/go"                   "go"
 assert_primary "$FIXTURES/ruby-formatted"       "ruby"
 assert_primary "$FIXTURES/ruby-unformatted"     "ruby"
+# standardrb-only: no Gemfile, no .rubocop.yml — just .standard.yml.
+# Asserts detect_primary_language and detect_languages agree on ruby
+# (T2 fix; before the fix the scorer returned "none" while the plural
+# helper returned "ruby", which would have surfaced as configure/audit
+# disagreement on a standardrb-only consumer).
+assert_primary "$FIXTURES/ruby-standardrb"      "ruby"
 assert_primary "$FIXTURES/empty"                ""
 
 # Polyglot exercise. Build a fixture with python + rust + go markers
