@@ -17,6 +17,7 @@ for t in \
   configure.test.sh \
   lint.test.sh \
   format.test.sh \
+  fix.test.sh \
   end-to-end.test.sh \
   snapshots.test.sh
 do
