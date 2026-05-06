@@ -1,7 +1,7 @@
 ---
 id: t5
 plan: lintguini-expansion
-status: open
+status: closed
 updated: 2026-05-06
 ---
 
