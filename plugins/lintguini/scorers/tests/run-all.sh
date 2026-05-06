@@ -12,6 +12,8 @@ for t in \
   formatter-presence.test.sh \
   ci-lint-wired.test.sh \
   suppression-count.test.sh \
+  detect-language.test.sh \
+  templates.test.sh \
   end-to-end.test.sh \
   snapshots.test.sh
 do
