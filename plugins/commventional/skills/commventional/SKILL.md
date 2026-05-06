@@ -51,9 +51,53 @@ When the user asks to create or update a PR:
 
 When the user is reviewing code or providing feedback on a PR:
 
-1. Dispatch the `review-formatter` agent with the review context
-2. The agent returns properly formatted conventional comments
-3. Post the review using those formatted comments
+1. Dispatch the `review-formatter` agent with the review context.
+2. The agent returns a single JSON document — the locked response contract below — containing a verdict and a `comments[]` array, one entry per finding.
+3. Pipe that JSON into `${CLAUDE_PLUGIN_ROOT}/bin/commventional-post-review.sh <pr>` to submit **one** GitHub review with N inline comments grouped under it. Do NOT fall back to `gh pr comment` with the formatter output — that produces the wall-of-text PR comment shape v2.1 was written to retire.
+
+#### Response contract — locked
+
+The JSON shape that `review-formatter` emits and `commventional-post-review.sh` consumes is load-bearing for both halves of the flow. Do not reshape it without updating both sides plus this section in lockstep.
+
+```json
+{
+  "verdict": {
+    "event": "COMMENT",
+    "body": "Short overall summary — 1-3 sentences."
+  },
+  "comments": [
+    {
+      "path": "src/auth.ts",
+      "line": 42,
+      "side": "RIGHT",
+      "label": "suggestion",
+      "subject": "Extract this repeated pattern into a helper",
+      "discussion": "The same null-check-then-transform appears on lines 42, 67, and 91. A small utility function would reduce duplication."
+    }
+  ]
+}
+```
+
+Field semantics:
+
+- `verdict.event` — GitHub review event. One of `COMMENT`, `APPROVE`, `REQUEST_CHANGES`. Default `COMMENT`. The agent decides; the poster passes through.
+- `verdict.body` — short summary; required. Displayed at the top of the GitHub review submission.
+- `comments[].path` — file path, repo-root-relative. Required.
+- `comments[].line` — line number on the head commit (RIGHT side of the diff by default). Required, must be a number.
+- `comments[].side` — `RIGHT` (default) or `LEFT`. Optional.
+- `comments[].label` — conventional comment label (`praise`, `nitpick`, `suggestion`, `issue`, `issue (blocking)`, `question`, `thought`, `chore`, `typo`). Required.
+- `comments[].subject` — one-line headline. Required.
+- `comments[].discussion` — optional longer body. Skip the field when the subject is self-explanatory.
+
+The poster renders each comment's GitHub-API `body` as `label: subject\n\ndiscussion` (or just `label: subject` when `discussion` is absent), so the conventional-comments shape is preserved on the wire.
+
+#### Invocation
+
+```bash
+cat review.json | "${CLAUDE_PLUGIN_ROOT}/bin/commventional-post-review.sh" <pr>
+```
+
+`<pr>` is anything `gh pr view` accepts — a number, URL, or `owner/repo#n`. Add `--dry-run` to print the `gh api` invocation instead of posting; useful when verifying an unfamiliar diff before committing the review. The poster validates the JSON shape before any network call: missing required fields exit 2 with a stderr message naming the field, and `gh api` failures (e.g. 422 because a `line` doesn't exist on the diff) exit 4 with the GitHub error body surfaced verbatim.
 
 ## Agent Dispatch
 
@@ -74,8 +118,11 @@ description: "Format review comments"
 subagent_type: "commventional:review-formatter"
 prompt: |
   Format the following review feedback using conventional comments.
+  Emit JSON only, per the locked response contract.
   [include review context and feedback points]
 ```
+
+The agent's stdout goes straight into `bin/commventional-post-review.sh <pr>` — no parsing, no rewrapping. Treat the JSON as opaque between the two halves; only the contract above is stable.
 
 ## Error Handling
 

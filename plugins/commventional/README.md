@@ -16,7 +16,7 @@ The first two are enforced by the auto-invoking `commventional` skill (it activa
 |----------|-------------|
 | You ask to commit | The `commventional` skill dispatches the `commit-crafter` agent to analyse staged diffs, determine the conventional type, and craft the message |
 | You ask to create a PR | The `commventional` skill dispatches `commit-crafter` with the full branch diff to produce a conventional title and structured body |
-| You review code | The `commventional` skill dispatches `review-formatter` to format feedback using conventional-comment labels |
+| You review code | The `commventional` skill dispatches `review-formatter` to format feedback as JSON, then pipes it to `bin/commventional-post-review.sh` to submit one GitHub review with grouped inline comments |
 | You want one-shot trailer cleanup | Run `/commventional:strip-trailers --text "..."` or `/commventional:strip-pr-body --pr-url <url>` |
 | You want trailer-stripping wired into your own automation | Run `/commventional:install-trailer-stripper --target <choice>` — the helper writes the wiring into the surface you chose |
 
@@ -34,6 +34,10 @@ Per ADR-006 §1, this plugin ships:
   - `commit-crafter` — analyses diffs and produces conventional commit messages and PR bodies.
   - `review-formatter` — formats review feedback using conventional-comment labels.
 - **Hooks:** none. Post-migration, commventional installs no Claude Code event hooks and no `.git/hooks/` scripts at plugin-install time.
+- **Bin scripts (3):**
+  - `bin/strip-trailers.sh` — capability primitive backing `:strip-trailers`.
+  - `bin/strip-pr-body.sh` — capability primitive backing `:strip-pr-body`.
+  - `bin/commventional-post-review.sh` — submits one GitHub pull-request review with grouped inline comments from `review-formatter`'s JSON output. Reads the locked JSON contract on stdin (or `--input <file>`), validates shape, resolves head SHA via `gh pr view`, posts via `gh api POST repos/{owner}/{repo}/pulls/{n}/reviews`. `--dry-run` previews the request without posting.
 - **Opinions:** when the auto-invoking skill activates, it enforces engineering-ownership in commit messages and PR bodies it crafts (no `Co-Authored-By`, no `Generated with/by Claude`). When the consumer wires `:install-trailer-stripper` into their own automation, the installed wiring strips those patterns from anything matching its trigger — but the trigger is the consumer's, not commventional's.
 
 ADR-006 §2 conformance (no silent mutation of consumer artefacts): no plugin-installed hooks; no consumer state mutation at install time. Every consumer write commventional performs is the result of a slash command the consumer typed (`/commventional:strip-pr-body`, `/commventional:install-trailer-stripper`) with explicit arguments naming the target.
@@ -110,6 +114,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 Returns the cleaned text on stdout. Useful for ad-hoc cleanups, scripting, or feeding through your own pipeline.
+
+## What's new in v2.1
+
+Reviews now post as a **single GitHub review submission with grouped inline comments at `path:line`** rather than a single wall-of-text PR comment. The seam between the formatter (LLM) and the poster (deterministic bash) is a locked JSON contract: `review-formatter` emits a verdict + `comments[]` document; `bin/commventional-post-review.sh` validates the shape, builds the GitHub review-API payload, and submits via a single `gh api` call (one review, N inline comments). The contract surface — field names, body rendering, request shape — is documented inline in `agents/review-formatter.md` and `skills/commventional/SKILL.md`. Use `--dry-run` on the poster to preview the `gh api` invocation without posting.
 
 ## Breaking changes in v2.0
 
