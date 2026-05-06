@@ -7,7 +7,7 @@ Audits lint-posture for Claude Code consumer repos: linter config strictness, fo
 This plugin ships:
 - Skills: `audit`
 - Commands: none
-- Agents: `parse-lintguini` (transitional, per ADR-005 §5)
+- Agents: none
 - Hooks: none
 - Opinions: none
 
@@ -50,7 +50,7 @@ claude --plugin-dir /path/to/quickstop/plugins/lintguini
 
 ## Architecture
 
-1 skill (`audit`), 1 transitional parser agent (`parse-lintguini`). No commands, no hooks, no MCP servers. Scorers and language-detection logic land in 2b2/2b3.
+1 skill (`audit`). No commands, no hooks, no MCP servers. Scorers and language-detection logic land in 2b2/2b3.
 
 ## License
 
