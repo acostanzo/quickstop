@@ -47,13 +47,17 @@ fi
 OBS_FILE="$(mktemp -t lintguini-observations.XXXXXX.json)"
 trap 'rm -f "$OBS_FILE"' EXIT
 
-# Run the four scorers in fixed order so observations[] order is
-# deterministic across machines.
+# Run the scorers in fixed order so observations[] order is deterministic
+# across machines. The four legacy scorers (M2) always run; M5's
+# conditional scorers append after them and self-gate on the
+# lintguini-managed-config provenance marker — empty-scope on
+# non-lintguini consumers, preserving the pre-T5 envelope shape there.
 for scorer in \
   score-linter-presence.sh \
   score-formatter-presence.sh \
   score-ci-lint-wired.sh \
-  score-suppression-count.sh
+  score-suppression-count.sh \
+  score-lint-pass-rate.sh
 do
   out="$("$SCORERS_DIR/$scorer" "$REPO_ROOT")"
   if [[ -n "$out" ]]; then
