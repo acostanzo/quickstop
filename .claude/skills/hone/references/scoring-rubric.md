@@ -4,12 +4,12 @@
 
 Each category starts at a base score of **100** and has deductions applied for issues found. Bonuses are awarded for quality that goes beyond baseline. The overall quality score is a weighted average of all categories.
 
-## Categories & Shares
+## Categories & Weights
 
-Shares are stored here; effective weights are computed at scoring time via share-based renormalization (see Scoring Algorithm). Non-sibling total share = 100 (Pronto Compliance excluded). Sibling total share = 110 (Pronto Compliance included).
+Weights sum to 100. The overall score is the weighted average of the 8 category scores.
 
-| Category | Share | What It Measures |
-|----------|-------|------------------|
+| Category | Weight | What It Measures |
+|----------|--------|------------------|
 | Skill Quality | 20 | Frontmatter, instructions, phases, argument handling |
 | Structure Compliance | 15 | Directory layout, required files, naming conventions |
 | Agent Quality | 15 | Frontmatter, tool lists, model selection, instruction clarity |
@@ -18,7 +18,6 @@ Shares are stored here; effective weights are computed at scoring time via share
 | Documentation | 10 | README quality, inline docs, usage examples, ADR-006 §1 |
 | Over-Engineering | 10 | Agent sprawl, verbose instructions, unnecessary complexity |
 | Security | 10 | Secrets scan, tool restrictions, permission scope, ADR-006 §2 |
-| Pronto Compliance | 10 | Sibling-shape compliance — ADR-004/005 wire contract, :audit skill (sibling-only) |
 
 ## Grade Thresholds
 
@@ -286,81 +285,32 @@ False-positive guard: matches inside README fenced code blocks (documented examp
 | Appropriate tool restrictions | +5 | Each agent has minimal needed tools |
 | Read-only audit agents | +5 | Audit agents can't modify files |
 
-## Category: Pronto Compliance (share: 10, sibling-only)
-
-**What:** Sibling-shape compliance with ADR-004 / ADR-005 — wire contract, `:audit` skill, parser agent state, version handshake.
-
-**When applicable:** Plugin is detected as a sibling (pronto block in `plugin.json` OR listed as `recommended_plugin` in `recommendations.json`). Non-sibling plugins skip this category entirely — it does not score 100 neutral; it is excluded from the rubric for those plugins.
-
-Findings come from `audit-pronto`. Source: `audit-pronto`.
-
-### Deductions
-
-| Issue | Points | Description |
-|-------|--------|-------------|
-| Missing `compatible_pronto` | -20 | ADR-004 §2 soft finding |
-| Missing `audits[]` | -30 | No rubric participation declaration |
-| Off-canonical dimension | -15 each | Dimension not in `recommendations.json` |
-| Missing `skills/audit/SKILL.md` | -25 | Step-1 discovery broken |
-| `:audit` frontmatter incomplete | -5 each (max -15) | Missing required field (name, disable-model-invocation, argument-hint) |
-| `$ARGUMENTS` not parsed | -10 | Skill ignores invocation flags (presence-gated: skip if audit skill absent) |
-| stdout contains human-readable text | -15 | Wire contract violation (presence-gated: skip if audit skill absent) |
-| No `$schema_version: 2` marker | -10 | Pre-H3 emission (presence-gated: skip if audit skill absent) |
-| No `observations[]` emission | -15 | Legacy `score`-only emission (presence-gated: skip if audit skill absent) |
-| Hardcoded `composite_score` | -10 | Should be null or computed (presence-gated: skip if audit skill absent) |
-| Parser agent not deprecated when step-1 active | -5 | Discovery ambiguity |
-| `compatible_pronto` floor >2 minor versions stale | -10 | Skew risk |
-
-**Presence-gated deductions:** When `skills/audit/SKILL.md` is absent (the -25 deduction fires), deductions that check the skill body (`$ARGUMENTS` not parsed, stdout mix, `$schema_version`, `observations[]`, `composite_score`) are **not stacked** — the missing-skill finding subsumes them.
-
-### Bonuses
-
-| Optimization | Points | Description |
-|-------------|--------|-------------|
-| Clean wire-contract emission | +10 | All schema-2 fields emitted correctly |
-| `:doctor` skill present | +5 | Optional self-health surface |
-| All audit dimensions in canonical list | +5 | Plays well with the registry |
-
 ## Categories Reference Table
 
-| Category | Share | Effective weight (sibling) | Effective weight (non-sibling) |
-|----------|-------|----------------------------|-------------------------------|
-| Skill Quality | 20 | 18.2% | 20% |
-| Structure Compliance | 15 | 13.6% | 15% |
-| Agent Quality | 15 | 13.6% | 15% |
-| Metadata Quality | 10 | 9.1% | 10% |
-| Hook Quality | 10 | 9.1% | 10% |
-| Documentation | 10 | 9.1% | 10% |
-| Over-Engineering | 10 | 9.1% | 10% |
-| Security | 10 | 9.1% | 10% |
-| **Pronto Compliance** | **10** | **9.1%** | — (excluded) |
-| **Total** | **110 / 100** | **100%** | **100%** |
+| Category | Weight |
+|----------|--------|
+| Skill Quality | 20 |
+| Structure Compliance | 15 |
+| Agent Quality | 15 |
+| Metadata Quality | 10 |
+| Hook Quality | 10 |
+| Documentation | 10 |
+| Over-Engineering | 10 |
+| Security | 10 |
+| **Total** | **100** |
 
 ## Scoring Algorithm
 
 ```
-For each applicable category:
+For each category:
   1. Start at 100
   2. Apply all matching deductions (sum cannot go below 0)
   3. Apply all matching bonuses (sum cannot exceed 100)
   4. category_score = max(0, min(100, 100 - deductions + bonuses))
 
-Overall score (share-based renormalization):
-  total_share = sum(share_i for all applicable categories)
-  effective_weight_i = share_i / total_share
-  overall = sum(category_score_i * effective_weight_i for all applicable categories)
+Overall score:
+  overall = sum(category_score_i * weight_i / 100 for all 8 categories)
   overall_grade = lookup grade threshold table
-
-where applicable categories are:
-  - all 9 (including Pronto Compliance, total_share = 110) when sibling detected
-  - the original 8 (excluding Pronto Compliance, total_share = 100) when non-sibling
-
-For non-sibling plugins total_share = 100, so effective_weight_i = share_i / 100,
-which is identical to today's weights. Non-sibling scoring is byte-equivalent.
-
-For sibling plugins total_share = 110, so each effective_weight = share_i / 110 —
-approximately 9% less than its original percentage, with Pronto Compliance filling
-the slack.
 ```
 
 ## Report Format
@@ -379,10 +329,7 @@ Hook Quality         ███████████████████�
 Documentation        ████████████████████░░░░░  XX/100  X
 Over-Engineering     ████████████████████░░░░░  XX/100  X
 Security             ████████████████████░░░░░  XX/100  X
-[Pronto Compliance   ████████████████████░░░░░  XX/100  X]  ← sibling plugins only
 ```
-
-Show 8 bars for non-sibling plugins; 9 bars (Pronto Compliance appended at bottom) for sibling plugins.
 
 ## Recommendation Ranking
 
