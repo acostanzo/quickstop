@@ -10,7 +10,7 @@ allowed-tools: Task, Read, Glob, Grep, Bash, Write, Edit, WebSearch, WebFetch, A
 
 You are the Smith orchestrator. When the user runs `/smith <plugin-name>`, scaffold a new Quickstop plugin with correct structure, frontmatter, and marketplace registration. Follow each phase in order.
 
-> **Human-driven by design (Q3 §U1).** Smith carries `disable-model-invocation: true` in its frontmatter, which means agents and sub-Claudes cannot dispatch it through the Skill tool — `Skill(smith, ...)` returns `Skill smith cannot be used with Skill tool due to disable-model-invocation`. This is intentional, not an oversight. Smith is an interactive scaffolding skill: it asks questions via AskUserQuestion and produces a plugin from human answers. Letting an agent answer those questions on the user's behalf would defeat the purpose. The supported way for an agent to "dogfood" smith is the **recipe-by-hand** path — read this SKILL.md and execute each phase manually against the user's stated inputs, calling Read/Write/Edit/Bash directly rather than dispatching the skill. The 2b1 lintguini dogfood used exactly this path; Q3's U1 finding is the precedent.
+> **Human-driven by design.** Smith carries `disable-model-invocation: true` in its frontmatter, which means agents and sub-Claudes cannot dispatch it through the Skill tool — `Skill(smith, ...)` returns `Skill smith cannot be used with Skill tool due to disable-model-invocation`. This is intentional, not an oversight. Smith is an interactive scaffolding skill: it asks questions via AskUserQuestion and produces a plugin from human answers. Letting an agent answer those questions on the user's behalf would defeat the purpose. The supported way for an agent to "dogfood" smith is the **recipe-by-hand** path — read this SKILL.md and execute each phase manually against the user's stated inputs, calling Read/Write/Edit/Bash directly rather than dispatching the skill.
 
 > **Hook note (ADR-006 §3).** Smith does not scaffold a `hooks/` directory. If you see the user mention "hooks" anywhere during the questionnaire — in the Description, in Components, or in any free-text answer — prepend the following note to the very next prompt you display (once, not repeatedly): *"Note: smith doesn't scaffold hooks. See ADR-006 §3 / towncrier `bin/emit.sh` for the by-hand pattern."* Then continue normally.
 
@@ -37,7 +37,7 @@ Gathering requirements...
 
 ## Phase 1: Build Expert Context (lazy)
 
-> **Default: skip this phase.** Q4 verification (`project/tickets/closed/quickstop-dev-tooling-q4-smith-lazy-phase1.md`) confirmed empirically that Phase 1's output does not influence the scaffolded files for any standard sibling or tool case — Phase 3's templates contain no Expert-Context substitution slots. Substitutions come from user answers (Phase 2) and three pronto files (`plugin.json`, `references/recommendations.json`, `references/rubric.md`); none flow from Expert Context. The expert-context fanout was a defensive measure that turned out to be sunk cost on the standard path.
+> **Default: skip this phase.** Phase 1's output rarely influences the scaffolded files for a standard plugin — Phase 3's templates contain no Expert-Context substitution slots. Substitutions come from user answers (Phase 2); none flow from Expert Context. The expert-context fanout is a defensive measure, sunk cost on the standard path.
 >
 > Run Phase 1 only when one of the trigger conditions below fires during Phase 2, and then run it **between Phase 2 and Phase 3** (not before Phase 2 — you need the questionnaire answers to know whether a trigger applies). For the common case, jump straight from Phase 0 to Phase 2.
 
@@ -45,9 +45,8 @@ Gathering requirements...
 
 Run Phase 1 if any of these surface during Phase 2:
 
-- **Q4 returned "Other (non-canonical)"** — the sibling dimension is not in pronto's rubric, so the wire-contract scaffold may need verification beyond the templates. Load Expert Context to confirm the v2 envelope shape and the dimension-naming conventions before scaffolding.
-- **A free-text answer (Q1 description, Q5 follow-up, Q6/Q7 skill/agent descriptions) names a capability the templates don't cover** — e.g. multi-dimension siblings (out of Q1 scope), hook-only plugins (smith doesn't scaffold hooks; redirect to towncrier's pattern), LSP/monitor servers, or anything outside the Skills / Agents / MCP / References component classes Q5 lists. Load Expert Context if you're unsure how to scaffold the request.
-- **You explicitly need to verify frontmatter or wire-contract details that aren't already in `.claude/skills/smith/references/plugin-spec.md`** — e.g. a recently-added `claude-plugin/plugin.json` field. Lean conservative: when in doubt, load.
+- **A free-text answer (description, component follow-up, skill/agent descriptions) names a capability the templates don't cover** — e.g. hook-only plugins (smith doesn't scaffold hooks; redirect to towncrier's pattern), LSP/monitor servers, or anything outside the Skills / Agents / MCP / References component classes the questionnaire lists. Load Expert Context if you're unsure how to scaffold the request.
+- **You explicitly need to verify frontmatter details that aren't already in `.claude/skills/smith/references/plugin-spec.md`** — e.g. a recently-added `claude-plugin/plugin.json` field. Lean conservative: when in doubt, load.
 
 If none of these fire, skip directly to Phase 3.
 
@@ -112,15 +111,7 @@ Use AskUserQuestion for each question. Skip questions that don't apply based on 
 ### Question 1: Description
 "What does this plugin do? (1-2 sentence description)"
 
-### Question 2: Plugin Role
-Use AskUserQuestion with options:
-"What role does this plugin play?"
-- **Tool plugin** — a stand-alone command/skill set (most plugins: claudit, towncrier, smith itself)
-- **Pronto sibling** — audits a pronto rubric dimension; produces a wire-contract JSON envelope on `/<name>:audit --json`
-
-Set `IS_SIBLING=true` if the user selects "Pronto sibling".
-
-### Question 3: License
+### Question 2: License
 Use AskUserQuestion with options (pre-highlight MIT for marketplace plugins, No LICENSE for internal use — pre-highlighting is a UX hint, not a silent default; the user must affirm):
 
 "Which license should this plugin carry?
@@ -139,34 +130,9 @@ Options:"
 
 Set `LICENSE_CHOICE` to the user's answer. If "Other", ask a follow-up: "Provide the SPDX identifier (e.g. `BSD-3-Clause`) or the full license text."
 
-### Question 4: Sibling Dimension (if IS_SIBLING)
-Read `plugins/pronto/references/recommendations.json`. Extract each key from `.recommendations` and present the `dimension_label` values as options, plus an escape hatch.
+### Question 3: Components
 
 Use AskUserQuestion:
-"Which pronto rubric dimension does this sibling audit?
-
-(Options sourced from `plugins/pronto/references/recommendations.json`)"
-- [One option per dimension from the JSON, displaying `dimension_label`]
-- **Other (non-canonical)** — *Warning: pronto won't recognize this dimension automatically.*
-
-Set `SIBLING_DIMENSION` to the slug of the chosen dimension (the JSON key, e.g. `code-documentation`), or to the user's custom string if "Other".
-
-If "Other", warn: "Non-canonical dimensions are not in pronto's rubric. The sibling will scaffold correctly but pronto won't discover it automatically until the dimension is registered in `recommendations.json`."
-
-### Question 5: Components
-
-**For role = sibling (`IS_SIBLING=true`):** Skip the Skills and Agents toggles entirely — the `audit` skill (Phase 3.2a) and the `parse-<name>` agent (Phase 3.3a) are auto-included for every sibling and are not configurable here. Use AskUserQuestion with the trimmed list:
-
-"What additional components does this plugin need?
-*(Note: the `audit` skill and `parse-<name>` agent are auto-included for siblings — not toggled here.)*"
-
-Options (allow multiple selections):
-- MCP servers (external tool integration)
-- Reference files (heavy docs/schemas loaded on demand)
-
-In this branch, Q6 (additional skills) and Q7 (additional agents) are still asked — framed as *"List any **additional** skills beyond `audit`"* and *"List any **additional** agents beyond `parse-<name>`"* — and the user may answer with an empty line if they want only the auto-included pair.
-
-**For role = tool (`IS_SIBLING=false`):** Use AskUserQuestion with the full list:
 
 "What components does this plugin need?"
 
@@ -176,45 +142,37 @@ Options (allow multiple selections):
 - MCP servers (external tool integration)
 - Reference files (heavy docs/schemas loaded on demand)
 
-Note: hooks are not an option in either branch. If the user types "hooks" in the free-text follow-up, surface the migration note.
+Note: hooks are not an option. If the user types "hooks" in the free-text follow-up, surface the migration note.
 
-### Question 6: Skills
+### Question 4: Skills
 
-**For role = sibling:** Always ask, framed as additional to the auto-included `audit` skill:
-
-"List any **additional** skills this plugin needs beyond the auto-included `audit` skill. For each, provide a name and brief description. Format: `name: description` (one per line). Leave blank if `audit` is the only skill."
-
-**For role = tool:** Ask only if Q5 selected Skills:
+Ask only if Q3 selected Skills:
 
 "List the skills this plugin needs. For each, provide a name and brief description. Format: `name: description` (one per line)"
 
-### Question 7: Agents
+### Question 5: Agents
 
-**For role = sibling:** Always ask, framed as additional to the auto-included `parse-<name>` parser:
-
-"List any **additional** agents this plugin needs beyond the auto-included transitional parser `parse-<name>`. For each, provide a name and brief description. Format: `name: description` (one per line). Leave blank if `parse-<name>` is the only agent."
-
-**For role = tool:** Ask only if Q5 selected Agents:
+Ask only if Q3 selected Agents:
 
 "List the agents this plugin needs. For each, provide a name and brief description. Format: `name: description` (one per line)"
 
-### Question 8: Agent Model (if agents selected)
+### Question 6: Agent Model (if agents selected)
 Use AskUserQuestion with options:
 "What model should agents default to?"
 - `haiku` — fast and cheap, good for research/fetch tasks
 - `inherit` — use parent's model, good for analysis tasks
 - `sonnet` — balanced, good for complex analysis
 
-### Question 9: Keywords
+### Question 7: Keywords
 "What keywords describe this plugin? (comma-separated, for marketplace discovery)"
 
 ---
 
 ## Phase 3: Scaffold
 
-Using the user's answers, create all files according to the templates below. The templates are self-contained — every substitution slot is filled from a Phase 2 answer, a pronto file (`plugin.json`, `references/recommendations.json`, `references/rubric.md`), or `date +%Y`. If Phase 1 was triggered, also use Expert Context to verify any frontmatter or wire-contract details the templates don't already cover.
+Using the user's answers, create all files according to the templates below. The templates are self-contained — every substitution slot is filled from a Phase 2 answer or `date +%Y`. If Phase 1 was triggered, also use Expert Context to verify any frontmatter details the templates don't already cover.
 
-### Phase 3.0: Hook Surface (ADR-006 §3 boundary)
+### 3.0: Hook Surface (ADR-006 §3 boundary)
 
 Smith does **not** scaffold a `hooks/` directory or `hooks/hooks.json`. This is the load-bearing non-default — authors who need a pure-observability hook surface follow towncrier's pattern by hand.
 
@@ -222,9 +180,8 @@ If the user mentioned hooks anywhere in Phase 2, note this once in Phase 5 as a 
 
 ### 3.1: plugin.json
 
-Create `plugins/<name>/.claude-plugin/plugin.json`.
+Create `plugins/<name>/.claude-plugin/plugin.json`:
 
-**For role = tool:**
 ```json
 {
   "name": "<name>",
@@ -239,44 +196,15 @@ Create `plugins/<name>/.claude-plugin/plugin.json`.
 }
 ```
 
-**For role = sibling:**
-
-Read `plugins/pronto/.claude-plugin/plugin.json` → extract `version` as `PRONTO_VERSION`.
-Read `plugins/pronto/references/rubric.md` → find the row for `SIBLING_DIMENSION`, extract its weight integer, divide by 100 → `WEIGHT_HINT` (e.g. `15` → `0.15`). If parsing fails, omit `weight_hint`.
-
-```json
-{
-  "name": "<name>",
-  "version": "0.1.0",
-  "description": "<user's description>",
-  "author": {
-    "name": "Anthony Costanzo",
-    "url": "https://github.com/acostanzo"
-  },
-  "license": "<LICENSE_SPDX or omit if No LICENSE>",
-  "keywords": [<user's keywords>],
-  "pronto": {
-    "compatible_pronto": ">=<PRONTO_VERSION>",
-    "audits": [
-      {
-        "dimension": "<SIBLING_DIMENSION>",
-        "command": "/<name>:audit --json",
-        "weight_hint": <WEIGHT_HINT>
-      }
-    ]
-  }
-}
-```
-
 **License field handling:**
 - MIT → `"license": "MIT"`
 - Apache-2.0 → `"license": "Apache-2.0"`
 - No LICENSE → omit the `license` field entirely
 - Other → `"license": "<SPDX-identifier>"` if one was given, otherwise omit
 
-### 3.2: Skills (user-listed)
+### 3.2: Skills
 
-For each skill the user listed that is NOT `audit` (or not a sibling), create `plugins/<name>/skills/<skill-name>/SKILL.md`:
+For each skill the user listed, create `plugins/<name>/skills/<skill-name>/SKILL.md`:
 
 ```yaml
 ---
@@ -292,53 +220,9 @@ Body should include:
 - A TODO section prompting the author to fill in instructions
 - If the plugin has agents, include a skeleton Phase structure showing how to dispatch them
 
-### 3.2a: skills/audit/SKILL.md (sibling only, auto-created)
+### 3.3: Agents
 
-When IS_SIBLING, always create `plugins/<name>/skills/audit/SKILL.md` with the wire-contract emission shape. If the user listed `audit` as a skill in Question 6, this template supersedes the generic TODO stub.
-
-```yaml
----
-name: audit
-description: Audit the `<SIBLING_DIMENSION>` dimension in a target codebase
-disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Bash
-argument-hint: --json
----
-```
-
-Body (the skill emits this wire-contract-valid JSON envelope on stdout when invoked with `--json`):
-
-~~~markdown
-# <Name>:audit
-
-Audit the target codebase for <SIBLING_DIMENSION_LABEL> and emit a v2 wire-contract envelope.
-
-## Output
-
-Emit exactly one JSON object to stdout:
-
-```json
-{
-  "$schema_version": 2,
-  "plugin": "<name>",
-  "dimension": "<SIBLING_DIMENSION>",
-  "categories": [],
-  "observations": [],
-  "composite_score": null,
-  "recommendations": []
-}
-```
-
-<!-- TODO: Fill in `observations[]` entries when scorers are wired up. Until then,
-the empty array exercises the translator's case-3 passthrough — the dimension scores
-by presence-only fallback. Each observation needs: id (stable string), kind (ratio |
-count | presence | score), evidence (object), summary (string). See
-plugins/pronto/references/sibling-audit-contract.md for the full field reference. -->
-~~~
-
-### 3.3: Agents (user-listed)
-
-For each agent the user listed (excluding the auto-created `parse-<name>` for siblings), create `plugins/<name>/agents/<agent-name>.md`:
+For each agent the user listed, create `plugins/<name>/agents/<agent-name>.md`:
 
 ```yaml
 ---
@@ -357,62 +241,6 @@ Body should include:
 - A purpose section
 - A TODO section for instructions
 - An output format skeleton
-
-### 3.3a: Transitional parser agent (sibling only, auto-created)
-
-When IS_SIBLING, create `plugins/<name>/agents/parse-<name>.md`:
-
-```yaml
----
-name: parse-<name>
-description: "Transitional parser agent for <name>. Forwards /<name>:audit --json output to pronto unchanged. Remove after step-1 discovery verifies in production."
-deprecated: true
-tools:
-  - Bash
-model: haiku
----
-```
-
-Body:
-
-~~~markdown
-# Parser Agent: <name> (transitional)
-
-<!-- Transitional. Satisfies ADR-005 §5 step-2 discovery while the audit ramps up;
-remove after step-1 discovery (plugins/<name>/skills/audit/SKILL.md) verifies in
-production. When /<name>:audit --json is confirmed stable, delete this file and
-remove the matching parser entry from plugins/pronto/references/recommendations.json
-(if one exists). -->
-
-You are a pass-through parser agent. Your only job is to forward the output of
-`/<name>:audit --json` to the caller unchanged. Do not interpret, summarize, or
-restructure the output.
-
-## Inputs
-
-From the dispatching prompt:
-
-- `REPO_ROOT` — absolute repo-root path.
-
-## What to do
-
-Run exactly one Bash command and print its stdout verbatim as your final message:
-
-```bash
-# Invoke the native audit skill (step-1 path)
-# This agent exists only until step-1 discovery is confirmed stable in production.
-echo "Passthrough: invoke /<name>:audit --json against ${REPO_ROOT}"
-```
-
-<!-- TODO: Replace the echo above with the actual invocation once the audit skill
-is wired up. Until then, this agent satisfies the step-2 registration requirement
-from ADR-005 §5. -->
-
-## Output
-
-Exactly one JSON object — whatever `/<name>:audit --json` emits. No prose, no
-markdown fences, no leading or trailing text.
-~~~
 
 ### 3.4: MCP Config
 
@@ -480,7 +308,7 @@ Use the current year from `date +%Y` in all copyright notices.
 
 ### 3.6: README
 
-Create `plugins/<name>/README.md`. Every plugin, whether tool or sibling, opens with a **"Plugin surface"** section per ADR-006 §1.
+Create `plugins/<name>/README.md`. Every plugin opens with a **"Plugin surface"** section per ADR-006 §1.
 
 ~~~markdown
 # <Name>
@@ -490,43 +318,16 @@ Create `plugins/<name>/README.md`. Every plugin, whether tool or sibling, opens 
 ## Plugin surface
 
 This plugin ships:
-- Skills: <list from Question 6 — include `audit` for siblings; "none" if empty>
+- Skills: <list from Question 4 — "none" if empty>
 - Commands: <list, or "none">
-- Agents: <list from Question 7 — include `parse-<name>` for siblings; "none" if empty>
+- Agents: <list from Question 5 — "none" if empty>
 - Hooks: none
 - Opinions: <reference files and rules, or "none">
 
 This plugin does not ship: cross-plugin automation, consumer config edits, or any
 flow that silently mutates artefacts the consumer owns. Consumers compose automation
 against this plugin's capabilities per ADR-006 §6.
-~~~
 
-**For sibling plugins**, append after the Plugin surface section:
-
-~~~markdown
-## What this sibling audits
-
-This plugin audits the **<SIBLING_DIMENSION_LABEL>** dimension of pronto's readiness rubric.
-
-## Standalone invocation
-
-```bash
-/<name>:audit --json
-```
-
-Emits a v2 wire-contract JSON envelope to stdout. The `observations[]` field
-carries entries pronto's rubric translates into a dimension score.
-
-## Pronto handshake
-
-This plugin declares `compatible_pronto: ">=<PRONTO_VERSION>"` in `plugin.json`.
-Pronto checks this at dispatch time — if the installed pronto is outside the declared
-range, pronto skips this sibling's audit and scores the dimension by presence only.
-~~~
-
-Then for all plugins, add:
-
-~~~markdown
 ## Installation
 
 ### From marketplace
@@ -598,7 +399,7 @@ Note the comma added to the previous last entry's closing brace, and the new ent
 
 ### 4.2: Root README
 
-Read `README.md` and add a new plugin section following the existing format (look at Claudit and Skillet entries for the pattern). Add as the last plugin entry.
+Read `README.md` and add a new plugin section following the existing format (look at existing plugin entries for the pattern). Add as the last plugin entry.
 
 ---
 
@@ -609,15 +410,12 @@ Present the created files:
 ```
 === SMITH COMPLETE ===
 Plugin: <name> v0.1.0
-Role: <Tool plugin | Pronto sibling (dimension: <SIBLING_DIMENSION>)>
 License: <MIT | Apache-2.0 | No LICENSE | Other>
 
 Created:
   plugins/<name>/.claude-plugin/plugin.json
   plugins/<name>/skills/<skill>/SKILL.md        (per user-listed skill)
-  plugins/<name>/skills/audit/SKILL.md          (sibling: auto-created)
   plugins/<name>/agents/<agent>.md               (per user-listed agent)
-  plugins/<name>/agents/parse-<name>.md          (sibling: transitional parser)
   plugins/<name>/.mcp.json                       (if MCP selected)
   plugins/<name>/LICENSE                         (if MIT or Apache-2.0)
   plugins/<name>/NOTICE                          (if Apache-2.0)
@@ -630,11 +428,9 @@ Registered:
 Next steps:
   1. Fill in skill instructions (the TODO sections)
   2. Fill in agent instructions
-  3. If sibling: wire up observations[] in skills/audit/SKILL.md
-  4. If sibling: run /hone <name> to verify Pronto Compliance ≥85
-  5. Test: claude --plugin-dir plugins/<name>
-  6. Run ./scripts/check-plugin-versions.sh to verify versions
-  7. Bump to v1.0.0 when ready for release
+  3. Test: claude --plugin-dir plugins/<name>
+  4. Run ./scripts/check-plugin-versions.sh to verify versions
+  5. Bump to v1.0.0 when ready for release
 === END ===
 
 If the user mentioned hooks during the questions, append this note to the report:
@@ -652,6 +448,4 @@ Otherwise omit the note entirely.
 - If a research agent fails, continue with the local baseline from `plugin-spec.md`
 - If file creation fails, report the error and continue with remaining files
 - If marketplace.json can't be read, create the entry and tell the user to add it manually
-- If `plugins/pronto/references/recommendations.json` can't be read for the Sibling Dimension question, present a text input instead of a list
-- If `plugins/pronto/references/rubric.md` can't be parsed for the weight hint, omit `weight_hint` from `plugin.json` (do not block scaffolding)
 - Never leave a half-scaffolded plugin — if a critical step fails, clean up created files
