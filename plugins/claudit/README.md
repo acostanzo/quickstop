@@ -1,12 +1,14 @@
 # Claudit
 
-Audit and optimize your Claude Code configuration with dynamic best-practice research.
+Audit and optimize your Claude Code configuration. Along the way, claudit caches current Claude Code ecosystem knowledge — settings, plugins, skills, hooks, MCP, performance patterns — so any subsequent agent task can read it via `/claudit:knowledge` instead of re-fetching docs.
 
-## What It Does
+## Two things, one plugin
 
-Claudit performs a comprehensive, research-backed audit of your Claude Code setup. It first builds expert knowledge from Anthropic's official documentation, then evaluates your configuration against that knowledge — identifying issues, over-engineering, and features you're not using yet.
+**1. The audit (`/claudit`).** A research-backed audit of your Claude Code setup. Claudit first builds expert knowledge from Anthropic's official documentation, then evaluates your configuration against that knowledge — identifying issues, over-engineering, and features you're not using yet.
 
-### Key Innovations
+**2. The cache (`/claudit:knowledge`).** A general-purpose Claude Code knowledge primer. Pre-fetched from official docs, version-tracked, TTL-checked. Any agent task that needs current ecosystem knowledge — building a skill, configuring an MCP, authoring CLAUDE.md, debugging hooks — can pull from the cache rather than fetching the same docs again. The audit uses it; you can too.
+
+### Key behaviors
 
 - **Recursive CLAUDE.md discovery**: Finds and audits all instruction files — root, subdirectory, `.claude/rules/`, `CLAUDE.local.md`, and `@import` references
 - **Automatic scope detection**: Detects whether you're in a project or not, audits everything relevant without prompting
@@ -29,7 +31,7 @@ Per ADR-006 §1, this plugin ships:
 
 - **Skills (4):**
   - `claudit` — the on-demand audit orchestrator. Runs the 6-phase audit (configuration map → research → audit → score → interactive enhancement → optional PR delivery). Accepts an optional `[focus-area]` argument (`MCP`, `CLAUDE.md`, `hooks`, `security`, a plugin name, etc.) to deepen the dive on one area without narrowing scope.
-  - `knowledge` — consumer-invoked. Reads claudit's expert-knowledge cache for the named domain(s) (`ecosystem`, `core-config`, `optimization`, or `all`); checks freshness and auto-refreshes stale domains. Lets other skills consume the same researched context the audit agents use.
+  - `knowledge` — consumer-invoked. Reads the cached Claude Code expert knowledge for the named domain(s) (`ecosystem`, `core-config`, `optimization`, or `all`); checks freshness and auto-refreshes stale domains. Any agent task can call this to skip fetching docs the cache already has.
   - `refresh` — consumer-invoked. Force-refreshes the knowledge cache from official Anthropic documentation. Accepts a single domain or `all`.
   - `status` — consumer-invoked. Reports the knowledge cache's freshness, TTL, and per-domain coverage. Read-only.
 - **Commands:** none (each skill is invoked via its `/claudit` or `/claudit:<skill>` slash).

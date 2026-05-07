@@ -1,6 +1,6 @@
 # Claudit Knowledge Cache Check Protocol
 
-This reference defines the standard procedure for checking the claudit knowledge cache. All consumers (claudit, skillet, smith, hone) should follow this protocol for consistent behavior.
+This reference defines the standard procedure for checking the claudit knowledge cache. Any agent task that wants current Claude Code knowledge — building a skill, configuring an MCP, authoring CLAUDE.md, debugging hooks — can read the cache via `/claudit:knowledge` instead of re-fetching docs. The protocol below is what `/claudit` itself uses internally; external consumers should normally just invoke `/claudit:knowledge` and let it apply the protocol.
 
 ## Cache Location
 
@@ -48,11 +48,12 @@ The `/claudit:knowledge [domain ...]` skill is the preferred way to access the c
 
 If claudit is not installed, consumers should fall back to their own research agents.
 
-## Consumer Quick Reference
+## Domain Quick Reference
 
-| Consumer | Domains Needed | Access Method |
-|----------|---------------|--------------|
-| `/claudit` | core-config, ecosystem, optimization | `/claudit:knowledge all` |
-| `/skillet:*` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
-| `/smith` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
-| `/hone` | ecosystem | `/claudit:knowledge ecosystem` with fallback |
+| Domain | Covers |
+|---|---|
+| `core-config` | Settings, permissions, CLAUDE.md, memory system. |
+| `ecosystem` | MCP servers, plugins, hooks, skills, sub-agents. |
+| `optimization` | Performance patterns, over-engineering detection. |
+
+A skill or agent task building against Claude Code's plugin / skill / agent / hook surface typically wants `ecosystem`. A task editing CLAUDE.md or configuring permissions wants `core-config`. A task tightening an existing config for performance wants `optimization`. `all` returns every domain. The audit (`/claudit`) reads `all`.

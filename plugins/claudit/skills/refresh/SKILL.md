@@ -98,6 +98,8 @@ Cache: ~/.cache/claudit/
 
 Other tools that benefit from this cache:
   /claudit        — skips research phase on next audit
-  /skillet:*      — uses ecosystem knowledge for skill analysis
-  /smith, /hone   — uses ecosystem knowledge for plugin scaffolding/auditing
+  any agent task  — building a skill, configuring an MCP, authoring
+                    CLAUDE.md, etc. — can pull current Claude Code
+                    knowledge from the cache instead of re-fetching
+                    docs.
 ```

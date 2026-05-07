@@ -29,7 +29,8 @@ No knowledge cache found.
 Run /claudit:refresh or /claudit to populate the cache.
 
 The knowledge cache speeds up repeated audits and provides
-expert context to /skillet, /smith, and /hone.
+current Claude Code expert context to any subsequent agent task —
+building a skill, configuring an MCP, authoring CLAUDE.md, etc.
 ╚══════════════════════════════════════════════════╝
 ```
 
@@ -88,5 +89,6 @@ To refresh now: /claudit:refresh
 If FRESH, add:
 
 ```
-Access via: /claudit:knowledge | Consumers: /claudit, /skillet:*, /smith, /hone
+Access via: /claudit:knowledge — any subsequent agent task can read
+the cached ecosystem/core-config/optimization knowledge directly.
 ```

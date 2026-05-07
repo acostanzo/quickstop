@@ -359,9 +359,7 @@ After the score card, present:
 2. **Critical Issues** — anything scoring below 50 in a category
 3. **Top Recommendations** — ranked list with estimated point impact (focus-relevant recommendations first when in focus mode)
 4. **New Features to Adopt** — capabilities from Expert Context not currently used
-5. **See Also** — cross-tool suggestions based on findings:
-   - If audit-project or audit-ecosystem found skill/agent structural issues (e.g., legacy commands/ directory, missing or malformed frontmatter, skills without proper structure): suggest `For detailed skill-level analysis, try /skillet:audit <skill-path>`
-   - If the focus area is plugin-related (Plugins, Specific Plugin) or audit-ecosystem found plugin authoring issues: suggest `For plugin authoring quality audits, try /hone <plugin-name>`
+5. **See Also** — operational suggestions based on findings:
    - If the knowledge cache was stale or missing (Phase 1 Step 1 fell through to Step 2): suggest `Run /claudit:refresh periodically to speed up future audits`
 
 ---

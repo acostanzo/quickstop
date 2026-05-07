@@ -1,7 +1,7 @@
 {
   "name": "claudit",
   "version": "2.6.0",
-  "description": "Audit and optimize Claude Code configurations with dynamic best-practice research",
+  "description": "Audit and optimize your Claude Code configuration. Caches current Claude Code ecosystem knowledge so any subsequent agent task — building a skill, configuring an MCP, authoring CLAUDE.md — can read it instead of re-fetching docs.",
   "author": {
     "name": "quickstop",
     "url": "https://github.com/acostanzo/quickstop"
