@@ -247,6 +247,18 @@ cat > "$RUBRIC_FIXTURE" <<'RUBRIC_EOF'
         { "gte": 1,   "score": 95 },
         { "else": 100 }
       ]
+    },
+    {
+      "id": "lint-pass-rate",
+      "kind": "ratio",
+      "rule": "ladder",
+      "bands": [
+        { "gte": 1.00, "score": 100 },
+        { "gte": 0.80, "score": 85  },
+        { "gte": 0.60, "score": 70  },
+        { "gte": 0.40, "score": 50  },
+        { "else": 30 }
+      ]
     }
   ],
   "default_rule": "passthrough"
