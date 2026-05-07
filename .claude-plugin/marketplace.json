@@ -61,22 +61,6 @@
       ]
     },
     {
-      "name": "lintguini",
-      "version": "0.5.0",
-      "description": "Lint-posture toolkit for Claude Code consumer repos: configure, lint, format, fix. Pronto-sibling audit grades lint-posture against the rubric.",
-      "source": "./plugins/lintguini",
-      "keywords": [
-        "lint",
-        "format",
-        "fix",
-        "configure",
-        "posture",
-        "audit",
-        "sibling",
-        "pronto"
-      ]
-    },
-    {
       "name": "inkwell",
       "version": "0.4.1",
       "description": "Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree.",
