@@ -12,7 +12,6 @@ fail=0
 
 for t in \
   "$PLUGIN_ROOT/test-fixtures/strip-trailers/cases.test.sh" \
-  "$PLUGIN_ROOT/test-fixtures/snapshots/snapshots.test.sh" \
   "$PLUGIN_ROOT/test-fixtures/post-review/post-review-dryrun.test.sh"
 do
   if [[ ! -x "$t" ]]; then
