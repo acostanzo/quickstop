@@ -29,21 +29,9 @@ Audit and optimize Claude Code configurations with dynamic best-practice researc
 - Over-engineering detection as highest-weighted scoring category
 - 6-category health scoring with interactive fix selection
 - Persistent memory on research agents for faster subsequent runs
-- Cross-tool synergy: cached knowledge speeds up skillet, smith, and hone
+- Cross-tool synergy: cached knowledge speeds up `/smith` and `/hone` (this repo's plugin-authoring tools)
 
 **Commands:** `/claudit` — run audit, `/claudit:refresh` — refresh cache, `/claudit:status` — show cache state, `/claudit:knowledge` — retrieve cached research
-
-### Skillet (v0.2.1)
-
-Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure.
-
-- Research-first: fetches latest Anthropic skill/agent docs before every action
-- **Claudit cache integration**: uses claudit's cached ecosystem knowledge when available, falls back to own research
-- Three workflows: build from scratch, audit existing, improve from findings
-- Opinionated directory template enforcement for consistent skill structure
-- 6-category scoring rubric specific to skill quality
-
-**Commands:** `/skillet:build <name>`, `/skillet:audit <path>`, `/skillet:improve <path>`
 
 ### Towncrier (v0.4.1)
 
