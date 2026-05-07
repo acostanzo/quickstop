@@ -33,20 +33,6 @@
       ]
     },
     {
-      "name": "skillet",
-      "version": "0.2.1",
-      "description": "Build, audit, and improve Claude Code skills with research-first architecture and opinionated structure",
-      "source": "./plugins/skillet",
-      "keywords": [
-        "skills",
-        "scaffolding",
-        "audit",
-        "quality",
-        "authoring",
-        "templates"
-      ]
-    },
-    {
       "name": "towncrier",
       "version": "0.4.1",
       "description": "Emit a structured JSON event for every Claude Code hook to a configurable transport (file, fifo, or HTTP).",
