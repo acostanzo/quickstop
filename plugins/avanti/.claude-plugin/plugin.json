@@ -1,6 +1,6 @@
 {
   "name": "avanti",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "SDLC in markdown — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions",
   "author": {
     "name": "quickstop",

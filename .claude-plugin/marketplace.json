@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "claudit",
-      "version": "2.6.0",
+      "version": "2.6.1",
       "description": "Audit and optimize your Claude Code configuration. Caches current Claude Code ecosystem knowledge so any subsequent agent task — building a skill, configuring an MCP, authoring CLAUDE.md — can read it instead of re-fetching docs.",
       "source": "./plugins/claudit",
       "keywords": [
@@ -21,7 +21,7 @@
     },
     {
       "name": "commventional",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "description": "Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews",
       "source": "./plugins/commventional",
       "keywords": [
@@ -34,7 +34,7 @@
     },
     {
       "name": "towncrier",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "description": "Emit a structured JSON event for every Claude Code hook to a configurable transport (file, fifo, or HTTP).",
       "source": "./plugins/towncrier",
       "keywords": [
@@ -48,7 +48,7 @@
     },
     {
       "name": "avanti",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "description": "SDLC in markdown — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions",
       "source": "./plugins/avanti",
       "keywords": [
@@ -62,7 +62,7 @@
     },
     {
       "name": "inkwell",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "description": "Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree.",
       "source": "./plugins/inkwell",
       "keywords": [
