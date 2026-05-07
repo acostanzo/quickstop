@@ -1,8 +1,8 @@
 ---
 id: 008
-status: accepted
-superseded_by: null
-updated: 2026-05-06
+status: superseded
+superseded_by: 009
+updated: 2026-05-07
 ---
 
 # ADR 008 — The lint-posture rubric is the authority; lintguini's templates are mechanical projections
