@@ -27,7 +27,6 @@ Check whether `${REPO_ROOT}/project/` exists. If it does not, report cleanly and
 
 ```
 No project/ directory in this repo. Nothing to report.
-Run /pronto:init to scaffold one.
 ```
 
 ## Phase 1: Gather
@@ -108,7 +107,7 @@ If a category is empty, show `  (none)` under its header rather than omitting th
 
 ## Error handling
 
-- **`project/` missing**: clean early exit with pointer to `/pronto:init`.
+- **`project/` missing**: clean early exit with the "Nothing to report" message above.
 - **Glob returns nothing in a subdir**: that's valid — report `(none)` in the category.
 - **Frontmatter parse fails on a file**: include it in a `MALFORMED (N):` section at the bottom of verbose output (path + the parse error). Don't crash the whole status report over one bad file.
 - **Git log unavailable for a file** (new and uncommitted): fall back to frontmatter `updated:`; mark last-touched as "(uncommitted)" in verbose output.

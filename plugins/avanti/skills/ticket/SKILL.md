@@ -49,9 +49,9 @@ Store the single matching path as **PLAN_PATH**.
 
 ### Step 4: Ensure the tickets directory exists
 
-The destination is deterministic: `${REPO_ROOT}/project/tickets/open/`. If it is missing, create it with `mkdir -p` via Bash and continue. Do not abort and do not gate on `/pronto:init` — the parent `project/` container is pronto's to scaffold, but plan-scoped subdirectories are avanti's destination and cheap to create on demand.
+The destination is deterministic: `${REPO_ROOT}/project/tickets/open/`. If it is missing, create it with `mkdir -p` via Bash and continue. The destination is avanti's to manage and cheap to create on demand.
 
-If you find yourself in a repo with no `project/` at all (i.e., neither `project/` nor any parent of `tickets/open/` exists, and the `mkdir -p` would create the entire subtree from `project/` upward), suggest `/pronto:init` as a softer note in the report — but still proceed with the `mkdir` and write the ticket. A repo without `project/` will not have plans either, so the plan-resolve step in Step 3 will already have failed first; this branch is unreachable in practice.
+A repo with no `project/` at all will already have failed the plan-resolve step in Step 3 (no plans means no `--plan` resolution), so this branch is unreachable in practice; if it is somehow reached, still proceed with the `mkdir` and write the ticket.
 
 ## Phase 1: Mint the ID
 

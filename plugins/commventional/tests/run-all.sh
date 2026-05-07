@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # run-all.sh — drive every commventional test in one command.
 #
-# Mirrors the inkwell pattern (plugins/inkwell/scorers/tests/run-all.sh):
-# walk a fixed list of test scripts, fail the runner if any of them
+# Walk a fixed list of test scripts, fail the runner if any of them
 # fails, summarise at the end.
 
 set -uo pipefail

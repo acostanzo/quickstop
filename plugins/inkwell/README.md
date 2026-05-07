@@ -1,6 +1,6 @@
 # Inkwell
 
-Documentation toolkit for Claude Code. Inkwell owns a repo's `docs/` tree the way avanti owns its `project/` tree: write, search, query, and tidy are the daily surface; a Pronto-sibling audit for code-documentation depth ships alongside. Docs are written in a voice and shape an LLM can retrieve and reason over — that is the point of the system, not a flourish.
+Documentation toolkit for Claude Code. Inkwell owns a repo's `docs/` tree the way avanti owns its `project/` tree: write, search, query, and tidy are the daily surface. Docs are written in a voice and shape an LLM can retrieve and reason over — that is the point of the system, not a flourish.
 
 ## Quick start
 
@@ -20,7 +20,6 @@ Documentation toolkit for Claude Code. Inkwell owns a repo's `docs/` tree the wa
 | [`/inkwell:search <query>`](skills/search/SKILL.md) | FTS5 search over `docs/`. Top-25 ranked hits with file paths and matching snippets. |
 | [`/inkwell:query <question>`](skills/query/SKILL.md) | Retrieval-augmented Q&A. One-paragraph synthesis plus citations and per-claim code corroboration. |
 | [`/inkwell:tidy`](skills/tidy/SKILL.md) | Surface (and optionally fix) doc-tree drift — duplicates, dead links, stale docs, template non-compliance, missing `## Related` blocks. |
-| [`/inkwell:audit`](skills/audit/SKILL.md) | Pronto-sibling audit for code-documentation depth. Pure shell + grep + awk + jq, no LLM dispatch. |
 
 ## Documentation voice
 
@@ -59,11 +58,11 @@ tags: [auth, security]                               # optional
 
 **No `code_refs:` field.** Code and docs evolve in parallel; an authoring-time reference list goes stale and erodes trust faster than no list at all. Code corroboration happens at inference time via subagent (see ADR-007), not via author-maintained metadata.
 
-**Body shape.** H1 title → body → terminal `## Related` block (wikilinks or relative paths to sibling docs). Soft requirement, scored, not enforced.
+**Body shape.** H1 title → body → terminal `## Related` block (wikilinks or relative paths to sibling docs). Soft requirement.
 
 **Templates.** Diátaxis four-quadrant: `concept`, `how-to`, `reference`, `tutorial`. Proven framework, ships unmodified. Soft templates — required frontmatter, suggested sections, no rigid format-policing. Live under [`templates/`](templates/).
 
-**README is separate.** It's the repo's front door, not an inkwell-doc. Graded by the existing `score-readme-quality.sh` and untouched by the new model.
+**README is separate.** It's the repo's front door, not an inkwell-doc.
 
 ## /inkwell:doc — write or update
 
@@ -106,7 +105,7 @@ The **corroboration field** is what makes this load-bearing. Every cited claim c
 - **Tier 2 — LLM-judged.** Behavioural assertions ("when X, returns Y", "the default is Z"). An `Explore`-class subagent reads the relevant code and returns a confidence verdict.
 - **Tier 3 — `could not corroborate`.** Conceptual statements, design rationale, narrative — exactly the things docs *should* carry that code can't express. Annotated, no penalty.
 
-Subagent dispatch is bounded and parallelisable; if it's unreachable or times out, the answer still ships with `could not corroborate` rather than failing. The architectural rationale and the audit-vs-query split are recorded in [`project/adrs/007-inkwell-corroboration-architecture.md`](../../project/adrs/007-inkwell-corroboration-architecture.md). See [`skills/query/SKILL.md`](skills/query/SKILL.md) for the locked response contract.
+Subagent dispatch is bounded and parallelisable; if it's unreachable or times out, the answer still ships with `could not corroborate` rather than failing. The architectural rationale is recorded in [`project/adrs/007-inkwell-corroboration-architecture.md`](../../project/adrs/007-inkwell-corroboration-architecture.md). See [`skills/query/SKILL.md`](skills/query/SKILL.md) for the locked response contract.
 
 ## /inkwell:tidy — drift finder
 
@@ -120,47 +119,13 @@ Read-only by default. Surfaces duplicates (title + content-overlap heuristic), d
 
 The `--apply` / `--apply-semantic` split is load-bearing: mechanical changes have a single correct answer and are silent; semantic operations always come with a diff so they're reviewed, not trusted. See [`skills/tidy/SKILL.md`](skills/tidy/SKILL.md).
 
-## /inkwell:audit — Pronto sibling
-
-Inkwell ships as a Pronto sibling for the **`code-documentation`** dimension (weight 15 in the readiness rubric). The audit stays deterministic — pure shell + grep + awk + jq, no LLM dispatch in scorers — and runs orthogonally to the writer surface.
-
-### Standalone invocation
-
-```bash
-/inkwell:audit --json
-```
-
-Emits a v2 wire-contract JSON envelope to stdout. The `observations[]` field carries entries pronto's rubric translates into a dimension score; `composite_score` is `null` because the rubric path is the sole authority on dimension scoring.
-
-### Scorers
-
-`bin/build-envelope.sh` dispatches the scorers in fixed order and slurps their non-empty stdouts into `observations[]`. Tool-absent branches degrade gracefully — missing `interrogate` / `lychee` / `revive` / `cargo doc` omit the observation rather than fail the audit.
-
-Always-on scorers:
-
-- `score-readme-quality.sh` — counts answered arrival questions in `README.md`.
-- `score-docs-coverage.sh` — per-language tool dispatch (`interrogate` / `eslint-jsdoc` / `revive` / `cargo doc`) for public-API docstring coverage.
-- `score-doc-staleness.sh` — `git log` mtimes for source files vs the latest docs touch.
-- `score-link-health.sh` — `lychee --offline` over `README.md` and `docs/`.
-
-Conditional scorers (gated on the presence of inkwell-frontmatter on any `docs/**/*.md` — emit empty-scope on non-inkwell consumers, preserving today's audit semantics):
-
-- `score-template-compliance.sh` — % of inkwell-marked docs with valid `template:` frontmatter and required sections.
-- `score-backlink-coverage.sh` — % of inkwell-marked docs that terminate with a non-empty `## Related` block.
-- `score-duplicate-density.sh` — title + content-overlap pairs, near-duplicate count.
-
-### Pronto handshake
-
-`plugin.json` declares `compatible_pronto: ">=0.3.0"`. Pronto checks this at dispatch time — if the installed pronto is outside the declared range, pronto skips the sibling audit and scores the dimension by presence only.
-
 ## Architecture
 
-- **Skills.** Five SKILL.md files under [`skills/`](skills/) — `doc`, `search`, `query`, `tidy`, `audit`.
-- **Bin scripts.** Workhorses under [`bin/`](bin/) — `build-envelope.sh` (audit orchestrator), `inkwell-index.sh` (FTS5 rebuild), `inkwell-search.sh`, `inkwell-suggest-links.sh`, `inkwell-query-retrieve.sh`, `inkwell-corroborate.sh`, `inkwell-tidy.sh`.
+- **Skills.** Four SKILL.md files under [`skills/`](skills/) — `doc`, `search`, `query`, `tidy`.
+- **Bin scripts.** Workhorses under [`bin/`](bin/) — `inkwell-index.sh` (FTS5 rebuild), `inkwell-search.sh`, `inkwell-suggest-links.sh`, `inkwell-query-retrieve.sh`, `inkwell-corroborate.sh`, `inkwell-tidy.sh`. Shared frontmatter and bigram helpers live in `bin/_common.sh`.
 - **Templates.** Four Diátaxis templates under [`templates/`](templates/) — `concept.md`, `how-to.md`, `reference.md`, `tutorial.md`. Soft templates: required frontmatter, suggested sections.
 - **FTS5 index.** `docs/.inkwell.fts5.db` (gitignored), rebuilt on-write by `inkwell-index.sh`.
 - **Thresholds.** Tunables (e.g. staleness day cutoff) in [`references/thresholds.json`](references/thresholds.json).
-- **Conditional audit scorers.** Three scorers under [`scorers/`](scorers/) gate on inkwell-frontmatter presence and emit empty-scope otherwise.
 
 The plugin ships no commands, no agents, no hooks, no MCP servers. ADR-006 §2 (no silent mutation of consumer artefacts) and §3 (vacuously satisfied: inkwell ships no hooks) hold across the surface; consumers compose automation against this plugin's capabilities per ADR-006 §6.
 
