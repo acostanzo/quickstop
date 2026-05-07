@@ -126,29 +126,15 @@ Phase 2: Analyzing plugin against expert knowledge...
 
 ## Phase 2: Audit
 
-### Step 1: Sibling Detection
-
-Before dispatching any audit agents, determine whether the plugin is a pronto sibling. Either of the following paths marks it as a sibling:
-
-**Path 1 — contract-native:** Read `plugins/<name>/.claude-plugin/plugin.json`. Check whether a `pronto` key exists at the top level.
-
-**Path 2 — registry:** Read `plugins/pronto/references/recommendations.json`. Check whether `<name>` appears as a `recommended_plugin` value for any dimension entry.
-
-Record which path(s) matched: `pronto-block`, `registry-only`, `both`, or `none`.
-
-### Step 2: Build Agent Prompts
+### Step 1: Build Agent Prompts
 
 Read all plugin files before dispatching. Each agent needs:
 1. The full Expert Context from Phase 1
 2. Its specific file contents (read and include them in the prompt)
 
-### Step 3: Dispatch Audit Agents
+### Step 2: Dispatch Audit Agents
 
-**Non-sibling (detection = none):** dispatch 5 agents in parallel — the existing 4 plus `audit-boundary`.
-
-**Sibling (detection = pronto-block / registry-only / both):** dispatch 6 agents in parallel — the existing 4 plus `audit-boundary` plus `audit-pronto`.
-
-Dispatch all applicable agents simultaneously in a single message.
+Dispatch 5 agents in parallel — the four content audits plus `audit-boundary`. Send all five Task tool calls in a single message.
 
 **audit-structure:**
 - `description`: "Audit plugin structure"
@@ -170,15 +156,10 @@ Dispatch all applicable agents simultaneously in a single message.
 - `subagent_type`: "audit-design"
 - `prompt`: Include Expert Context + contents of all plugin files (skills, agents, hooks). The agent assesses over-engineering, hook quality, and design patterns.
 
-**audit-boundary (always):**
+**audit-boundary:**
 - `description`: "Audit ADR-006 boundary compliance"
 - `subagent_type`: "audit-boundary"
 - `prompt`: Include Expert Context + plugin name and root path (`plugins/<name>/`). The agent audits §1 surface declaration, §2 silent consumer-artefact mutation, §3 hook invariants, and manifest/script drift.
-
-**audit-pronto (sibling only):**
-- `description`: "Audit pronto sibling compliance"
-- `subagent_type`: "audit-pronto"
-- `prompt`: Include Expert Context + plugin name + `detection: <pronto-block|registry-only|both>`. The agent audits pronto block, `:audit` skill, wire contract emission, parser agent state, and version handshake hygiene.
 
 ---
 
@@ -196,10 +177,10 @@ Apply the rubric to audit findings. For each applicable category:
 3. Apply matching **bonuses** from the rubric
 4. Clamp to 0-100 range
 
-**Categories, shares, and audit sources:**
+**Categories, weights, and audit sources:**
 
-| Category | Share | Audit Source |
-|----------|-------|-------------|
+| Category | Weight | Audit Source |
+|----------|--------|-------------|
 | Skill Quality | 20 | audit-skills-agents |
 | Structure Compliance | 15 | audit-structure |
 | Agent Quality | 15 | audit-skills-agents |
@@ -208,27 +189,22 @@ Apply the rubric to audit findings. For each applicable category:
 | Documentation | 10 | audit-metadata-docs + audit-boundary |
 | Over-Engineering | 10 | audit-design |
 | Security | 10 | audit-metadata-docs + audit-boundary |
-| Pronto Compliance | 10 | audit-pronto (sibling plugins only) |
 
-**Scope-aware scoring:** If a plugin has no component for a category (e.g., no hooks), that category scores 100 (neutral) unless the plugin clearly needs it. Pronto Compliance is excluded entirely for non-sibling plugins — it does not score 100 neutral.
+Weights sum to 100.
+
+**Scope-aware scoring:** If a plugin has no component for a category (e.g., no hooks), that category scores 100 (neutral) unless the plugin clearly needs it.
 
 ### Compute Overall Score
 
 ```
-total_share = sum(share_i for all applicable categories)
-effective_weight_i = share_i / total_share
-overall = sum(category_score_i * effective_weight_i for all applicable categories)
+overall = sum(category_score_i * weight_i / 100 for all 8 categories)
 ```
-
-Applicable categories:
-- **Non-sibling:** the original 8 categories, total_share = 100. Effective weights equal shares/100 — byte-equivalent to the pre-Q2 formula.
-- **Sibling:** all 9 categories including Pronto Compliance, total_share = 110. Each effective weight = share/110 (~9% less than original, with Pronto Compliance filling the slack).
 
 Look up letter grade from rubric's grade threshold table.
 
 ### Build Recommendations
 
-Compile ranked recommendations from all audit findings (including boundary and pronto findings):
+Compile ranked recommendations from all audit findings (including boundary findings):
 
 1. **Critical** (> 20 point impact): Must fix — actively harming quality
 2. **High** (10-20 point impact): Should fix — significant improvement
@@ -251,10 +227,9 @@ Hook Quality         ███████████████████�
 Documentation        ████████████████████░░░░░  XX/100  X
 Over-Engineering     ████████████████████░░░░░  XX/100  X
 Security             ████████████████████░░░░░  XX/100  X
-[Pronto Compliance   ████████████████████░░░░░  XX/100  X]  ← sibling plugins only
 ```
 
-For visual bars: `█` for filled (score/100 * 25 chars), `░` for remaining. Append numeric score and letter grade. Show 8 bars for non-sibling plugins; append the Pronto Compliance bar (9th) for sibling plugins.
+For visual bars: `█` for filled (score/100 * 25 chars), `░` for remaining. Append numeric score and letter grade.
 
 After the scorecard, present:
 1. **Critical Issues** — anything scoring below 50
@@ -295,11 +270,6 @@ Common fix types:
 - §1 missing README "Plugin surface" section — add the section listing declared capabilities.
 - §2 Scope A consumer-artefact mutation — surface the finding; do not auto-apply. These are architectural decisions requiring the plugin author's deliberate migration (ref. relevant per-plugin migration ticket if one exists).
 - §3 hook invariant violations — surface Critical findings clearly. For §3.1 payload mutation fields, flag the exact jq template or field construction. For §3.2 persistent host state, flag the installation call. Auto-apply is out of scope; recommend the author follow the migration ticket.
-
-**Pronto Compliance findings (from audit-pronto, sibling plugins only):**
-- Missing fields in `plugin.json` pronto block (e.g. `compatible_pronto`) — apply the field addition directly (low-risk, non-destructive edit).
-- Missing `skills/audit/SKILL.md` or frontmatter issues — surface the finding; recommend `/smith --upgrade <plugin>` for scaffolding-shaped work (future enhancement); do not auto-generate the skill body.
-- Registry-only detection finding ("migrate to contract-native shape") — surface as High recommendation; do not auto-apply.
 
 ### Re-Score and Show Delta
 
