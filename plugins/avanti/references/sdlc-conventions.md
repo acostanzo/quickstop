@@ -4,11 +4,11 @@ The canonical reference for avanti's lifecycle model — folder layout, state ma
 
 ## The model in one paragraph
 
-Every SDLC artifact lives under `project/` in the consumer repo. Three artifact types — **plans**, **tickets**, **ADRs** — each drive through their own state machine. A fourth artifact type — **pulse** — is an append-only journal, not a stateful artifact. The folder a file lives in is the authoritative state; frontmatter `status:` mirrors the folder for machine-readability. Avanti's skills (`/avanti:plan`, `/avanti:ticket`, `/avanti:adr`, `/avanti:promote`, `/avanti:pulse`) read and write these conventions; `/avanti:audit` measures how well the repo keeps to them.
+Every SDLC artifact lives under `project/` in the consumer repo. Three artifact types — **plans**, **tickets**, **ADRs** — each drive through their own state machine. A fourth artifact type — **pulse** — is an append-only journal, not a stateful artifact. The folder a file lives in is the authoritative state; frontmatter `status:` mirrors the folder for machine-readability. Avanti's skills (`/avanti:plan`, `/avanti:ticket`, `/avanti:adr`, `/avanti:promote`, `/avanti:pulse`, `/avanti:status`) read and write these conventions.
 
 ## Folder layout
 
-After `/pronto:init` scaffolds the container and avanti starts filling it:
+The avanti skills auto-create directories on demand, so the layout below grows as you author plans, tickets, ADRs, and pulse entries:
 
 ```
 project/
@@ -31,7 +31,7 @@ project/
 
 ### Folder-as-primary
 
-The directory a file sits in is the authoritative state. `status:` in frontmatter mirrors it for machine-readability but is never the source of truth except for ADRs (where the folder is flat). `/avanti:promote` moves files between folders and updates frontmatter atomically; hand-editing `status:` without moving the file is a convention violation the audit flags.
+The directory a file sits in is the authoritative state. `status:` in frontmatter mirrors it for machine-readability but is never the source of truth except for ADRs (where the folder is flat). `/avanti:promote` moves files between folders and updates frontmatter atomically; hand-editing `status:` without moving the file is a convention violation that creates a folder/frontmatter mismatch.
 
 ### Why ADRs are flat
 
@@ -216,16 +216,13 @@ Ticket IDs are plan-scoped, not repo-global. Every plan has its own `t1`, `t2`, 
 
 ## Tool state
 
-Phase 1 ships no persistent tool state. The `.avanti/` directory is reserved — mirroring pronto's `.pronto/` pattern — for future needs (cached audit results, per-repo config overrides). If it lands, it follows the same rules: hidden, tool-named, git-committable or git-ignored per need, never user-authored content.
+Avanti ships no persistent tool state. The `.avanti/` directory is reserved for future needs (per-repo config overrides, cached state). If it lands, it follows the same rules: hidden, tool-named, git-committable or git-ignored per need, never user-authored content.
 
 ## Common pitfalls
 
-- **Hand-editing `status:` without moving the file.** The audit flags this as a folder/frontmatter mismatch. Use `/avanti:promote` instead.
+- **Hand-editing `status:` without moving the file.** The folder is authoritative; a mismatch breaks the convention. Use `/avanti:promote` instead.
 - **Standalone tickets.** `/avanti:ticket` requires `--plan`. If work doesn't justify a plan, it doesn't justify a ticket.
 - **Reusing ADR numbers.** ADR numbers are repo-wide and monotonic. Superseded ADRs keep their original number; the superseding ADR takes the next unused number.
 - **Editing past pulse entries.** Pulse is append-only. Corrections go in a new timestamped entry referencing the earlier one.
 - **Skipping pulse entries at transitions.** `/avanti:promote` appends one automatically. If you do a manual promotion, add a pulse entry by hand.
 
-## Audit thresholds
-
-What counts as stale, orphaned, or cadence-breaking is configurable — see `audit-thresholds.md` for the knobs and defaults. Phase 1 ships lenient defaults (60-day stale plans, 30-day pulse-cadence warning) and expects consumers to tighten once usage data accumulates.

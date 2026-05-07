@@ -26,7 +26,7 @@ Store as **SLUG**.
 
 Run `git rev-parse --show-toplevel 2>/dev/null`. Abort if this fails. Store as **REPO_ROOT**.
 
-**ADRS_DIR** = `${REPO_ROOT}/project/adrs/`. If the directory does not exist, create it with `mkdir -p` via Bash and continue — the destination is deterministic and cheap to create on demand. If the entire `project/` subtree is missing, mention `/pronto:init` as a softer note in the final report so the consumer picks up the rest of the kernel scaffold.
+**ADRS_DIR** = `${REPO_ROOT}/project/adrs/`. If the directory does not exist, create it with `mkdir -p` via Bash and continue — the destination is deterministic and cheap to create on demand.
 
 ### Step 3: Check for slug collision
 
@@ -109,4 +109,4 @@ Next:
 - **Slug collision**: abort with the existing path named.
 - **Number collision after mint** (double-check fails): abort with a "rescan and retry" pointer — do not silently pick the next number; surface the drift.
 - **Write failure**: report the error; if the file was partially written, delete it before re-raising.
-- **ADRs directory missing**: auto-create with `mkdir -p` and proceed. The directory is deterministic and avanti's destination — refusing to create it just to defer to `/pronto:init` is unnecessary friction. If the entire `project/` subtree is missing, mention `/pronto:init` as a softer note in the report but still write the ADR.
+- **ADRs directory missing**: auto-create with `mkdir -p` and proceed. The directory is deterministic and avanti's destination — cheap to create on demand.

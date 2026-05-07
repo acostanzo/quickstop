@@ -87,13 +87,12 @@ fi
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THRESHOLDS_JSON="$HERE/../references/thresholds.json"
 
-# Source the shingle/Jaccard helpers shared with the scorers so the two
-# surfaces (tidy's `duplicate` rule and score-duplicate-density) cannot
-# diverge on the math. _common.sh ships with `set -euo pipefail`; tidy
-# is intentionally fail-soft in many branches, so restore the looser
-# option set after sourcing.
-# shellcheck source=../scorers/_common.sh
-. "$HERE/../scorers/_common.sh"
+# Source the shingle/Jaccard helpers (frontmatter parsing + bigram
+# math) used by the `duplicate` rule. _common.sh ships with
+# `set -euo pipefail`; tidy is intentionally fail-soft in many
+# branches, so restore the looser option set after sourcing.
+# shellcheck source=./_common.sh
+. "$HERE/_common.sh"
 set +e
 
 STALENESS_DAYS=90
@@ -304,9 +303,9 @@ check_stale() {
 # Pairs only, no transitive merging. The alphabetic-earlier path is the
 # finding's primary path; the partner path appears in `details:`.
 #
-# Math (bigrams_for_doc / jaccard_files) lives in scorers/_common.sh and
-# is shared with score-duplicate-density.sh. Tidy keeps only the
-# pair-finding loop and the per-pair float comparison helpers below.
+# Math (bigrams_for_doc / jaccard_files) lives in bin/_common.sh.
+# Tidy keeps only the pair-finding loop and the per-pair float
+# comparison helpers below.
 # ---------------------------------------------------------------------
 
 # Float comparison via awk (locale-independent).

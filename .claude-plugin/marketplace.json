@@ -61,23 +61,9 @@
       ]
     },
     {
-      "name": "pronto",
-      "version": "0.5.1",
-      "description": "Meta-orchestrator for Claude-Code-readiness — audits a repo against a rubric of readiness dimensions and delegates depth scoring to sibling plugins",
-      "source": "./plugins/pronto",
-      "keywords": [
-        "audit",
-        "meta-orchestrator",
-        "readiness",
-        "rubric",
-        "kernel",
-        "scorecard"
-      ]
-    },
-    {
       "name": "avanti",
       "version": "0.1.5",
-      "description": "SDLC work layer — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions; audits SDLC hygiene",
+      "description": "SDLC in markdown — authors plans, tickets, ADRs, and pulse entries; drives lifecycle transitions",
       "source": "./plugins/avanti",
       "keywords": [
         "sdlc",
@@ -85,8 +71,7 @@
         "tickets",
         "adrs",
         "pulse",
-        "lifecycle",
-        "audit"
+        "lifecycle"
       ]
     },
     {
@@ -108,17 +93,14 @@
     {
       "name": "inkwell",
       "version": "0.4.1",
-      "description": "Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree. Pronto-sibling audit for code-documentation depth ships alongside.",
+      "description": "Documentation toolkit for Claude Code: write, search, query (with code corroboration), and tidy docs in a repo's `docs/` tree.",
       "source": "./plugins/inkwell",
       "keywords": [
         "documentation",
         "markdown",
         "fts5",
         "rag",
-        "code-documentation",
-        "audit",
-        "sibling",
-        "pronto"
+        "code-documentation"
       ]
     }
   ]
