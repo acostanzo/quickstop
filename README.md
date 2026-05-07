@@ -34,7 +34,7 @@ claude --plugin-dir /path/to/quickstop/plugins/<plugin>
 
 ## Per-plugin details
 
-### Claudit (v2.6.0)
+### Claudit (v2.6.1)
 
 Audit and optimize your Claude Code configuration. Caches current Claude Code ecosystem knowledge so any subsequent agent task — building a skill, configuring an MCP, authoring CLAUDE.md, debugging hooks — can read it via `/claudit:knowledge` instead of re-fetching docs.
 
@@ -47,7 +47,7 @@ Audit and optimize your Claude Code configuration. Caches current Claude Code ec
 
 **Commands:** `/claudit`, `/claudit:knowledge`, `/claudit:refresh`, `/claudit:status`
 
-### Avanti (v0.1.5)
+### Avanti (v0.1.6)
 
 SDLC in markdown — authors and maintains the records under `project/` (plans, tickets, ADRs, pulse journal) and drives each record through its lifecycle.
 
@@ -59,7 +59,7 @@ SDLC in markdown — authors and maintains the records under `project/` (plans, 
 
 **Commands:** `/avanti:plan`, `/avanti:ticket`, `/avanti:adr`, `/avanti:promote`, `/avanti:pulse`, `/avanti:status`
 
-### Commventional (v2.1.0)
+### Commventional (v2.1.1)
 
 Enforce conventional commits, conventional comments, and engineering ownership for commits, PRs, and code reviews.
 
@@ -72,7 +72,7 @@ Enforce conventional commits, conventional comments, and engineering ownership f
 
 **Auto-invokes on:** commits, pull requests, code reviews
 
-### Inkwell (v0.4.1)
+### Inkwell (v0.4.2)
 
 Documentation toolkit for Claude Code. Inkwell owns a repo's `docs/` tree the way avanti owns its `project/` tree: write, search, query, and tidy are the daily surface.
 
@@ -83,7 +83,7 @@ Documentation toolkit for Claude Code. Inkwell owns a repo's `docs/` tree the wa
 
 **Commands:** `/inkwell:doc`, `/inkwell:search`, `/inkwell:query`, `/inkwell:tidy`
 
-### Towncrier (v0.4.1)
+### Towncrier (v0.4.2)
 
 Emit a structured JSON event for every Claude Code hook to a configurable transport. Pure observability — strictly pass-through, never alters Claude's behavior.
 
