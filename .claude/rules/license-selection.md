@@ -59,4 +59,4 @@ The user-facing prompt must show the decision tree from the table above inline, 
 
 ## In-tree convention
 
-Shipped quickstop marketplace plugins use MIT. The `plugin.json` files for pronto, claudit, commventional, skillet, avanti, and towncrier all carry `"license": "MIT"`. Smith-scaffolded plugins under `plugins/` follow the same convention when the user confirms MIT.
+Shipped quickstop marketplace plugins use MIT. The `plugin.json` files for claudit, commventional, avanti, inkwell, and towncrier all carry `"license": "MIT"`. Smith-scaffolded plugins under `plugins/` follow the same convention when the user confirms MIT.
