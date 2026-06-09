@@ -42,6 +42,36 @@ To determine if the cache (or a specific domain) is fresh:
 
 **Important**: Always check per-domain `cached_at` timestamps (not the top-level `cached_at`), because partial refreshes may update some domains but not others.
 
+## Cache Write Procedure
+
+After research agents return, persist the refreshed domains and update the manifest. This is the single source of truth for cache writes — both `/claudit:refresh` and `/claudit:knowledge` (when auto-refreshing) follow it.
+
+Given **CURRENT_VERSION** (from `claude --version`) and the set of **refreshed domains**:
+
+1. For each refreshed domain, write the agent's results to its cache file via the Write tool:
+   - `~/.cache/claudit/core-config.md`
+   - `~/.cache/claudit/ecosystem.md`
+   - `~/.cache/claudit/optimization.md`
+2. Read the existing `~/.cache/claudit/manifest.json` (if any) to preserve timestamps for domains that were **not** refreshed.
+3. Write `~/.cache/claudit/manifest.json`:
+   - Set each refreshed domain's `cached_at` to the current timestamp; preserve the rest.
+   - Update the top-level `claude_code_version` and `cached_at` **only when all three domains were refreshed** (via `all` or all three named); otherwise preserve the existing top-level values.
+
+   ```json
+   {
+     "claude_code_version": "{CURRENT_VERSION if all domains refreshed, otherwise preserve existing}",
+     "cached_at": "{current timestamp if all domains refreshed, otherwise preserve existing}",
+     "max_ttl_days": 7,
+     "domains": {
+       "core-config": { "cached_at": "{current if refreshed, preserved if not}" },
+       "ecosystem": { "cached_at": "{current if refreshed, preserved if not}" },
+       "optimization": { "cached_at": "{current if refreshed, preserved if not}" }
+     }
+   }
+   ```
+
+**Why**: Consumers check per-domain `cached_at` for TTL and the top-level `claude_code_version` for version invalidation. Updating those top-level fields on a partial refresh would incorrectly mark non-refreshed domains as fresh.
+
 ## Preferred Interface: `/claudit:knowledge`
 
 The `/claudit:knowledge [domain ...]` skill is the preferred way to access the cache. It handles freshness checks, auto-refreshes stale domains, and outputs content in a standard format. Consumers should invoke this skill rather than inlining the protocol below.

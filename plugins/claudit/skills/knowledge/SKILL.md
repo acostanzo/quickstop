@@ -75,24 +75,7 @@ Dispatch research agents for stale domains only, in parallel using the Task tool
 
 ### Write Cache
 
-For each refreshed domain, write the agent's results to the corresponding cache file using the Write tool.
-
-Then update the manifest. Read the existing `~/.cache/claudit/manifest.json` (if it exists) to preserve timestamps for domains that were NOT refreshed. Write the updated manifest:
-
-```json
-{
-  "claude_code_version": "{CURRENT_VERSION if all 3 domains refreshed, otherwise preserve existing}",
-  "cached_at": "{current timestamp if all 3 domains refreshed, otherwise preserve existing}",
-  "max_ttl_days": 7,
-  "domains": {
-    "core-config": { "cached_at": "{current if refreshed, preserved if not}" },
-    "ecosystem": { "cached_at": "{current if refreshed, preserved if not}" },
-    "optimization": { "cached_at": "{current if refreshed, preserved if not}" }
-  }
-}
-```
-
-**Why**: Only update top-level `claude_code_version` and `cached_at` when all domains are refreshed. Partial refreshes preserve these fields so non-refreshed domains aren't incorrectly marked fresh by a version match.
+Persist the refreshed domains and update the manifest by following the **Cache Write Procedure** in `${CLAUDE_PLUGIN_ROOT}/references/cache-check-protocol.md`, passing CURRENT_VERSION and the set of domains you refreshed.
 
 ## Step 4: Output Domain Content
 

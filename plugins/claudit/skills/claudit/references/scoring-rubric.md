@@ -267,22 +267,7 @@ Overall score:
 
 ## Report Format
 
-Present the health report as:
-
-```
-╔══════════════════════════════════════════════════════════╗
-║                  CLAUDIT HEALTH REPORT                  ║
-╠══════════════════════════════════════════════════════════╣
-║  Overall Score: 78/100  Grade: B  (Good)                ║
-╚══════════════════════════════════════════════════════════╝
-
-Over-Engineering     ████████████████░░░░░░░░░  65/100  C
-CLAUDE.md Quality    █████████████████████░░░░  85/100  B
-Security Posture     ██████████████████████░░░  90/100  A
-MCP Configuration    ████████████████████░░░░░  80/100  B
-Plugin Health        ██████████████████░░░░░░░  70/100  C
-Context Efficiency   █████████████████████░░░░  82/100  B
-```
+The health report card template (header box + per-category score bars) lives in `report-templates.md` (**Health Report Card**) — the single source the orchestrator renders from in Phase 3.
 
 ## Recommendation Ranking
 

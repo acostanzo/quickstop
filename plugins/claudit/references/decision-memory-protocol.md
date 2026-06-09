@@ -18,7 +18,7 @@ Project decision files are committable — team members benefit from shared cont
   "schema_version": 1,
   "decisions": [
     {
-      "fingerprint": "over-engineering:restated-builtin:CLAUDE.md:a3f8c1d2",
+      "fingerprint": "over-engineering:restated-builtin:CLAUDE.md",
       "category": "Over-Engineering",
       "recommendation": "Remove restated built-in: 'Always read files before editing'",
       "action": "rejected",
@@ -39,7 +39,7 @@ Project decision files are committable — team members benefit from shared cont
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `fingerprint` | string | Composite key: `{category_slug}:{issue_type}:{file_stem}:{content_hash_8}` |
+| `fingerprint` | string | Composite key: `{category_slug}:{issue_type}:{file_stem}` |
 | `category` | string | Scoring category name (e.g., "Over-Engineering") |
 | `recommendation` | string | The recommendation text as presented |
 | `action` | enum | `accepted`, `rejected`, `alternative`, `deferred` |
@@ -61,33 +61,20 @@ Project decision files are committable — team members benefit from shared cont
 
 ## Fingerprinting
 
-`{category_slug}:{issue_type}:{file_stem}:{content_hash_8}`
+`{category_slug}:{issue_type}:{file_stem}`
 
 - **category_slug**: Slugified scoring category (see Issue Type Slugs table in scoring-rubric.md)
 - **issue_type**: Normalized from rubric deductions (e.g., `restated-builtin`, `missing-binary`)
 - **file_stem**: Target file basename (e.g., `CLAUDE.md`, `settings.json`) or `_global` for cross-file issues
-- **content_hash_8**: First 8 chars of SHA-256 of the specific flagged content (see Hashing Guidance below)
 
-### Hashing Guidance
-
-The `content_hash_8` must be computed from a stable, deterministic input. Hash the **exact text of the configuration value or instruction being flagged**, trimmed of leading/trailing whitespace. Examples:
-
-- **Restated built-in**: hash the quoted instruction text (e.g., `"Always read files before editing"`)
-- **Hook sprawl**: hash the hook's `command` field value
-- **Missing binary**: hash the MCP server's `command` field value
-- **Verbose CLAUDE.md**: hash the file path being flagged (e.g., `CLAUDE.md`) since the issue is file-level, not line-level
-- **Cross-file duplication**: hash the duplicated instruction text
-- **Feature adoption**: hash the feature name (e.g., `"@import"`, `"rules directory"`)
-
-If the flagged content is ambiguous or spans multiple lines, hash the first meaningful line. Consistency across runs matters more than perfect specificity — the structural match (same `category:issue_type:file_stem`) catches content-changed cases.
+This three-part key is stable across runs without hashing flagged content — which matters because the model can't compute a reliable content hash anyway. Two distinct findings of the same `issue_type` in the same file share a fingerprint; that's an accepted trade-off (one decision covers the pattern for that file), kept deliberately simple.
 
 ### Matching Algorithm
 
 When a new recommendation is generated, compute its fingerprint and match against stored decisions:
 
-1. **Exact match** (full fingerprint): High confidence. Past decision is directly relevant.
-2. **Structural match** (same `category:issue_type:file_stem`, different hash): Content changed since the decision. Flag for re-evaluation with reason "config changed."
-3. **No match**: New recommendation. No past decision applies.
+1. **Match** (same fingerprint): A past decision applies. Surface it as context and check staleness.
+2. **No match**: New recommendation. No past decision applies.
 
 ## Staleness Rules
 
@@ -95,7 +82,6 @@ A past decision is flagged for re-evaluation when ANY condition is met:
 
 | Condition | Reason | Check |
 |-----------|--------|-------|
-| Content hash changed | Config was modified since decision | Structural match but hash differs |
 | Score impact delta >= 5 | Rubric or analysis weighted it differently | Compare `context.score_impact` to current |
 | Claude Code version changed | Best practices may have evolved | Compare `context.claude_code_version` to current |
 | Decision age > 90 days | Periodic re-evaluation | Compare `timestamp` to current date |
