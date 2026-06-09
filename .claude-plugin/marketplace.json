@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "claudit",
-      "version": "2.6.2",
+      "version": "3.0.0",
       "description": "Audit and optimize your Claude Code configuration. Caches current Claude Code ecosystem knowledge so any subsequent agent task — building a skill, configuring an MCP, authoring CLAUDE.md — can read it instead of re-fetching docs.",
       "source": "./plugins/claudit",
       "keywords": [

@@ -24,7 +24,7 @@ git clone https://github.com/acostanzo/quickstop.git
 claude --plugin-dir /path/to/quickstop/plugins/claudit
 ```
 
-## Claudit (v2.6.2)
+## Claudit (v3.0.0)
 
 Audit and optimize your Claude Code configuration. Caches current Claude Code ecosystem knowledge so any subsequent agent task — building a skill, configuring an MCP, authoring CLAUDE.md, debugging hooks — can read it via `/claudit:knowledge` instead of re-fetching docs.
 
