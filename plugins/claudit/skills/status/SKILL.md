@@ -1,7 +1,6 @@
 ---
 name: status
 description: Show claudit knowledge cache status — freshness, TTL, and domain coverage
-disable-model-invocation: true
 allowed-tools: Read, Bash
 ---
 

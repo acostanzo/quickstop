@@ -1,7 +1,6 @@
 ---
 name: knowledge
 description: Retrieve claudit knowledge cache domains (ecosystem, core-config, optimization). Checks freshness and auto-refreshes stale domains.
-disable-model-invocation: true
 argument-hint: "[domain ...] (ecosystem | core-config | optimization | all)"
 allowed-tools: Task, Read, Bash, Write
 ---

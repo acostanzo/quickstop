@@ -1,8 +1,0 @@
-{
-  "staleness_days": 90,
-  "tidy": {
-    "duplicate_overlap_min": 0.85,
-    "duplicate_overlap_archive": 0.95,
-    "rename_lookback_commits": 30
-  }
-}

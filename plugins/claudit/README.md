@@ -27,7 +27,7 @@ Audit and optimize your Claude Code configuration. Along the way, claudit caches
 
 ## Plugin surface
 
-Per ADR-006 §1, this plugin ships:
+This plugin ships:
 
 - **Skills (4):**
   - `claudit` — the on-demand audit orchestrator. Runs the 6-phase audit (configuration map → research → audit → score → interactive enhancement → optional PR delivery). Accepts an optional `[focus-area]` argument (`MCP`, `CLAUDE.md`, `hooks`, `security`, a plugin name, etc.) to deepen the dive on one area without narrowing scope.
@@ -42,10 +42,10 @@ Per ADR-006 §1, this plugin ships:
   - `audit-global` — audits global Claude Code configuration (`~/.claude/`) against the researched expert knowledge. Dispatched in Phase 2.
   - `audit-project` — audits project Claude Code configuration (`.claude/`, `CLAUDE.md`, subdirectory files, rules) against expert knowledge. Dispatched in Phase 2.
   - `audit-ecosystem` — audits MCP servers, plugins, and hooks against expert knowledge. Dispatched in Phase 2.
-- **Hooks:** none. Per ADR-006 §3, the hook invariants are vacuously satisfied — claudit installs no Claude Code event hooks.
+- **Hooks:** none — claudit installs no Claude Code event hooks, so the hook invariants are vacuously satisfied.
 - **Opinions:** claudit is an on-demand, interactive audit (Phase 4 requires the consumer to select which recommendations to apply). The knowledge cache is plugin-managed at `~/.cache/claudit/` with freshness checks at run-time. Decision memory persists to `.claude/claudit-decisions.json` (project-scoped audit) or `~/.cache/claudit/decisions.json` (global-only audit), but only when the consumer accepts, rejects, or defers a recommendation. Phase 5 PR delivery requires `gh`, runs only when the consumer opts in, and is restricted to project-scoped files (never `CLAUDE.local.md` or `~/.claude/`).
 
-ADR-006 §2 conformance (no silent mutation of consumer artefacts): claudit performs no consumer state mutation at plugin-install time. Every write claudit performs — to the knowledge cache, to decision memory, to project files during Phase 4, or to a GitHub PR during Phase 5 — is the result of a slash command the consumer typed and a recommendation the consumer accepted.
+Boundary conformance (no silent mutation of consumer artefacts): claudit performs no consumer state mutation at plugin-install time. Every write claudit performs — to the knowledge cache, to decision memory, to project files during Phase 4, or to a GitHub PR during Phase 5 — is the result of a slash command the consumer typed and a recommendation the consumer accepted.
 
 ## Usage
 

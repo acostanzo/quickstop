@@ -157,9 +157,9 @@ Dispatch 5 agents in parallel — the four content audits plus `audit-boundary`.
 - `prompt`: Include Expert Context + contents of all plugin files (skills, agents, hooks). The agent assesses over-engineering, hook quality, and design patterns.
 
 **audit-boundary:**
-- `description`: "Audit ADR-006 boundary compliance"
+- `description`: "Audit plugin boundary compliance"
 - `subagent_type`: "audit-boundary"
-- `prompt`: Include Expert Context + plugin name and root path (`plugins/<name>/`). The agent audits §1 surface declaration, §2 silent consumer-artefact mutation, §3 hook invariants, and manifest/script drift.
+- `prompt`: Include Expert Context + plugin name and root path (`plugins/<name>/`). The agent audits surface declaration, silent consumer-artefact mutation, hook invariants, and manifest/script drift.
 
 ---
 
@@ -263,13 +263,13 @@ Common fix types:
 - **Version sync**: Align versions across plugin.json, marketplace.json, README
 - **Structure cleanup**: Move files to correct directories, remove legacy patterns
 - **Instruction improvements**: Add phase structure, output formats, error handling
-- **Documentation**: Add missing README sections, add "Plugin surface" section (ADR-006 §1)
+- **Documentation**: Add missing README sections, add "Plugin surface" section
 - **Security**: Remove hardcoded paths, scope tool lists
 
-**ADR-006 boundary findings (from audit-boundary):**
-- §1 missing README "Plugin surface" section — add the section listing declared capabilities.
-- §2 Scope A consumer-artefact mutation — surface the finding; do not auto-apply. These are architectural decisions requiring the plugin author's deliberate migration (ref. relevant per-plugin migration ticket if one exists).
-- §3 hook invariant violations — surface Critical findings clearly. For §3.1 payload mutation fields, flag the exact jq template or field construction. For §3.2 persistent host state, flag the installation call. Auto-apply is out of scope; recommend the author follow the migration ticket.
+**Plugin boundary findings (from audit-boundary):**
+- Missing README "Plugin surface" section — add the section listing declared capabilities.
+- Scope A consumer-artefact mutation — surface the finding; do not auto-apply. These are architectural decisions requiring the plugin author's deliberate migration.
+- Hook invariant violations — surface Critical findings clearly. For payload mutation fields, flag the exact jq template or field construction. For persistent host state, flag the installation call. Auto-apply is out of scope; recommend the author migrate by hand.
 
 ### Re-Score and Show Delta
 

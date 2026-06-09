@@ -1,4 +1,0 @@
-{
-  "transport": "file:~/.towncrier/events.jsonl",
-  "skip_events": []
-}
