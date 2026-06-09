@@ -180,7 +180,7 @@ Category Name        ███████████████████�
 
 ## Issue Type Slugs for Decision Fingerprinting
 
-Each rubric deduction maps to a normalized slug used in decision fingerprints (`{category_slug}:{issue_type}:{file_stem}:{hash}`).
+Each rubric deduction maps to a normalized slug used in decision fingerprints (`{category_slug}:{issue_type}:{file_stem}`).
 
 | Category Slug | Issue Type Slug | Rubric Deduction |
 |---------------|----------------|------------------|
