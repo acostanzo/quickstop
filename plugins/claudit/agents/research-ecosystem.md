@@ -4,7 +4,6 @@ description: "Researches Claude Code ecosystem from official Anthropic documenta
 tools:
   - WebSearch
   - WebFetch
-  - Read
 model: haiku
 memory: user
 ---

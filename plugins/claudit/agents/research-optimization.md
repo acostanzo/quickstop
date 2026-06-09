@@ -4,7 +4,6 @@ description: "Researches Claude Code performance and over-engineering patterns f
 tools:
   - WebSearch
   - WebFetch
-  - Read
 model: haiku
 memory: user
 ---
