@@ -12,7 +12,7 @@ You are the Smith orchestrator. When the user runs `/smith <plugin-name>`, scaff
 
 > **Human-driven by design.** Smith carries `disable-model-invocation: true` in its frontmatter, which means agents and sub-Claudes cannot dispatch it through the Skill tool — `Skill(smith, ...)` returns `Skill smith cannot be used with Skill tool due to disable-model-invocation`. This is intentional, not an oversight. Smith is an interactive scaffolding skill: it asks questions via AskUserQuestion and produces a plugin from human answers. Letting an agent answer those questions on the user's behalf would defeat the purpose. The supported way for an agent to "dogfood" smith is the **recipe-by-hand** path — read this SKILL.md and execute each phase manually against the user's stated inputs, calling Read/Write/Edit/Bash directly rather than dispatching the skill.
 
-> **Hook note (ADR-006 §3).** Smith does not scaffold a `hooks/` directory. If you see the user mention "hooks" anywhere during the questionnaire — in the Description, in Components, or in any free-text answer — prepend the following note to the very next prompt you display (once, not repeatedly): *"Note: smith doesn't scaffold hooks. See ADR-006 §3 / towncrier `bin/emit.sh` for the by-hand pattern."* Then continue normally.
+> **Hook note.** Smith does not scaffold a `hooks/` directory. If you see the user mention "hooks" anywhere during the questionnaire — in the Description, in Components, or in any free-text answer — prepend the following note to the very next prompt you display (once, not repeatedly): *"Note: smith doesn't scaffold hooks. Author a hook by hand: a small script under `bin/` wired from a `hooks/hooks.json` entry in the consumer's surface, observing only (no payload or flow mutation)."* Then continue normally.
 
 ## Phase 0: Validation
 
@@ -45,7 +45,7 @@ Gathering requirements...
 
 Run Phase 1 if any of these surface during Phase 2:
 
-- **A free-text answer (description, component follow-up, skill/agent descriptions) names a capability the templates don't cover** — e.g. hook-only plugins (smith doesn't scaffold hooks; redirect to towncrier's pattern), LSP/monitor servers, or anything outside the Skills / Agents / MCP / References component classes the questionnaire lists. Load Expert Context if you're unsure how to scaffold the request.
+- **A free-text answer (description, component follow-up, skill/agent descriptions) names a capability the templates don't cover** — e.g. hook-only plugins (smith doesn't scaffold hooks; redirect to the by-hand hook pattern), LSP/monitor servers, or anything outside the Skills / Agents / MCP / References component classes the questionnaire lists. Load Expert Context if you're unsure how to scaffold the request.
 - **You explicitly need to verify frontmatter details that aren't already in `.claude/skills/smith/references/plugin-spec.md`** — e.g. a recently-added `claude-plugin/plugin.json` field. Lean conservative: when in doubt, load.
 
 If none of these fire, skip directly to Phase 3.
@@ -172,9 +172,9 @@ Use AskUserQuestion with options:
 
 Using the user's answers, create all files according to the templates below. The templates are self-contained — every substitution slot is filled from a Phase 2 answer or `date +%Y`. If Phase 1 was triggered, also use Expert Context to verify any frontmatter details the templates don't already cover.
 
-### 3.0: Hook Surface (ADR-006 §3 boundary)
+### 3.0: Hook Surface
 
-Smith does **not** scaffold a `hooks/` directory or `hooks/hooks.json`. This is the load-bearing non-default — authors who need a pure-observability hook surface follow towncrier's pattern by hand.
+Smith does **not** scaffold a `hooks/` directory or `hooks/hooks.json`. This is the load-bearing non-default — authors who need a pure-observability hook surface author it by hand: a small script (e.g. under `bin/`) wired from a `hooks/hooks.json` entry, observing only — no payload or flow mutation, no persistent host state, no undeclared writes.
 
 If the user mentioned hooks anywhere in Phase 2, note this once in Phase 5 as a "next steps" reminder. Do not create any file under `hooks/`.
 
@@ -308,7 +308,7 @@ Use the current year from `date +%Y` in all copyright notices.
 
 ### 3.6: README
 
-Create `plugins/<name>/README.md`. Every plugin opens with a **"Plugin surface"** section per ADR-006 §1.
+Create `plugins/<name>/README.md`. Every plugin opens with a **"Plugin surface"** section enumerating its capabilities.
 
 ~~~markdown
 # <Name>
@@ -326,7 +326,7 @@ This plugin ships:
 
 This plugin does not ship: cross-plugin automation, consumer config edits, or any
 flow that silently mutates artefacts the consumer owns. Consumers compose automation
-against this plugin's capabilities per ADR-006 §6.
+against this plugin's capabilities themselves.
 
 ## Installation
 
@@ -436,7 +436,8 @@ Next steps:
 If the user mentioned hooks during the questions, append this note to the report:
 
   Note: hooks were mentioned during scaffolding but are not scaffolded.
-        See ADR-006 §3 and towncrier bin/emit.sh for the by-hand pattern.
+        Author one by hand: a small bin/ script wired from hooks/hooks.json,
+        observing only — no payload/flow mutation, host state, or undeclared writes.
 
 Otherwise omit the note entirely.
 ```

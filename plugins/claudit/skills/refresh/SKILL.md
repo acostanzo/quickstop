@@ -1,7 +1,6 @@
 ---
 name: refresh
 description: Force-refresh the claudit knowledge cache from official Anthropic documentation
-disable-model-invocation: true
 argument-hint: "[domain|all]"
 allowed-tools: Task, Read, Bash, Write
 ---

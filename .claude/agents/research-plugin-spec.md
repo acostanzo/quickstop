@@ -30,7 +30,7 @@ Read the plugin specification baseline for additional context:
 
 Read each of the following files **if they exist** (use `Read` — skip gracefully if not found). Surface their content under a **"Quickstop Conventions"** section in your output, distinct from the Anthropic-docs section.
 
-- `project/adrs/006-plugin-responsibility-boundary.md` — capability vs automation boundary, hook carve-out (§3), "Plugin surface" README convention (§1)
+- `.claude/rules/commit-conventions.md` — conventional-commit format and the engineering-ownership stance
 - `.claude/rules/license-selection.md` — license decision tree, defaults, never-default-pick rule
 
 Budget note: these are 2 local file reads. Each is fast and cached after first read via `memory: user`. Read all present; omit absent with a brief note.
@@ -118,7 +118,7 @@ Return your findings as structured markdown:
 - [Recently changed behavior]
 
 ### Quickstop Conventions
-- [ADR-006: capability vs automation boundary, §3 hook carve-out, "Plugin surface" README section — if present]
+- [Commit rule: conventional-commit format, engineering-ownership stance — if present]
 - [License rule: decision tree, defaults, never-default-pick directive — if present]
 ```
 

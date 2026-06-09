@@ -1,7 +1,6 @@
 ---
 name: claudit
 description: Audit and optimize Claude Code configuration with dynamic best-practice research
-disable-model-invocation: true
 argument-hint: "[focus-area]"
 allowed-tools: Task, Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---

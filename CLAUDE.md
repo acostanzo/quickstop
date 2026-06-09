@@ -30,11 +30,11 @@ Repo-level skills in `.claude/` for plugin authors:
 
 ## Commit Conventions
 
-```
-PluginName vX.Y.Z: Brief description
+Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/). The full rule — types, scopes, and the engineering-ownership stance (no AI co-author trailers) — lives in `.claude/rules/commit-conventions.md`.
 
-- Change 1
-- Change 2
+```
+chore(claudit): bump to v2.6.2
+docs: drop the retired plugins from the README
 ```
 
 ## Testing
