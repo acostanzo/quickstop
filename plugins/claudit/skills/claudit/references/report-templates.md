@@ -86,7 +86,7 @@ Plugin Health        ███████████████████�
 Context Efficiency   ████████████████████░░░░░  XX/100  X
 ```
 
-For the visual bars, use `█` for filled and `░` for empty, scaled to 25 characters total; append the numeric score and letter grade. Omit the CLAUDE.md Quality row in global-only scope.
+For the visual bars, use `█` for filled and `░` for empty, scaled to 25 characters total; append the numeric score and letter grade. In global-only scope, render the CLAUDE.md Quality row as `CLAUDE.md Quality    skipped (no project detected)` instead of a score bar.
 
 ## Focus Mode Report Adjustments
 
