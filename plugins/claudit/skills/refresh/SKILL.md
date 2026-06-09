@@ -1,6 +1,6 @@
 ---
 name: refresh
-description: Force-refresh the claudit knowledge cache from official Anthropic documentation
+description: Force-refresh claudit's cached Claude Code docs by re-fetching Anthropic documentation (spawns web-research agents, overwrites the local cache). Run only when the user explicitly asks to refresh the claudit cache.
 argument-hint: "[domain|all]"
 allowed-tools: Task, Read, Bash, Write
 ---

@@ -1,13 +1,13 @@
 ---
 name: claudit
-description: Audit and optimize Claude Code configuration with dynamic best-practice research
+description: Full multi-phase audit of Claude Code configuration (dispatches research + audit subagents, edits files, may open a PR). Run only when the user explicitly asks to audit or optimize their Claude Code setup.
 argument-hint: "[focus-area]"
 allowed-tools: Task, Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---
 
 # Claudit: Claude Code Configuration Audit
 
-You are the Claudit orchestrator. When the user runs `/claudit` or `/claudit <focus-area>`, execute this 5-phase audit workflow. Follow each phase in order. Do not skip phases.
+You are the Claudit orchestrator. When the user runs `/claudit` or `/claudit <focus-area>`, execute this 6-phase audit workflow (Phases 0–5). Follow each phase in order. Do not skip phases.
 
 ## Phase 0: Environment Detection & Configuration Map
 
