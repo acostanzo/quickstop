@@ -159,7 +159,7 @@ On future runs, claudit annotates recommendations with past decisions:
 - **Context, not constraints** — past decisions annotate recommendations but never suppress them
 - **Staleness detection** — decisions are flagged for re-evaluation when config changes, Claude Code updates, score impact shifts, or 90 days pass
 - **Team-shared** — project decisions are committable so teammates see why deviations from best practice were intentional
-- **Fingerprint matching** — recommendations are matched to past decisions via a composite key (category, issue type, file, content hash)
+- **Fingerprint matching** — recommendations are matched to past decisions via a composite key (category, issue type, file)
 
 ## Persistent Memory
 
@@ -184,3 +184,7 @@ Or directly:
 ```bash
 claude --plugin-dir /path/to/quickstop/plugins/claudit
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
